@@ -1,6 +1,6 @@
 <?php
 namespace Tuna\TunaGateway\Model\Payment;
-use Magento\Checkout\Model\ConfigProviderInterface;
+use \Magento\Checkout\Model\ConfigProviderInterface;
 use \Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
  
 class TunaProvider implements ConfigProviderInterface
@@ -9,6 +9,7 @@ class TunaProvider implements ConfigProviderInterface
 * @var \Magento\Framework\App\Config\ScopeConfigInterface
 */
 protected $scopeConfig;
+protected $_session;
 /**
 * first config value config path
 */
@@ -17,9 +18,15 @@ const CONFIG_KEY = 'payment/tunagateway/tokenid';
 * @param ScopeConfig $scopeConfig
 */
 public function __construct(
-ScopeConfig $scopeConfig
+ScopeConfig $scopeConfig ,
+\Magento\Framework\Session\SessionManager $sessionManager,
+\Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
+\Magento\Framework\Json\Helper\Data $jsonHelper
 ) {
 $this->scopeConfig = $scopeConfig;
+$this->_session = $sessionManager;
+$this->curlFactory = $curlFactory;
+$this->jsonHelper = $jsonHelper;
 }
 /**
 * {@inheritdoc}
