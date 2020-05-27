@@ -22,20 +22,17 @@ class Get extends \Magento\Framework\App\Action\Action
 
     public function execute()
     {
-        $post = '{}';
+        $post = array(
+            'session_id' =>  $this->_session->getSessionId()
+        );
 
 
         try {
-            //  $ch = curl_init("https://5ec81c52155c130016a908a7.mockapi.io/Tuna/teste/1/InitPay");
-            $apiOrderUrl = "https://5ec81c52155c130016a908a7.mockapi.io/Tuna/tt";
+            $apiOrderUrl = "http://tuna.mypig.com.br/home/index";
             $body = $post;
-            $headers = [
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($post)
-            ];
+            $headers = [];
             $this->curl->write('POST', $apiOrderUrl, $http_ver = '1.1', $headers, $post);
-            //For Get Request
-            #$this->curl->write('GET', $url);
+         
             $response = $this->curl->read();
             echo $response;
         } catch (\Zend\Http\Exception\RuntimeException $runtimeException) {
@@ -43,5 +40,6 @@ class Get extends \Magento\Framework\App\Action\Action
         }
         #echo  $this->_session->getSessionId();
         exit;
+        
     }
 }
