@@ -12,33 +12,30 @@ class Get extends \Magento\Framework\App\Action\Action
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\View\Result\PageFactory $pageFactory,
         \Magento\Framework\Session\SessionManager $sessionManager,
-        \Magento\Framework\HTTP\Adapter\Curl $curl
+        \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
+        \Magento\Framework\Json\Helper\Data $jsonHelper
     ) {
         $this->_pageFactory = $pageFactory;
         $this->_session = $sessionManager;
-        $this->curl = $curl;
+        $this->curlFactory = $curlFactory;
+        $this->jsonHelper = $jsonHelper;
         return parent::__construct($context);
     }
 
     public function execute()
     {
-        $post = array(
-            'session_id' =>  $this->_session->getSessionId()
-        );
-
-
-        try {
-            $apiOrderUrl = "http://tuna.mypig.com.br/home/index";
-            $body = $post;
-            $headers = [];
-            $this->curl->write('POST', $apiOrderUrl, $http_ver = '1.1', $headers, $post);
-         
-            $response = $this->curl->read();
-            echo $response;
-        } catch (\Zend\Http\Exception\RuntimeException $runtimeException) {
-            echo $runtimeException->getMessage();
-        }
-        #echo  $this->_session->getSessionId();
+        $url = 'http://tuna.mypig.com.br/home/index'; //pass dynamic url
+        $requstbody ='session_id='.$this->_session->getSessionId();
+           
+           /* Create curl factory */
+           $httpAdapter = $this->curlFactory->create();
+           /* Forth parameter is POST body */
+           $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', [],$requstbody);
+           $result = $httpAdapter->read();
+           $body = \Zend_Http_Response::extractBody($result);
+           /* convert JSON to Array */
+           $response = $this->jsonHelper->jsonDecode($body);
+           echo '<pre>';print_r($response["code"]); 
         exit;
         
     }
