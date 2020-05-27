@@ -1,0 +1,7 @@
+<type name="Magento\Checkout\Model\CompositeConfigProvider">
+<arguments>
+<argument name="configProviders" xsi:type="array">
+<item name="tunaprovider" xsi:type="object">Tuna\TunaGateway\Model\Payment\TunaProvider</item>
+</argument>
+</arguments>
+</type>
