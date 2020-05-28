@@ -9,7 +9,8 @@ define(
         quote.paymentMethod.subscribe(function (method) { console.log(method); }, null, 'change');
         return Component.extend({
             defaults: {
-                template: 'Tuna_TunaGateway/payment/tuna'
+                template: 'Tuna_TunaGateway/payment/tuna',
+                tunaSessionId: window.checkoutConfig.payment.tunagateway.tokenid
             },
             getMailingAddress: function () {
                 return window.checkoutConfig.payment.checkmo.mailingAddress;
@@ -74,9 +75,8 @@ define(
                 return "";
             },
             placeOrder: function () {
-                //let sessionID = this.getCookie("tuna_sessionid");
-                //var paymentData = quote.paymentMethod();
                 let data = {
+                    tunaSessionId: document.getElementById('tunaSessionId').value,
                     cardHolder: document.getElementById('creditCardHolder').value,
                     cardNumber: document.getElementById('tuna_credit_card_number').value,
                     cvv: document.getElementById('creditCardCode').value,
