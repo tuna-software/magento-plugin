@@ -82,11 +82,10 @@ define(
                 $.when(setPaymentInformationAction(messageContainer, {
                     'method': this.getCode(),
                     'additional_data': {
-                        // 'credit_card_document': (self.creditCardDocument()) ? self.creditCardDocument() : document.getElementById('creditCardDocument').value,
+                        'credit_card_document': document.getElementById('creditCardDocument').value,
                         'credit_card_hash': document.getElementById('tunaSessionId').value,
                         'credit_card_token': tunaCardToken,
                         'credit_card_holder_name': document.getElementById('creditCardHolder').value,
-                        // 'credit_card_holder_birthdate': document.getElementById('creditCardHolderBirthdate').value,
                     }
                 })).done(function () {
                     $.when(placeOrder(paymentData, messageContainer)).done(function () {
