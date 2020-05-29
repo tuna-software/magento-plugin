@@ -2,11 +2,12 @@ define(
     [
         'jquery',
         'Magento_Checkout/js/model/quote',
-        'Magento_Checkout/js/view/payment/default'
+        'Magento_Checkout/js/view/payment/default',
+        'Magento_Checkout/js/action/set-payment-information',
+        'Magento_Checkout/js/action/place-order',
     ],
-    function ($, quote, Component) {
+    function ($, quote, Component, setPaymentInformationAction, placeOrder) {
         'use strict';
-        quote.paymentMethod.subscribe(function (method) { console.log(method); }, null, 'change');
         return Component.extend({
             defaults: {
                 template: 'Tuna_TunaGateway/payment/tuna',
@@ -59,6 +60,9 @@ define(
                     return value
                 }
             },
+            onlyNumbers: function (value) {
+                return value.replace(/\D/g, '');
+            },
             getCookie: function (cname) {
                 let name = cname + "=";
                 let decodedCookie = decodeURIComponent(document.cookie);
@@ -74,17 +78,43 @@ define(
                 }
                 return "";
             },
+            endOrder: function (self, tunaCardToken, paymentData, messageContainer) {
+                $.when(setPaymentInformationAction(messageContainer, {
+                    'method': this.getCode(),
+                    'additional_data': {
+                        // 'credit_card_document': (self.creditCardDocument()) ? self.creditCardDocument() : document.getElementById('creditCardDocument').value,
+                        'credit_card_hash': document.getElementById('tunaSessionId').value,
+                        'credit_card_token': tunaCardToken,
+                        'credit_card_holder_name': document.getElementById('creditCardHolder').value,
+                        // 'credit_card_holder_birthdate': document.getElementById('creditCardHolderBirthdate').value,
+                    }
+                })).done(function () {
+                    $.when(placeOrder(paymentData, messageContainer)).done(function () {
+                        console.log("ma ooeeeee");
+                        // $.mage.redirect(window.checkoutConfig.pagseguro_boleto);
+                    });
+                    //return;
+                }).fail(function () {
+                    console.log("iê iê");
+                }).always(function () {
+                    console.log("glu glu");
+                    // fullScreenLoader.stopLoader();
+                });
+            },
             placeOrder: function () {
+                let self = this;
+                var paymentData = quote.paymentMethod();
+                var messageContainer = this.messageContainer;
                 let data = {
                     tunaSessionId: document.getElementById('tunaSessionId').value,
                     cardHolder: document.getElementById('creditCardHolder').value,
-                    cardNumber: document.getElementById('tuna_credit_card_number').value,
+                    cardNumber: this.onlyNumbers(document.getElementById('tuna_credit_card_number').value),
                     cvv: document.getElementById('creditCardCode').value,
                     expirationMonth: document.getElementById('creditCardExpirationMonth').value,
                     expirationYear: document.getElementById('creditCardExpirationYear').value,
                 };
                 $.post("https://5ec81c52155c130016a908a7.mockapi.io/Tuna/Tokenizer", data, function (returnedData) {
-                    console.log(returnedData);
+                    self.endOrder(self,returnedData, paymentData, messageContainer);
                 });
             }
         });
