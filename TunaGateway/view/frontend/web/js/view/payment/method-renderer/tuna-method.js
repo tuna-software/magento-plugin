@@ -90,7 +90,7 @@ define(
                 })).done(function () {
                     $.when(placeOrder(paymentData, messageContainer)).done(function () {
                         console.log("ma ooeeeee");
-                        // $.mage.redirect(window.checkoutConfig.pagseguro_boleto);
+                        // $.mage.redirect(window.checkoutConfig);
                     });
                     //return;
                 }).fail(function () {
