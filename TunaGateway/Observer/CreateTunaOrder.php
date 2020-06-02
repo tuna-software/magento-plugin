@@ -9,7 +9,7 @@ class CreateTunaOrder implements ObserverInterface
 	{
         $order = $observer->getEvent()->getOrder();
 
-        //verify pagseguro transaction
+        //verify transaction
         if ($order->getStatus() == 'tuna_begin_payment') {
             $orderId = $order->getId();
             
