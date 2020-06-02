@@ -3,12 +3,12 @@
 	<default>
 		<payment>
 			<tuna>
+				<title>Tuna</title>
 				<active>1</active>
 				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
-				<order_status>pending</order_status>
-				<title>Tuna</title>
-				<allowspecific>0</allowspecific>
-				<group>offline</group>
+				<order_status>tuna_begin_payment</order_status>
+				 <log_file>var/log/tuna.log</log_file>
+				<group>tuna</group>
 			</tuna>
 		</payment>
 	</default>
