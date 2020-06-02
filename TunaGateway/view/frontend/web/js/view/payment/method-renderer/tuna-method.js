@@ -88,6 +88,7 @@ define(
                         'credit_card_holder_name': document.getElementById('creditCardHolder').value,
                     }
                 })).done(function () {
+                    console.log("lebaraaaaa");
                     $.when(placeOrder(paymentData, messageContainer)).done(function () {
                         console.log("ma ooeeeee");
                         // $.mage.redirect(window.checkoutConfig);
@@ -113,7 +114,7 @@ define(
                     expirationYear: document.getElementById('creditCardExpirationYear').value,
                 };
                 $.post("https://5ec81c52155c130016a908a7.mockapi.io/Tuna/Tokenizer", data, function (returnedData) {
-                    self.endOrder(self,returnedData, paymentData, messageContainer);
+                    self.endOrder(self,returnedData.sessionID, paymentData, messageContainer);
                 });
             }
         });
