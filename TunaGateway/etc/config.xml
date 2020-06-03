@@ -6,7 +6,7 @@
 				<title>Tuna</title>
 				<active>1</active>
 				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
-				<order_status>tuna_begin_payment</order_status>
+				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
 				<group>tuna</group>
 			</tuna>
