@@ -8,10 +8,34 @@ define(
     ],
     function ($, quote, Component, setPaymentInformationAction, placeOrder) {
         'use strict';
+        require(['jquery', 'jquery_mask'], function ($) {
+            $("#tuna_credit_card_document").live("keydown", function () {
+                try {
+                    $("#tuna_credit_card_document").unmask();
+                } catch (e) { }
+
+                if ($("#tuna_credit_card_document").val().length < 11) {
+                    $("#tuna_credit_card_document").mask("999.999.999-99");
+                } else {
+                    $("#tuna_credit_card_document").mask("99.999.999/9999-99");
+                }
+
+                var elem = this;
+                setTimeout(function () {
+                    elem.selectionStart = elem.selectionEnd = 10000;
+                }, 0);
+                var currentValue = $(this).val();
+                $(this).val('');
+                $(this).val(currentValue);
+            });
+            
+            $("#tuna_credit_card_code").mask("9999");
+            $("#tuna_credit_card_number").mask("9999 9999 9999 9999");
+
+        });
         return Component.extend({
             defaults: {
-                template: 'Tuna_TunaGateway/payment/tuna',
-                tunaSessionId: window.checkoutConfig.payment.tunagateway.tokenid
+                template: 'Tuna_TunaGateway/payment/tuna'
             },
             getMailingAddress: function () {
                 return window.checkoutConfig.payment.checkmo.mailingAddress;
@@ -42,56 +66,23 @@ define(
                     };
                 });
             },
-            formatCreditCard: function () {
-                let ccNumber = jQuery("#tuna_credit_card_number")[0].value.replace(/[^0-9 ]/g, "")
-                jQuery("#tuna_credit_card_number")[0].value = this.ccFormater(ccNumber);
-            },
-            ccFormater: function (value) {
-                var v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
-                var matches = v.match(/\d{4,16}/g);
-                var match = matches && matches[0] || ''
-                var parts = []
-                for (let i = 0, len = match.length; i < len; i += 4) {
-                    parts.push(match.substring(i, i + 4))
-                }
-                if (parts.length) {
-                    return parts.join(' ')
-                } else {
-                    return value
-                }
-            },
             onlyNumbers: function (value) {
                 return value.replace(/\D/g, '');
-            },
-            getCookie: function (cname) {
-                let name = cname + "=";
-                let decodedCookie = decodeURIComponent(document.cookie);
-                let ca = decodedCookie.split(';');
-                for (let i = 0; i < ca.length; i++) {
-                    var c = ca[i];
-                    while (c.charAt(0) == ' ') {
-                        c = c.substring(1);
-                    }
-                    if (c.indexOf(name) == 0) {
-                        return c.substring(name.length, c.length);
-                    }
-                }
-                return "";
             },
             endOrder: function (self, tunaCardToken, paymentData, messageContainer) {
                 $.when(setPaymentInformationAction(messageContainer, {
                     'method': this.getCode(),
                     'additional_data': {
-                        'credit_card_document': document.getElementById('creditCardDocument').value,
-                        'credit_card_hash': document.getElementById('tunaSessionId').value,
+                        'credit_card_document': $('#tuna_credit_card_document')[0].value,
+                        'credit_card_hash': $('#tuna_session_id')[0].value,
                         'credit_card_token': tunaCardToken,
-                        'credit_card_holder_name': document.getElementById('creditCardHolder').value,
+                        'credit_card_holder_name': $('#tuna_credit_card_holder')[0].value,
                     }
                 })).done(function () {
                     console.log("lebaraaaaa");
                     $.when(placeOrder(paymentData, messageContainer)).done(function () {
                         console.log("ma ooeeeee");
-                        // $.mage.redirect(window.checkoutConfig);
+                        $.mage.redirect(window.checkoutConfig);
                     });
                     //return;
                 }).fail(function () {
@@ -106,15 +97,16 @@ define(
                 var paymentData = quote.paymentMethod();
                 var messageContainer = this.messageContainer;
                 let data = {
-                    tunaSessionId: document.getElementById('tunaSessionId').value,
-                    cardHolder: document.getElementById('creditCardHolder').value,
-                    cardNumber: this.onlyNumbers(document.getElementById('tuna_credit_card_number').value),
-                    cvv: document.getElementById('creditCardCode').value,
-                    expirationMonth: document.getElementById('creditCardExpirationMonth').value,
-                    expirationYear: document.getElementById('creditCardExpirationYear').value,
+                    tunaSessionId: window.checkoutConfig.payment.tunagateway.tokenid,
+                    cardHolder: $('#tuna_credit_card_holder')[0].value,
+                    cardNumber: this.onlyNumbers($('#tuna_credit_card_number')[0].value),
+                    creditCardDocument: this.onlyNumbers($('#tuna_credit_card_document')[0].value),
+                    cvv: $('#tuna_credit_card_code')[0].value,
+                    expirationMonth: $('#tuna_credit_card_expiration_month')[0].value,
+                    expirationYear: $('#tuna_credit_card_expiration_year')[0].value,
                 };
                 $.post("https://5ec81c52155c130016a908a7.mockapi.io/Tuna/Tokenizer", data, function (returnedData) {
-                    self.endOrder(self,returnedData.sessionID, paymentData, messageContainer);
+                    self.endOrder(self, returnedData.sessionID, paymentData, messageContainer);
                 });
             }
         });
