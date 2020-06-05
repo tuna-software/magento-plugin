@@ -74,7 +74,7 @@ define(
                     'method': this.getCode(),
                     'additional_data': {
                         'credit_card_document': $('#tuna_credit_card_document')[0].value,
-                        'credit_card_hash': $('#tuna_session_id')[0].value,
+                        'credit_card_hash': window.checkoutConfig.payment.tunagateway.tokenid,
                         'credit_card_token': tunaCardToken,
                         'credit_card_holder_name': $('#tuna_credit_card_holder')[0].value,
                     }
