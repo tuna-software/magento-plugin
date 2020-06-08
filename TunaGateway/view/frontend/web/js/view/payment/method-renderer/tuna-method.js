@@ -9,26 +9,17 @@ define(
     function ($, quote, Component, setPaymentInformationAction, placeOrder) {
         'use strict';
         require(['jquery', 'jquery_mask'], function ($) {
-            $("#tuna_credit_card_document").live("keydown", function (e) {
-                try {
-                    $("#tuna_credit_card_document").unmask();
-                } catch (ex) { }
 
-                if ($("#tuna_credit_card_document").val().length < 11) {
-                    $("#tuna_credit_card_document").mask("999.999.999-99");
-                } else {
-                    $("#tuna_credit_card_document").mask("99.999.999/9999-99");
+            var CpfCnpjMaskBehavior = function (val) {
+                return val.replace(/\D/g, '').length <= 11 ? '000.000.000-009' : '00.000.000/0000-00';
+            },
+            cpfCnpjpOptions = {
+                onKeyPress: function (val, e, field, options) {
+                    field.mask(CpfCnpjMaskBehavior.apply({}, arguments), options);
                 }
+            };
 
-                var elem = this;
-                setTimeout(function () {
-                    elem.selectionStart = elem.selectionEnd = 10000;
-                }, 0);
-                var currentValue = $(this).val();
-                $(this).val('');
-                $(this).val(currentValue);
-
-            });
+            $('#tuna_credit_card_document').mask(CpfCnpjMaskBehavior, cpfCnpjpOptions);
 
             $("#tuna_credit_card_code").mask("9999");
             $("#tuna_credit_card_number").mask("9999 9999 9999 9999");
