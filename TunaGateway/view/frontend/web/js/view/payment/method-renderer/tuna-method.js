@@ -9,10 +9,10 @@ define(
     function ($, quote, Component, setPaymentInformationAction, placeOrder) {
         'use strict';
         require(['jquery', 'jquery_mask'], function ($) {
-            $("#tuna_credit_card_document").live("keydown", function () {
+            $("#tuna_credit_card_document").live("keydown", function (e) {
                 try {
                     $("#tuna_credit_card_document").unmask();
-                } catch (e) { }
+                } catch (ex) { }
 
                 if ($("#tuna_credit_card_document").val().length < 11) {
                     $("#tuna_credit_card_document").mask("999.999.999-99");
@@ -27,6 +27,7 @@ define(
                 var currentValue = $(this).val();
                 $(this).val('');
                 $(this).val(currentValue);
+
             });
 
             $("#tuna_credit_card_code").mask("9999");
