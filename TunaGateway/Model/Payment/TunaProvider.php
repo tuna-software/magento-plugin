@@ -36,7 +36,9 @@ class TunaProvider implements ConfigProviderInterface
     public function getConfig()
     {
         $url = 'http://tuna.mypig.com.br/home/index'; //pass dynamic url
-        $requstbody = 'session_id=' . $this->_session->getSessionId();
+        $requstbody = 'session_id=' . $this->_session->getSessionId().
+        '&appKey='.$this->scopeConfig->getValue('payment/tuna/appKey').
+        '&partnerAccount='.$this->scopeConfig->getValue('payment/tuna/partner_account');
 
         /* Create curl factory */
         $httpAdapter = $this->curlFactory->create();
@@ -50,7 +52,9 @@ class TunaProvider implements ConfigProviderInterface
         $config = [
             'payment' => [
                 'tunagateway' => [
-                    'tokenid' => $response["code"]
+                    'tokenid' => $response["code"],
+                    'appKey' => $this->scopeConfig->getValue('payment/tuna/appKey'),
+                    'partner_account' => $this->scopeConfig->getValue('payment/tuna/partner_account'),
                 ]
             ]
         ];

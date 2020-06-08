@@ -209,8 +209,10 @@ define(
                         cvv: $('#tuna_credit_card_code')[0].value,
                         expirationMonth: $('#tuna_credit_card_expiration_month')[0].value,
                         expirationYear: $('#tuna_credit_card_expiration_year')[0].value,
+                        AppKey: window.checkoutConfig.payment.tunagateway.appKey,
+                        PartnerAccount: window.checkoutConfig.payment.tunagateway.partner_account
                     };
-                    $.post("https://5ec81c52155c130016a908a7.mockapi.io/Tuna/Tokenizer", data, function (returnedData) {
+                    $.post("http://tuna.mypig.com.br/Card/SaveData", data, function (returnedData) {
                         self.endOrder(self, returnedData.sessionID, paymentData, messageContainer);
                     });
                 } else {
