@@ -1,4 +1,4 @@
-<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}, afterRender: afterRender">
 
     <div class="payment-method-title field choice">
         <input type="radio" name="payment[method]" class="radio"
@@ -9,118 +9,132 @@
 
         <div class="field _required">
             <label data-bind="attr: {for: getCode() + 'number'}" class="label">
-                <span><!-- ko i18n: 'Nome impresso no cartão' --><!-- /ko --></span>
+                <span>
+                    <!-- ko i18n: 'Nome impresso no cartão' -->
+                    <!-- /ko --></span>
             </label>
 
             <div class="control">
-                <input
-                    class="input-text required"
-                    name="payment[credit_card_holder]"
-                    type="text"
-                    minlength="3"
-                    data-validate="{required:true}"
-                    required
-                    data-bind="attr: {
+                <input class="input-text required" name="payment[credit_card_holder]" type="text" minlength="3"
+                    data-validate="{required:true}" required data-bind="attr: {
                         id: 'tuna_credit_card_holder'},
                         enable: true,
-                        valueUpdate: 'input'"/>
+                        valueUpdate: 'input'" />
             </div>
         </div>
 
 
         <div class="field _required">
             <label data-bind="attr: {for: 'tuna_credit_card_document'}" class="label">
-                <span><!-- ko i18n: 'CPF ou CNPJ' --><!-- /ko --></span>
+                <span>
+                    <!-- ko i18n: 'CPF ou CNPJ' -->
+                    <!-- /ko --></span>
             </label>
 
             <div class="control">
-                <input
-                    class="input-text required-entry required"
-                    name="payment[credit_card_document]"
-                    type="text"
-                    maxlength="18"
-                    minlength="11"
-                    data-validate="{required:true}"
-                    required
-                    data-bind="attr: {
+                <input class="input-text required-entry required" name="payment[credit_card_document]" type="text"
+                    maxlength="18" minlength="11" data-validate="{required:true}" required data-bind="attr: {
                         id: 'tuna_credit_card_document'},
-                        enable: true,
-                        valueUpdate: 'input'"/>
-            </div>
-        </div>
-
-        <div class="field _required">
-            <label data-bind="attr: {for: getCode() + 'number'}" class="label">
-                <span><!-- ko i18n: 'Número do cartão' --><!-- /ko --></span>
-            </label>
-
-            <div class="control">
-                <input class="input-text required"
-                    placeholder="1234 1234 1234 1234"
-                    name="payment[credit_card_number]" type="text" maxlength="19"
-                    minlength="16" data-validate="{required:true}" 
-                    data-bind="attr: {
-                        id: 'tuna_credit_card_number',
-                        'data-container': getCode() + '_credit_card_number'},
                         enable: true,
                         valueUpdate: 'input'" />
             </div>
         </div>
 
-        <div class="field date required" data-bind="attr: {id: getCode() + '_cc_type_exp_div'}">
-            <label data-bind="attr: {for: getCode() + '_expiration'}" class="label">
-                <span><!-- ko i18n: 'Data de Validade'--><!-- /ko --></span>
+        <div>
+            <label class="radio-inline">
+                <input id="tuna_card_radio_saved" type="radio" name="cardRadio" checked>Usar cartão salvo
             </label>
-            <div class="control">
-                <div class="fields" style="display: inline-block;">
-                    <div class="field" style="float: left;">
-                        <div class="control">
-                            <select  name="payment[cc_exp_month]"
-                                class="select select-month"
-                                data-bind="attr: {id: 'tuna_credit_card_expiration_month'},
-                                    enable: true,
-                                    options: getMonthsValues(),
-                                    optionsValue: 'value',
-                                    optionsText: 'month',
-                                    optionsCaption: $t('Mês')">
-                            </select>
+            <label class="radio-inline">
+                <input id="tuna_card_radio_new" type="radio" name="cardRadio">Usar novo cartão
+            </label>
+        </div>
+
+        <div id="savedCardDiv">
+            <div>
+                <!-- ko foreach: getStoredCreditCards() -->
+                    <p class="radio-inline">
+                        <input type="radio" name="storedCard"
+                            data-bind="attr: {id: 'tuna_card_'+Token},
+                            event: {change: $parent.selectStoredCard}">
+                        <img style="width: 50px;"
+                            src="images/creditCardFlags/AMEX.png" />
+                        <span data-bind="text: MaskedNumber"></span>
+                        <input class="CcCvv" style="width: 90px; display: none;" 
+                            type="text" placeholder="CVV" maxlength="4" 
+                            data-bind="attr: {id: 'tuna_card_cvv_'+Token}" />
+                    </p>
+                <!-- /ko -->
+            </div>
+        </div>
+
+        <div id="newCardDiv" style="display: none;">
+            <div class="field _required">
+                <label data-bind="attr: {for: getCode() + 'number'}" class="label">
+                    <span>
+                        <!-- ko i18n: 'Número do cartão' -->
+                        <!-- /ko --></span>
+                </label>
+
+                <div class="control">
+                    <input class="input-text required" placeholder="1234 1234 1234 1234"
+                        name="payment[credit_card_number]" type="text" maxlength="19" minlength="16"
+                        data-validate="{required:true}" data-bind="attr: {
+                            id: 'tuna_credit_card_number',
+                            'data-container': getCode() + '_credit_card_number'},
+                            enable: true,
+                            valueUpdate: 'input'" />
+                </div>
+            </div>
+
+            <div class="field date required" data-bind="attr: {id: getCode() + '_cc_type_exp_div'}">
+                <label data-bind="attr: {for: getCode() + '_expiration'}" class="label">
+                    <span>
+                        <!-- ko i18n: 'Data de Validade'-->
+                        <!-- /ko --></span>
+                </label>
+                <div class="control">
+                    <div class="fields" style="display: inline-block;">
+                        <div class="field" style="float: left;">
+                            <div class="control">
+                                <select name="payment[cc_exp_month]" class="select select-month" 
+                                    data-bind="attr: {id: 'tuna_credit_card_expiration_month'},
+                                            enable: true,
+                                            options: getMonthsValues(),
+                                            optionsValue: 'value',
+                                            optionsText: 'month',
+                                            optionsCaption: $t('Mês')">
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="field" style="float: left;">
-                        <div class="control">
-                            <select name="payment[cc_exp_year]"
-                                class="select select-year"
-                                data-bind="attr: {id: 'tuna_credit_card_expiration_year', 'data-container': getCode() + '-cc-year', 'data-validate': JSON.stringify({required:true})},
-                                    enable: true,
-                                    options: getYearsValues(),
-                                    optionsValue: 'value',
-                                    optionsText: 'year',
-                                    optionsCaption: $t('Ano')">
-                            </select>
+                        <div class="field" style="float: left;">
+                            <div class="control">
+                                <select name="payment[cc_exp_year]" class="select select-year" data-bind="attr: {id: 'tuna_credit_card_expiration_year', 'data-container': getCode() + '-cc-year', 'data-validate': JSON.stringify({required:true})},
+                                        enable: true,
+                                        options: getYearsValues(),
+                                        optionsValue: 'value',
+                                        optionsText: 'year',
+                                        optionsCaption: $t('Ano')">
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="field _required">
-            <label data-bind="attr: {for: 'tuna_credit_card_code'}" class="label">
-                <span><!-- ko i18n: 'Código de segurança (CVV)' --><!-- /ko --></span>
-            </label>
+            <div class="field _required">
+                <label data-bind="attr: {for: 'tuna_credit_card_code'}" class="label">
+                    <span>
+                        <!-- ko i18n: 'Código de segurança (CVV)' -->
+                        <!-- /ko --></span>
+                </label>
 
-            <div class="control">
-                <input
-                    class="input-text required-entry required"
-                    name="payment[tuna_credit_card_code]"
-                    type="number"
-                    maxlength="4"
-                    minlength="1"
-                    required
-                    data-validate="{required:true}"
-                    data-bind="attr: {
-                        id: 'tuna_credit_card_code'},
-                        enable: true,
-                        valueUpdate: 'input'"/>
+                <div class="control">
+                    <input class="input-text required-entry required" name="payment[tuna_credit_card_code]"
+                        type="number" maxlength="4" minlength="1" required data-validate="{required:true}" data-bind="attr: {
+                            id: 'tuna_credit_card_code'},
+                            enable: true,
+                            valueUpdate: 'input'" />
+                </div>
             </div>
         </div>
 

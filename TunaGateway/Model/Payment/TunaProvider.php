@@ -36,9 +36,9 @@ class TunaProvider implements ConfigProviderInterface
     public function getConfig()
     {
         $url = 'http://tuna.mypig.com.br/home/index'; //pass dynamic url
-        $requstbody = 'session_id=' . $this->_session->getSessionId().
-        '&appKey='.$this->scopeConfig->getValue('payment/tuna/appKey').
-        '&partnerAccount='.$this->scopeConfig->getValue('payment/tuna/partner_account');
+        $requstbody = 'session_id=' . $this->_session->getSessionId() .
+            '&appKey=' . $this->scopeConfig->getValue('payment/tuna/appKey') .
+            '&partnerAccount=' . $this->scopeConfig->getValue('payment/tuna/partner_account');
 
         /* Create curl factory */
         $httpAdapter = $this->curlFactory->create();
@@ -49,12 +49,31 @@ class TunaProvider implements ConfigProviderInterface
         /* convert JSON to Array */
         $response = $this->jsonHelper->jsonDecode($body);
 
+        $om = \Magento\Framework\App\ObjectManager::getInstance();
+        $customerSession = $om->get('Magento\Customer\Model\Session');
+        $tunaSessionID = $response["code"];
+
+        $response = null;
+        if ($customerSession->isLoggedIn()) {
+            $url = 'http://tuna.mypig.com.br/Card/List';
+            $requestbody = 'SessionId=' . $tunaSessionID .
+                '&CustomerId=' . $customerSession->getCustomer()->getId();
+
+            $httpAdapter = $this->curlFactory->create();
+            $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', [], $requestbody);
+            $result = $httpAdapter->read();
+            $body = \Zend_Http_Response::extractBody($result);
+            $response = $this->jsonHelper->jsonDecode($body);
+        }
+
         $config = [
             'payment' => [
                 'tunagateway' => [
-                    'tokenid' => $response["code"],
+                    'sessionid' =>  $tunaSessionID,
                     'appKey' => $this->scopeConfig->getValue('payment/tuna/appKey'),
                     'partner_account' => $this->scopeConfig->getValue('payment/tuna/partner_account'),
+                    'savedCreditCards' => ($response <> null && $response["Code"] == 1) ? $response["Tokens"] : null,
+                    'is_user_logged_in' => $customerSession->isLoggedIn()
                 ]
             ]
         ];

@@ -13,27 +13,59 @@ define(
             var CpfCnpjMaskBehavior = function (val) {
                 return val.replace(/\D/g, '').length <= 11 ? '000.000.000-009' : '00.000.000/0000-00';
             },
-            cpfCnpjpOptions = {
-                onKeyPress: function (val, e, field, options) {
-                    field.mask(CpfCnpjMaskBehavior.apply({}, arguments), options);
-                }
-            };
+                cpfCnpjpOptions = {
+                    onKeyPress: function (val, e, field, options) {
+                        field.mask(CpfCnpjMaskBehavior.apply({}, arguments), options);
+                    }
+                };
 
             $('#tuna_credit_card_document').mask(CpfCnpjMaskBehavior, cpfCnpjpOptions);
 
             $("#tuna_credit_card_code").mask("9999");
+            $(".CcCvv").mask("9999");
             $("#tuna_credit_card_number").mask("9999 9999 9999 9999");
 
         });
+
+        function cardRadioChanged() {
+            if ($("#tuna_card_radio_saved").prop("checked")) {
+                $("#newCardDiv").hide();
+                $("#savedCardDiv").show();
+            } else {
+                $("#savedCardDiv").hide();
+                $("#newCardDiv").show();
+            }
+        };
+
+        $("#tuna_card_radio_new").live("change", cardRadioChanged);
+        $("#tuna_card_radio_saved").live("change", cardRadioChanged);
+
         return Component.extend({
             defaults: {
-                template: 'Tuna_TunaGateway/payment/tuna'
+                template: 'Tuna_TunaGateway/payment/tuna',
+            },
+            afterRender: function(){
+                if(window.checkoutConfig.payment.tunagateway.is_user_logged_in){
+                    $("#tuna_card_radio_saved").prop("checked", true);
+                }else{
+                    $("#tuna_card_radio_new").prop("checked", true);
+                    $("#tuna_card_radio_saved").prop("disabled", true);
+                    $("#newCardDiv").show();
+                    $("#savedCardDiv").hide();
+                }
+            },
+            getStoredCreditCards: function(){
+                return window.checkoutConfig.payment.tunagateway.savedCreditCards;
             },
             getMailingAddress: function () {
                 return window.checkoutConfig.payment.checkmo.mailingAddress;
             },
             getInstructions: function () {
                 return window.checkoutConfig.payment.instructions[this.item.method];
+            },
+            selectStoredCard: function(cc){
+                $(".CcCvv").hide();
+                $("#tuna_card_cvv_"+cc.Token).show();
             },
             getMonthsValues: function () {
                 return _.map(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'], function (value, key) {
@@ -150,7 +182,7 @@ define(
                     'method': this.getCode(),
                     'additional_data': {
                         'credit_card_document': $('#tuna_credit_card_document')[0].value,
-                        'credit_card_hash': window.checkoutConfig.payment.tunagateway.tokenid,
+                        'credit_card_hash': window.checkoutConfig.payment.tunagateway.sessionid,
                         'credit_card_token': tunaCardToken,
                         'credit_card_holder_name': $('#tuna_credit_card_holder')[0].value,
                     }
@@ -194,7 +226,7 @@ define(
                 var messageContainer = this.messageContainer;
                 if (this.isFieldsValid()) {
                     let data = {
-                        tunaSessionId: window.checkoutConfig.payment.tunagateway.tokenid,
+                        tunaSessionId: window.checkoutConfig.payment.tunagateway.sessionid,
                         cardHolder: $('#tuna_credit_card_holder')[0].value,
                         cardNumber: this.onlyNumbers($('#tuna_credit_card_number')[0].value),
                         creditCardDocument: this.onlyNumbers($('#tuna_credit_card_document')[0].value),
