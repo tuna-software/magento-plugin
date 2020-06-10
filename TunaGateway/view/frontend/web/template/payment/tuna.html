@@ -2,10 +2,15 @@
 
     <div class="payment-method-title field choice">
         <input type="radio" name="payment[method]" class="radio"
-            data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()" />
-        <label data-bind="attr: {'for': getCode()}" class="label"><span data-bind="text: getTitle()"></span></label>
+            data-bind="attr: {'id': getCode()}, value: getCode(), 
+                checked: isChecked, 
+                click: selectPaymentMethod, 
+                visible: isRadioButtonVisible()" />
+        <label data-bind="attr: {'for': getCode()}" class="label">
+        <span data-bind="text: getTitle()"></span></label>
     </div>
     <div class="payment-method-content">
+        <img data-bind="attr: {src: fpxImageSrc, alt: $t('Fpx MyClear'), height: '', width: '110' }" class="payment-icon"/>
 
         <div class="field _required">
             <label data-bind="attr: {for: getCode() + 'number'}" class="label">
@@ -52,17 +57,14 @@
         <div id="savedCardDiv">
             <div>
                 <!-- ko foreach: getStoredCreditCards() -->
-                    <p class="radio-inline">
-                        <input type="radio" name="storedCard"
-                            data-bind="attr: {id: 'tuna_card_'+Token},
+                <p class="radio-inline">
+                    <input type="radio" name="storedCard" data-bind="attr: {id: 'tuna_card_'+Token},
                             event: {change: $parent.selectStoredCard}">
-                        <img style="width: 50px;"
-                            src="images/creditCardFlags/AMEX.png" />
-                        <span data-bind="text: MaskedNumber"></span>
-                        <input class="CcCvv" style="width: 90px; display: none;" 
-                            type="text" placeholder="CVV" maxlength="4" 
-                            data-bind="attr: {id: 'tuna_card_cvv_'+Token}" />
-                    </p>
+                    <img style="width: 50px;" src="images/creditCardFlags/AMEX.png" />
+                    <span data-bind="text: MaskedNumber"></span>
+                    <input class="CcCvv" style="width: 90px; display: none;" type="text" placeholder="CVV" maxlength="4"
+                        data-bind="attr: {id: 'tuna_card_cvv_'+Token}" />
+                </p>
                 <!-- /ko -->
             </div>
         </div>
@@ -96,8 +98,7 @@
                     <div class="fields" style="display: inline-block;">
                         <div class="field" style="float: left;">
                             <div class="control">
-                                <select name="payment[cc_exp_month]" class="select select-month" 
-                                    data-bind="attr: {id: 'tuna_credit_card_expiration_month'},
+                                <select name="payment[cc_exp_month]" class="select select-month" data-bind="attr: {id: 'tuna_credit_card_expiration_month'},
                                             enable: true,
                                             options: getMonthsValues(),
                                             optionsValue: 'value',
