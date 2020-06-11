@@ -36,18 +36,18 @@ class CreateTunaOrder implements ObserverInterface
             
             $custormerID = 0;
             $isNewCustomer = !$order->getCustomerId() || $order->getCustomerId() === true;
-            if ($isNewCustomer && $order->getCustomer()) {
-              $custormerID = $order->getCustomer()->getId();
+            if ($isNewCustomer && $order->getCustomerId()) {
+              $custormerID = $order->getCustomerId();
             }
             $itens = [];
-            $itemsCollection = $order->getAllItems();
+            $itemsCollection = $order->getAllVisibleItems();
             foreach ($itemsCollection as $item) {
               
                 $cItem = [[
                   "Amount"=> $item->getPrice(),
-                  "ProductDescription"=> $item->getName(),
+                  "ProductDescription"=> $item->getProduct()->getName(),
                   "ItemQuantity"=> $item->getQtyToInvoice(),
-                  "CategoryName"=> "",
+                  "CategoryName"=> $item->getProductType(),
                   "AntiFraud"=> [
                     "Ean"=> $item->getSku()
                   ]]
@@ -81,7 +81,7 @@ class CreateTunaOrder implements ObserverInterface
               {
                 $documentType = "CNPJ";    
               }
-              $url = 'http://172.25.176.1:54000/Payment/Init'; //pass dynamic url
+              $url = 'http://172.28.32.1:54000/Payment/Init'; //pass dynamic url
               $requstbody = [
                 'AppToken'=>$this->_scopeConfig->getValue('payment/tuna/appKey'),
                 'Account'=>$this->_scopeConfig->getValue('payment/tuna/partner_account'),
@@ -163,8 +163,7 @@ class CreateTunaOrder implements ObserverInterface
                     
                               ]
                               ];
-              $order->setStatus('complete');
-              $order->save();
+              
               /* Create curl factory */
               $httpAdapter = $this->curlFactory->create();
               $bodyJsonRequest = json_encode($requstbody);
@@ -180,16 +179,16 @@ class CreateTunaOrder implements ObserverInterface
               $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"],$bodyJsonRequest);
               
               $result = $httpAdapter->read();
-              $body = \Zend_Http_Response::extractBody($result);
-              $response = $this->jsonHelper->jsonDecode($body);
+             // $body = \Zend_Http_Response::extractBody($result);
+              // $response = $this->jsonHelper->jsonDecode($body);
       
-              $config = [
-                  'payment' => [
-                      'tunagateway' => [
-                          'tokenid' => $response["code"]
-                      ]
-                  ]
-              ];
+              // $config = [
+              //     'payment' => [
+              //         'tunagateway' => [
+              //             'tokenid' => $response["code"]
+              //         ]
+              //     ]
+              // ];
             #tmp error returned!
             #order->cancel();
             //save order in orders table
@@ -197,8 +196,10 @@ class CreateTunaOrder implements ObserverInterface
 
             // //$this->getEnvironmentName($environment);
             // $this->updateSalesOrderGridEnvironment($orderId, $environment);
+            $order->setStatus('complete');
+              $order->save();
         }
 
-        return $this;
+        #return $this;
 	}
 }
