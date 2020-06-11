@@ -3,16 +3,21 @@
 namespace Tuna\TunaGateway\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
+
 class CreateTunaOrder implements ObserverInterface
 {
   protected $_scopeConfig;
 
   public function __construct(
     \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
-    \Magento\Framework\Session\SessionManager $sessionManager
+    \Magento\Framework\Session\SessionManager $sessionManager,
+    \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
+    \Magento\Framework\Json\Helper\Data $jsonHelper
 ) {
     $this->_scopeConfig = $scopeConfigInterface;
     $this->_session = $sessionManager;
+    $this->curlFactory = $curlFactory;
+    $this->jsonHelper = $jsonHelper;
 }
 	public function execute(\Magento\Framework\Event\Observer $observer)
 	{
@@ -24,62 +29,31 @@ class CreateTunaOrder implements ObserverInterface
             $shipping = $order->getShippingAddress();
             $billing = $order->getBillingAddress();
             $payment = $order->getPayment();
-            $itens = $order->getAllItems();
-            $custormer = $order->getCustomerName();
+          
+        
+ 
+            $payItens = $order->getPaymentsCollection()->getItems();
             
-        #    $data->AppToken=$_scopeConfig->getValue('payment/tuna/appkey');
-       #     $data->PartnerUniqueID=$order->getId();
-             $data_post = '{                
-                "PaymentItems": {
-                  "Items": [
-                    {
-                      "Amount": 200,
-                      "ProductDescription": "item1",
-                      "ItemQuantity": 2,
-                      "CategoryName": "Category name",
-                      "AntiFraud": {
-                        "Ean": "A-121321"
-                      }
-                    }
-                  ]
-                },
-                "PaymentData": {
-                  "PaymentMethods": [
-                    {
-                      "PaymentMethodType": "1",
-                      "Amount": 200,
-                      "Installments": 1,
-                      "CardInfo": {
-                        "CardNumber": null,
-                        "CardHolderName": "Daniel Morais",
-                        "CVV": 841,
-                        "BrandName": "Master",
-                        "ExpirationMonth": null,
-                        "ExpirationYear": null,
-                        "Token": "11e02526-e82c-4ac1-b509-fa459b205bfd",
-                        "TokenSingleUse": 0,
-                        "SaveCard": false,
-                        "BillingInfo": {
-                          "Document": "481.427.300-22",
-                          "DocumentType": "CPF",
-                          "Address": {
-                            "Street": "Ses Av. Das Nações",
-                            "Number": "Q811",
-                            "Complement": "Bloco G",
-                            "Neighborhood": "Brasilia",
-                            "City": "Brasilia",
-                            "State": "DF",
-                            "Country": "BR",
-                            "PostalCode": "70429-900",
-                            "Phone": "(61) 324 421 21"
-                          }
-                        }
-                      }
-                    }
-                  ]
-                
-              }';
-
+            $custormerID = 0;
+            $isNewCustomer = !$order->getCustomerId() || $order->getCustomerId() === true;
+            if ($isNewCustomer && $order->getCustomer()) {
+              $custormerID = $order->getCustomer()->getId();
+            }
+            $itens = [];
+            $itemsCollection = $order->getAllItems();
+            foreach ($itemsCollection as $item) {
+              
+                $cItem = [[
+                  "Amount"=> $item->getPrice(),
+                  "ProductDescription"=> $item->getName(),
+                  "ItemQuantity"=> $item->getQtyToInvoice(),
+                  "CategoryName"=> "",
+                  "AntiFraud"=> [
+                    "Ean"=> $item->getSku()
+                  ]]
+                ];
+                $itens = array_merge($itens,$cItem);
+            }           
               $address  = preg_split("/(\r\n|\n|\r)/", $shipping["street"]);
               $number = "";
               if (sizeof($address)>1)
@@ -91,7 +65,23 @@ class CreateTunaOrder implements ObserverInterface
               {
                 $complement = $address[2];
               }
-              $url = 'http://tuna.mypig.com.br/home/index'; //pass dynamic url
+              $addressB  = preg_split("/(\r\n|\n|\r)/", $billing["street"]);
+              $numberB = "";
+              if (sizeof($addressB)>1)
+              {
+                $numberB = $addressB[1];
+              }
+              $complementB="";
+              if (sizeof($addressB)>2)
+              {
+                $complementB = $addressB[2];
+              }
+              $documentType = "CPF";
+              if (strlen($payment->getAdditionalInformation()["credit_card_document"])>17)
+              {
+                $documentType = "CNPJ";    
+              }
+              $url = 'http://172.25.176.1:54000/Payment/Init'; //pass dynamic url
               $requstbody = [
                 'AppToken'=>$this->_scopeConfig->getValue('payment/tuna/appKey'),
                 'Account'=>$this->_scopeConfig->getValue('payment/tuna/partner_account'),
@@ -100,9 +90,9 @@ class CreateTunaOrder implements ObserverInterface
                 'Customer'=> [
                   'Email'=> $billing["email"],
                   'Name'=> $billing["firstname"]." ".$billing["lastname"],
-                  'ID'=> "",$this->getCustomerId(),#parent::getCustomerId()
-                  'Document'=> "257.536.399-33",
-                  'DocumentType'=> "CPF"
+                  'ID'=> $custormerID,
+                  'Document'=> $payment->getAdditionalInformation()["credit_card_document"],
+                  'DocumentType'=> $documentType
                 ],
                 'Countrycode'=> $shipping["country_id"],
                 "SalesChannel"=> "ECOMMERCE",
@@ -123,26 +113,74 @@ class CreateTunaOrder implements ObserverInterface
                   "FrontData"=> [
                     "SessionID"=> $this->_session->getSessionId(),
                     "Origin"=> "WEBSITE",
-                    "IpAddress"=> "",#$this->getRemoteIp(),#parent::getCustomerId()
+                    "IpAddress"=> $order->getRemoteIp(),
                     "CookiesAccepted"=> true
                   ],
                   "ShippingItems"=> [
                     "Items"=> [[
-                        "Type"=> "intelipost_intelipost_2",
-                        "Amount"=> 45.89,
-                        "Code"=> "34567"
+                        "Type"=> $order->getShippingDescription(),
+                        "Amount"=> $order->getBaseShippingAmount(),
+                        "Code"=>  $order->getShippingMethod(true)['carrier_code']
                       ]]
-                  ]
-              ];
-    
+                    ],
+                    "PaymentItems"=> [
+                      "Items"=> $itens
+                      ],                    
+                    "PaymentData"=> [
+                      "PaymentMethods"=> [
+                        [
+                          "PaymentMethodType"=> "1",
+                          "Amount"=> $order->getGrandTotal(),
+                          "Installments"=> 1,
+                          "CardInfo"=> [
+                            "CardNumber"=> $payment->getAdditionalInformation()["credit_card_hash"],
+                            "CardHolderName"=> $payment->getAdditionalInformation()["credit_card_holder_name"],
+                            "CVV"=> null,
+                            "BrandName"=> "",
+                            "ExpirationMonth"=> null,
+                            "ExpirationYear"=> null,
+                            "Token"=> $payment->getAdditionalInformation()["credit_card_token"],
+                            "TokenSingleUse"=> 0,
+                            "SaveCard"=> true,
+                            "BillingInfo"=> [
+                              "Document"=> $payment->getAdditionalInformation()["credit_card_document"],
+                              "DocumentType"=> $documentType,
+                              "Address"=> [
+                                "Street"=>$addressB[0],
+                                "Number"=> $numberB,
+                                "Complement"=> $complementB,
+                                "Neighborhood"=> $billing["telephone"],
+                                "City"=> $billing["city"],
+                                "State"=> $billing["region"],
+                                "Country"=> $billing["country_id"],
+                                "PostalCode"=> $billing["postcode"],
+                                "Phone"=> $billing["telephone"]
+                        ]
+                        ]
+                        ]
+                        ]
+                      ]
+                    
+                              ]
+                              ];
+              $order->setStatus('complete');
+              $order->save();
               /* Create curl factory */
               $httpAdapter = $this->curlFactory->create();
-              /* Forth parameter is POST body */
-              $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"],json_encode($requstbody));
+              $bodyJsonRequest = json_encode($requstbody);
+              $filename = "/var/www/html/app/code/Tuna/newfile.txt";
+              $file = fopen( $filename, "a" );
+             
+              if( $file == false ) {
+              echo ( "Error in opening new file" );
+              exit();
+              }
+              fwrite( $file, $bodyJsonRequest." | ".date("j/n/Y h:i:s")."\n" );
+              fclose( $file );
+              $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"],$bodyJsonRequest);
               
               $result = $httpAdapter->read();
               $body = \Zend_Http_Response::extractBody($result);
-              /* convert JSON to Array */
               $response = $this->jsonHelper->jsonDecode($body);
       
               $config = [
