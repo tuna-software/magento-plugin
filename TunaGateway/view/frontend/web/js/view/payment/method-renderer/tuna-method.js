@@ -44,6 +44,8 @@ define(
             defaults: {
                 template: 'Tuna_TunaGateway/payment/tuna',
             },
+            placeOrderHandler: null,
+            fpxImageSrc: window.populateFpx.fpxLogoImageUrl,
             afterRender: function(){
                 if(window.checkoutConfig.payment.tunagateway.is_user_logged_in){
                     $("#tuna_card_radio_saved").prop("checked", true);
