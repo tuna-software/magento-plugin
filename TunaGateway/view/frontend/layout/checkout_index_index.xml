@@ -38,7 +38,7 @@
 			</arguments>
 		</referenceBlock>
 		<referenceContainer name="after.body.start">
-        	<block class="Tuna\TunaGateway\Block\PopulateFpx" name="populate.fpx" template="Tuna_TunaGateway::payment_image.phtml"/>
+        	<block class="Tuna\TunaGateway\Block\TunaImages" name="tunaImages" template="Tuna_TunaGateway::payment_image.phtml"/>
     	</referenceContainer>
 	</body>
 </page>
