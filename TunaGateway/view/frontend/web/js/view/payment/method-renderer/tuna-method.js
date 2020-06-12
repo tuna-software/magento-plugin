@@ -44,8 +44,31 @@ define(
             defaults: {
                 template: 'Tuna_TunaGateway/payment/tuna',
             },
-            placeOrderHandler: null,
-            fpxImageSrc: window.populateFpx.fpxLogoImageUrl,
+            AMAZON_flag: window.tunaImages.AMAZON_flag,
+            AMEX_flag: window.tunaImages.AMEX_flag,
+            CIRRUS_flag: window.tunaImages.CIRRUS_flag,
+            DINNERS_flag: window.tunaImages.DINNERS_flag,
+            DIRECT_DEBIT_flag: window.tunaImages.DIRECT_DEBIT_flag,
+            DISCOVER_flag: window.tunaImages.DISCOVER_flag,
+            EBAY_flag: window.tunaImages.EBAY_flag,
+            EWAY_flag: window.tunaImages.EWAY_flag,
+            JCB_flag: window.tunaImages.JCB_flag,
+            MAESTRO_flag: window.tunaImages.MAESTRO_flag,
+            MASTERCARD_flag: window.tunaImages.MASTERCARD_flag,
+            PAYPAL_flag: window.tunaImages.PAYPAL_flag,
+            SAGE_flag: window.tunaImages.SAGE_flag,
+            SHOPIFY_flag: window.tunaImages.SHOPIFY_flag,
+            SKRILL_MONEYBOOKERS_flag: window.tunaImages.SKRILL_MONEYBOOKERS_flag,
+            SKRILL_flag: window.tunaImages.SKRILL_flag,
+            SOLO_2_flag: window.tunaImages.SOLO_2_flag,
+            SOLO_flag: window.tunaImages.SOLO_flag,
+            VISA_ELECTRON_flag: window.tunaImages.VISA_ELECTRON_flag,
+            VISA_flag: window.tunaImages.VISA_flag,
+            WESTERN_UNION_flag: window.tunaImages.WESTERN_UNION_flag,
+            WORLDPAY_flag: window.tunaImages.WORLDPAY_flag,
+            W_flag: window.tunaImages.W_flag,
+
+
             afterRender: function(){
                 if(window.checkoutConfig.payment.tunagateway.is_user_logged_in){
                     $("#tuna_card_radio_saved").prop("checked", true);
@@ -57,7 +80,16 @@ define(
                 }
             },
             getStoredCreditCards: function(){
+                console.log(window.checkoutConfig.payment.tunagateway.savedCreditCards);
                 return window.checkoutConfig.payment.tunagateway.savedCreditCards;
+            },
+            getCreditCardFlag: function(brand){
+                let brandDict = {};
+                brandDict.VISA = window.tunaImages.VISA_flag;
+                brandDict.MASTER = window.tunaImages.MASTERCARD_flag;
+                brandDict.AMER = window.tunaImages.AMEX_flag;
+
+                return brandDict[brand];
             },
             getMailingAddress: function () {
                 return window.checkoutConfig.payment.checkmo.mailingAddress;

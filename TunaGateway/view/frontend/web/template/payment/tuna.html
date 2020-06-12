@@ -10,8 +10,6 @@
         <span data-bind="text: getTitle()"></span></label>
     </div>
     <div class="payment-method-content">
-        <img data-bind="attr: {src: fpxImageSrc, alt: $t('Fpx MyClear'), height: '', width: '110' }" class="payment-icon"/>
-
         <div class="field _required">
             <label data-bind="attr: {for: getCode() + 'number'}" class="label">
                 <span>
@@ -60,7 +58,11 @@
                 <p class="radio-inline">
                     <input type="radio" name="storedCard" data-bind="attr: {id: 'tuna_card_'+Token},
                             event: {change: $parent.selectStoredCard}">
-                    <img style="width: 50px;" src="images/creditCardFlags/AMEX.png" />
+                    
+                    <img data-bind="attr: {src: $parent.getCreditCardFlag(Brand), height: '', width: '60' }" class="payment-icon"/>
+                    <!-- <img data-bind="attr: {src: MASTER_logo, height: '', width: '60' }" class="payment-icon"/> -->
+
+                    <!-- <img style="width: 50px;" src="images/creditCardFlags/AMEX.png" /> -->
                     <span data-bind="text: MaskedNumber"></span>
                     <input class="CcCvv" style="width: 90px; display: none;" type="text" placeholder="CVV" maxlength="4"
                         data-bind="attr: {id: 'tuna_card_cvv_'+Token}" />
