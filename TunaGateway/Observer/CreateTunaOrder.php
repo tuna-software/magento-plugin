@@ -35,8 +35,8 @@ class CreateTunaOrder implements ObserverInterface
             $payItens = $order->getPaymentsCollection()->getItems();
             
             $custormerID = 0;
-            $isNewCustomer = !$order->getCustomerId() || $order->getCustomerId() === true;
-            if ($isNewCustomer && $order->getCustomerId()) {
+            $isNewCustomer = !$order->getCustomerId();
+            if (!$isNewCustomer) {
               $custormerID = $order->getCustomerId();
             }
             $itens = [];
@@ -81,7 +81,7 @@ class CreateTunaOrder implements ObserverInterface
               {
                 $documentType = "CNPJ";    
               }
-              $url = 'http://172.28.32.1:54000/Payment/Init'; //pass dynamic url
+              $url = 'http://host.docker.internal:45455/api/Payment/Init'; //pass dynamic url
               $requstbody = [
                 'AppToken'=>$this->_scopeConfig->getValue('payment/tuna/appKey'),
                 'Account'=>$this->_scopeConfig->getValue('payment/tuna/partner_account'),
@@ -179,7 +179,9 @@ class CreateTunaOrder implements ObserverInterface
               $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"],$bodyJsonRequest);
               
               $result = $httpAdapter->read();
-             // $body = \Zend_Http_Response::extractBody($result);
+              #$client = new \Zend_Http_Client($url);
+              #$result =  $client->setRawData($bodyJsonRequest, null)->request('POST');
+              $body = \Zend_Http_Response::extractBody($result);
               // $response = $this->jsonHelper->jsonDecode($body);
       
               // $config = [
