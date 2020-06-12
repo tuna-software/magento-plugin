@@ -60,9 +60,6 @@
                             event: {change: $parent.selectStoredCard}">
                     
                     <img data-bind="attr: {src: $parent.getCreditCardFlag(Brand), height: '', width: '60' }" class="payment-icon"/>
-                    <!-- <img data-bind="attr: {src: MASTER_logo, height: '', width: '60' }" class="payment-icon"/> -->
-
-                    <!-- <img style="width: 50px;" src="images/creditCardFlags/AMEX.png" /> -->
                     <span data-bind="text: MaskedNumber"></span>
                     <input class="CcCvv" style="width: 90px; display: none;" type="text" placeholder="CVV" maxlength="4"
                         data-bind="attr: {id: 'tuna_card_cvv_'+Token}" />

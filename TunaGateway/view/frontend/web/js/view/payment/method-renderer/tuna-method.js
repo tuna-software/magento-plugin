@@ -80,7 +80,6 @@ define(
                 }
             },
             getStoredCreditCards: function(){
-                console.log(window.checkoutConfig.payment.tunagateway.savedCreditCards);
                 return window.checkoutConfig.payment.tunagateway.savedCreditCards;
             },
             getCreditCardFlag: function(brand){
@@ -234,6 +233,13 @@ define(
                     // fullScreenLoader.stopLoader();
                 });
             },
+            isUsingSavedCard: function(){
+                return window.checkoutConfig.payment.tunagateway.is_user_logged_in && 
+                    $("#tuna_card_radio_saved").prop("checked")
+            },
+            getSelectedCardToken: function(){
+                return $("input[name='storedCard']:checked").attr("id").substring(10,$("input[name='storedCard']:checked").attr("id").length);
+            },
             isFieldsValid: function () {
                 if (!$('#tuna_credit_card_holder')[0].value)
                     return false;
@@ -242,15 +248,23 @@ define(
                 if (!document || (!this.isCNPJValid(document) && !this.isCPFValid(document)))
                     return false;
 
-                let cardNumber = this.onlyNumbers($('#tuna_credit_card_number')[0].value);
-                if (!cardNumber || cardNumber.length != 16)
-                    return false;
-
-                if (!$('#tuna_credit_card_expiration_month')[0].value || !$('#tuna_credit_card_expiration_year')[0].value)
-                    return false;
-
-                if (!$('#tuna_credit_card_code')[0].value || $('#tuna_credit_card_code')[0].value.length < 3)
-                    return false;
+                if(this.isUsingSavedCard()){
+                    if($("input[name='storedCard']:checked")){
+                        if(!$("#tuna_card_cvv_"+this.getSelectedCardToken()).val())
+                            return false;
+                    }else 
+                        return false
+                }else{
+                    let cardNumber = this.onlyNumbers($('#tuna_credit_card_number')[0].value);
+                    if (!cardNumber || cardNumber.length != 16)
+                        return false;
+    
+                    if (!$('#tuna_credit_card_expiration_month')[0].value || !$('#tuna_credit_card_expiration_year')[0].value)
+                        return false;
+    
+                    if (!$('#tuna_credit_card_code')[0].value || $('#tuna_credit_card_code')[0].value.length < 3)
+                        return false;
+                }
 
                 return true;
             },
@@ -259,20 +273,25 @@ define(
                 var paymentData = quote.paymentMethod();
                 var messageContainer = this.messageContainer;
                 if (this.isFieldsValid()) {
-                    let data = {
-                        tunaSessionId: window.checkoutConfig.payment.tunagateway.sessionid,
-                        cardHolder: $('#tuna_credit_card_holder')[0].value,
-                        cardNumber: this.onlyNumbers($('#tuna_credit_card_number')[0].value),
-                        creditCardDocument: this.onlyNumbers($('#tuna_credit_card_document')[0].value),
-                        cvv: $('#tuna_credit_card_code')[0].value,
-                        expirationMonth: $('#tuna_credit_card_expiration_month')[0].value,
-                        expirationYear: $('#tuna_credit_card_expiration_year')[0].value,
-                        AppKey: window.checkoutConfig.payment.tunagateway.appKey,
-                        PartnerAccount: window.checkoutConfig.payment.tunagateway.partner_account
-                    };
-                    $.post("http://tuna.mypig.com.br/Card/SaveData", data, function (returnedData) {
-                        self.endOrder(self, returnedData.sessionID, paymentData, messageContainer);
-                    });
+
+                    if(this.isUsingSavedCard()){
+                        self.endOrder(self, this.getSelectedCardToken(), paymentData, messageContainer);
+                    }else{
+                        let data = {
+                            tunaSessionId: window.checkoutConfig.payment.tunagateway.sessionid,
+                            cardHolder: $('#tuna_credit_card_holder')[0].value,
+                            cardNumber: this.onlyNumbers($('#tuna_credit_card_number')[0].value),
+                            creditCardDocument: this.onlyNumbers($('#tuna_credit_card_document')[0].value),
+                            cvv: $('#tuna_credit_card_code')[0].value,
+                            expirationMonth: $('#tuna_credit_card_expiration_month')[0].value,
+                            expirationYear: $('#tuna_credit_card_expiration_year')[0].value,
+                            AppKey: window.checkoutConfig.payment.tunagateway.appKey,
+                            PartnerAccount: window.checkoutConfig.payment.tunagateway.partner_account
+                        };
+                        $.post("http://tuna.mypig.com.br/Card/SaveData", data, function (returnedData) {
+                            self.endOrder(self, returnedData.sessionID, paymentData, messageContainer);
+                        });
+                    }
                 } else {
                     alert("invalid")
                 }
