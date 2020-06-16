@@ -220,16 +220,16 @@ define(
                         'credit_card_holder_name': $('#tuna_credit_card_holder')[0].value,
                     }
                 })).done(function () {
-                    console.log("lebaraaaaa");
+                    console.log("done set payment information");
                     $.when(placeOrder(paymentData, messageContainer)).done(function () {
-                        console.log("ma ooeeeee");
+                        console.log("done place order");
                         $.mage.redirect(window.checkoutConfig);
                     });
                     //return;
                 }).fail(function () {
-                    console.log("iê iê");
+                    console.log("fail");
                 }).always(function () {
-                    console.log("glu glu");
+                    console.log("always");
                     // fullScreenLoader.stopLoader();
                 });
             },
