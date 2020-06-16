@@ -4,6 +4,7 @@ namespace Tuna\TunaGateway\Model\Payment;
 
 use \Magento\Checkout\Model\ConfigProviderInterface;
 use \Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
+use Magento\Payment\Helper\Data as PaymentHelper;
 
 class TunaProvider implements ConfigProviderInterface
 {
@@ -16,6 +17,7 @@ class TunaProvider implements ConfigProviderInterface
      * first config value config path
      */
     const CONFIG_KEY = 'payment/tunagateway/tokenid';
+    const PAYMENT_METHOD_CODE = 'tuna';
     /**
      * @param ScopeConfig $scopeConfig
      */
@@ -23,12 +25,14 @@ class TunaProvider implements ConfigProviderInterface
         ScopeConfig $scopeConfig,
         \Magento\Framework\Session\SessionManager $sessionManager,
         \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
-        \Magento\Framework\Json\Helper\Data $jsonHelper
+        \Magento\Framework\Json\Helper\Data $jsonHelper,
+        PaymentHelper $helper
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->_session = $sessionManager;
         $this->curlFactory = $curlFactory;
         $this->jsonHelper = $jsonHelper;
+        $this->tunaPaymentMethod = $helper->getMethodInstance(self::PAYMENT_METHOD_CODE);
     }
     /**
      * {@inheritdoc}
@@ -75,7 +79,8 @@ class TunaProvider implements ConfigProviderInterface
                     'savedCreditCards' => ($response <> null && $response["Code"] == 1) ? $response["Tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn()
                 ]
-            ]
+                ],
+                'tuna_payment' => $this->tunaPaymentMethod->getStandardCheckoutPaymentUrl(),
         ];
         return $config;
     }

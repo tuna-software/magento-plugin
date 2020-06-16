@@ -223,7 +223,7 @@ define(
                     console.log("done set payment information");
                     $.when(placeOrder(paymentData, messageContainer)).done(function () {
                         console.log("done place order");
-                        $.mage.redirect(window.checkoutConfig);
+                        $.mage.redirect(window.checkoutConfig.tuna_payment);
                     });
                     //return;
                 }).fail(function () {
