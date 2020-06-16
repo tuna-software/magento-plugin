@@ -159,10 +159,10 @@ class CreateTunaOrder implements ObserverInterface
                         ]
                         ]
                         ]
-                      ]
+                    ]
                     
-                              ]
-                              ];
+                ]
+              ];
               
               /* Create curl factory */
               $httpAdapter = $this->curlFactory->create();
