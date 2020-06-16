@@ -85,7 +85,7 @@ class CreateTunaOrder implements ObserverInterface
               $requstbody = [
                 'AppToken'=>$this->_scopeConfig->getValue('payment/tuna/appKey'),
                 'Account'=>$this->_scopeConfig->getValue('payment/tuna/partner_account'),
-                'PartnerUniqueID'=> $orderId,
+                'PartnerUniqueID'=> $orderId+1000,
                 'PartnerID'=> 1,
                 'Customer'=> [
                   'Email'=> $billing["email"],
@@ -94,8 +94,6 @@ class CreateTunaOrder implements ObserverInterface
                   'Document'=> $payment->getAdditionalInformation()["credit_card_document"],
                   'DocumentType'=> $documentType
                 ],
-                'Countrycode'=> $shipping["country_id"],
-                "SalesChannel"=> "ECOMMERCE",
                 "AntiFraud"=>[
                   "DeliveryAddressee"=> $shipping["firstname"]
                 ],
@@ -126,7 +124,9 @@ class CreateTunaOrder implements ObserverInterface
                     "PaymentItems"=> [
                       "Items"=> $itens
                       ],                    
-                    "PaymentData"=> [
+                    "PaymentData"=> [                      
+                      'Countrycode'=> $shipping["country_id"],
+                      "SalesChannel"=> "ECOMMERCE",
                       "PaymentMethods"=> [
                         [
                           "PaymentMethodType"=> "1",
@@ -198,7 +198,7 @@ class CreateTunaOrder implements ObserverInterface
 
             // //$this->getEnvironmentName($environment);
             // $this->updateSalesOrderGridEnvironment($orderId, $environment);
-            $order->setStatus('complete');
+            $order->setStatus('pending');
               $order->save();
         }
 
