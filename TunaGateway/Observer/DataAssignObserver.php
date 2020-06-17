@@ -38,10 +38,7 @@ class DataAssignObserver extends AbstractDataAssignObserver
         }
          if ($additionalData->getData('credit_card_token')!=null){
             $payment->setData('additional_information',$additionalData->getData());   
-            #return $this->setData('additional_information', $this->additionalInformation);  
             $payment->save();
-            #$payment->setCcType($additionalData->getData('credit_card_document'));
-            #$payment->setCcNumberEnc($additionalData->getData('credit_card_holder_name'));
          }
     }
 }

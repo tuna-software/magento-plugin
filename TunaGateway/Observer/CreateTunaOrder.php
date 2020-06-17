@@ -181,24 +181,18 @@ class CreateTunaOrder implements ObserverInterface
               #$client = new \Zend_Http_Client($url);
               #$result =  $client->setRawData($bodyJsonRequest, null)->request('POST');
               $body = \Zend_Http_Response::extractBody($result);
-              // $response = $this->jsonHelper->jsonDecode($body);
-      
-              // $config = [
-              //     'payment' => [
-              //         'tunagateway' => [
-              //             'tokenid' => $response["code"]
-              //         ]
-              //     ]
-              // ];
-            #tmp error returned!
-            #order->cancel();
-            //save order in orders table
-            // $this->saveOrderAndEnvironment($orderId, $environment);
-
-            // //$this->getEnvironmentName($environment);
-            // $this->updateSalesOrderGridEnvironment($orderId, $environment);
-            $order->setStatus('pending');
-              $order->save();
+              $response = $this->jsonHelper->jsonDecode($body);
+    
+            if ($response["code"]==1){
+              $order->setStatus('pending');
+            }
+            if ($response["code"]==2){
+              $order->setStatus('complete');
+            }
+            if ($response["code"]==4){
+              $order->setStatus('canceled');
+            }
+            $order->save();
         }
 
         #return $this;

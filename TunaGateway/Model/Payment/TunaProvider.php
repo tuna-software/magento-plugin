@@ -74,8 +74,6 @@ class TunaProvider implements ConfigProviderInterface
             'payment' => [
                 'tunagateway' => [
                     'sessionid' =>  $tunaSessionID,
-                    'appKey' => $this->scopeConfig->getValue('payment/tuna/appKey'),
-                    'partner_account' => $this->scopeConfig->getValue('payment/tuna/partner_account'),
                     'savedCreditCards' => ($response <> null && $response["Code"] == 1) ? $response["Tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn()
                 ]
