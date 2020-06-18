@@ -77,7 +77,8 @@ class CreateTunaOrder implements ObserverInterface
       if (strlen($payment->getAdditionalInformation()["credit_card_document"]) > 17) {
         $documentType = "CNPJ";
       }
-      $url = 'http://host.docker.internal:45455/api/Payment/Init'; //pass dynamic url
+      #$url = 'http://host.docker.internal:45455/api/Payment/Init'; //pass dynamic url
+      $url  = 'http://tuna.construcodeapp.com/api/Payment/Init';
       $requstbody = [
         'AppToken' => $this->_scopeConfig->getValue('payment/tuna/appKey'),
         'Account' => $this->_scopeConfig->getValue('payment/tuna/partner_account'),
@@ -174,7 +175,7 @@ class CreateTunaOrder implements ObserverInterface
       $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
       $result = $httpAdapter->read();
-      /*
+      
       $body = \Zend_Http_Response::extractBody($result);
       $response = $this->jsonHelper->jsonDecode($body);      
       switch ($response["code"].'') {
@@ -224,7 +225,7 @@ class CreateTunaOrder implements ObserverInterface
               $order->setStatus('tuna_DeniedAntiFraud');
             break;
       }
-     */
+     
       $order->save();
     }
 
