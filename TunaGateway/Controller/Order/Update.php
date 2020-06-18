@@ -89,6 +89,7 @@ class Update extends \Magento\Framework\App\Action\Action
         { 
             $order->addStatusToHistory($status, null, true);
             $order->setStatus($status);
+            $order->save();
         }
         echo print_r("OK"); 
         exit;
