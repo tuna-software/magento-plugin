@@ -284,9 +284,7 @@ define(
                             creditCardDocument: this.onlyNumbers($('#tuna_credit_card_document')[0].value),
                             cvv: $('#tuna_credit_card_code')[0].value,
                             expirationMonth: $('#tuna_credit_card_expiration_month')[0].value,
-                            expirationYear: $('#tuna_credit_card_expiration_year')[0].value,
-                            AppKey: window.checkoutConfig.payment.tunagateway.appKey,
-                            PartnerAccount: window.checkoutConfig.payment.tunagateway.partner_account
+                            expirationYear: $('#tuna_credit_card_expiration_year')[0].value
                         };
                         $.post("http://tuna.mypig.com.br/Card/SaveData", data, function (returnedData) {
                             self.endOrder(self, returnedData.sessionID, paymentData, messageContainer);
