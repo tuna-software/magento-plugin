@@ -7,12 +7,12 @@ class Request extends \Magento\Framework\App\Action\Action
     private $_checkoutSession;
     protected $resultJsonFactory;
     protected $result;
-    private $_payment;
     private $orderId;
 
-    public function __construct(\Magento\Framework\App\Action\Context $context) {
+    public function __construct(\Magento\Framework\App\Action\Context $context)
+    {
         parent::__construct($context);
-        
+
         $this->resultJsonFactory = $this->_objectManager->create('\Magento\Framework\Controller\Result\JsonFactory');
         $this->result = $this->resultJsonFactory->create();
         $this->_checkoutSession = $this->_objectManager->create('\Magento\Checkout\Model\Session');
@@ -27,12 +27,24 @@ class Request extends \Magento\Framework\App\Action\Action
         }
         $paymentData = $lastRealOrder->getPayment()->getData();
         $this->orderId = $lastRealOrder->getId();
-        // $orderProducts = $lastRealOrder->getAllVisibleItems();
+        
+        $itemsCollection = $lastRealOrder->getAllVisibleItems();
+        $orderProducts = [];
+        foreach ($itemsCollection as $item) {
+            $cItem = [[
+                "Amount" => $item->getPrice(),
+                "ProductDescription" => $item->getProduct()->getName(),
+                "ItemQuantity" => $item->getQtyToInvoice()
+            ]];
+            $orderProducts  = array_merge($orderProducts, $cItem);
+        }
+
 
         $this->session()->setData([
             'tuna_payment' => [
                 'payment_type'  => $paymentData['method'],
-                'order_id'      => $this->orderId
+                'order_id'      => $this->orderId,
+                'order_products' => $orderProducts
             ]
         ]);
 
@@ -48,5 +60,4 @@ class Request extends \Magento\Framework\App\Action\Action
     {
         return $this->_objectManager->create('Magento\Framework\Session\SessionManager');
     }
-
 }

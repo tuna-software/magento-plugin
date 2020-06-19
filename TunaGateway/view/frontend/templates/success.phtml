@@ -15,16 +15,19 @@
         <p>Você comprou</p>
         <table>
             <tr>
-                <th>
+                <th>#</th>
                 <th>Produto</th>
                 <th>Preço</th>
                 <th>Quantidade</th>
-                <th>Preço</th>
-                </th>
             </tr>
-            <tr>
-  
-            </tr>
+            <?php foreach ($block->getOrderProducts() as $key => $product) : ?>
+                <tr>
+                    <td><?php echo $key+1 ?></td>
+                    <td><?php echo $product["ProductDescription"] ?></td>
+                    <td><?php echo $product["Amount"] ?></td>
+                    <td><?php echo $product["ItemQuantity"] ?></td>
+                </tr>
+            <?php endforeach; ?>
         </table>
     </div>
 </div>
