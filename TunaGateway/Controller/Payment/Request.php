@@ -26,29 +26,41 @@ class Request extends \Magento\Framework\App\Action\Action
             throw new \Magento\Framework\Exception\NotFoundException(__('No order associated.'));
         }
         $paymentData = $lastRealOrder->getPayment()->getData();
-        $this->orderId = $lastRealOrder->getId();
-        
-        $itemsCollection = $lastRealOrder->getAllVisibleItems();
-        $orderProducts = [];
-        foreach ($itemsCollection as $item) {
-            $cItem = [[
-                "Amount" => $item->getPrice(),
-                "ProductDescription" => $item->getProduct()->getName(),
-                "ItemQuantity" => $item->getQtyToInvoice()
-            ]];
-            $orderProducts  = array_merge($orderProducts, $cItem);
+
+        if ($paymentData['method'] === 'tuna') {
+            $this->orderId = $lastRealOrder->getId();
+            $orderStatus = $lastRealOrder->getStatus();
+
+            if (
+                $orderStatus == "tuna_Started" ||
+                $orderStatus == "tuna_Authorized" ||
+                $orderStatus == "tuna_Captured"
+            ) {
+                $itemsCollection = $lastRealOrder->getAllVisibleItems();
+                $orderProducts = [];
+                foreach ($itemsCollection as $item) {
+                    $cItem = [[
+                        "Amount" => $item->getPrice(),
+                        "ProductDescription" => $item->getProduct()->getName(),
+                        "ItemQuantity" => $item->getQtyToInvoice()
+                    ]];
+                    $orderProducts  = array_merge($orderProducts, $cItem);
+                }
+
+
+                $this->session()->setData([
+                    'tuna_payment' => [
+                        'payment_type'  => $paymentData['method'],
+                        'order_id'      => $this->orderId,
+                        'order_products' => $orderProducts,
+                        'order_status' => $orderStatus
+                    ]
+                ]);
+
+                return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
+            }
+                return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
         }
-
-
-        $this->session()->setData([
-            'tuna_payment' => [
-                'payment_type'  => $paymentData['method'],
-                'order_id'      => $this->orderId,
-                'order_products' => $orderProducts
-            ]
-        ]);
-
-        return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
     }
 
     private function baseUrl()

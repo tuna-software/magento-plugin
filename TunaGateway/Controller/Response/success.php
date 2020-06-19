@@ -38,6 +38,7 @@ class Success extends \Magento\Framework\App\Action\Action
         $blockInstance = $resultPage->getLayout()->getBlock('tuna.response.success');
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderId($this->order()->getIncrementId());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderProducts($this->products());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setStatus($this->status());
         $this->clearSession();
         return $resultPage;
     }
@@ -60,6 +61,11 @@ class Success extends \Magento\Framework\App\Action\Action
     private function products()
     {
         return $this->session()->order_products;
+    }
+
+    private function status()
+    {
+        return $this->session()->order_status;
     }
 
     /**
