@@ -163,15 +163,7 @@ class CreateTunaOrder implements ObserverInterface
       /* Create curl factory */
       $httpAdapter = $this->curlFactory->create();
       $bodyJsonRequest = json_encode($requstbody);
-      $filename = "/var/www/html/app/code/Tuna/newfile.txt";
-      $file = fopen($filename, "a");
-
-      if ($file == false) {
-        echo ("Error in opening new file");
-        exit();
-      }
-      fwrite($file, $bodyJsonRequest . " | " . date("j/n/Y h:i:s") . "\n");
-      fclose($file);
+      $this->saveLog($bodyJsonRequest);
       $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
       $result = $httpAdapter->read();
@@ -225,10 +217,32 @@ class CreateTunaOrder implements ObserverInterface
               $order->setStatus('tuna_DeniedAntiFraud');
             break;
       }
-     
       $order->save();
+      // if ($response["message"]!="")
+      // {
+          $additionalData = $payment->getAdditionalInformation();
+          #$additionalData->setData("boleto_url","Tapioca ");         
+          $additionalData["boleto_url"] ="Tapioca ";    
+           
+          $payment->setData('additional_information',$additionalData);   
+          $payment->save(); 
+         # $this->saveLog($additionalData);    
+      // }
+  
     }
 
     #return $this;
+  }
+  public function saveLog($txt)
+  {
+    $filename = "/var/www/html/app/code/Tuna/newfile.txt";
+    $file = fopen($filename, "a");
+
+    if ($file == false) {
+      echo ("Error in opening new file");
+      exit();
+    }
+    fwrite($file, $txt . " | " . date("j/n/Y h:i:s") . "\n");
+    fclose($file);
   }
 }
