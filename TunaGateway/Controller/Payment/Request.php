@@ -58,8 +58,16 @@ class Request extends \Magento\Framework\App\Action\Action
                 ]);
 
                 return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
-            }
+            } else {
+                $this->session()->setData([
+                    'tuna_payment' => [
+                        'payment_type'  => $paymentData['method'],
+                        'order_id'      => $this->orderId,
+                        'order_status' => $orderStatus
+                    ]
+                ]);
                 return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
+            }
         }
     }
 

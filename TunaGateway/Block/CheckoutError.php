@@ -25,7 +25,7 @@ namespace Tuna\TunaGateway\Block;
 use Magento\Sales\Model\Order;
 use Magento\Customer\Model\Context;
 
-class CheckoutSuccess extends \Magento\Framework\View\Element\Template
+class CheckoutError extends \Magento\Framework\View\Element\Template
 {
     /**
      * Initialize data and prepare it for output
