@@ -2,7 +2,7 @@
 
 namespace Tuna\TunaGateway\Controller\Response;
 
-class Success extends \Magento\Framework\App\Action\Action
+class Error extends \Magento\Framework\App\Action\Action
 {
 
     /** @var  \Magento\Framework\View\Result\Page */
@@ -34,10 +34,8 @@ class Success extends \Magento\Framework\App\Action\Action
     {
         /** @var \Magento\Framework\View\Result\PageFactory $resultPage */
         $resultPage = $this->_resultPageFactory->create();
-        $blockInstance = $resultPage->getLayout()->getBlock('tuna.response.success');
-        $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderId($this->order()->getIncrementId());
-        $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderProducts($this->products());
-        $resultPage->getLayout()->getBlock('tuna.response.success')->setStatus($this->status());
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderId($this->order()->getIncrementId());
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setStatus($this->status());
         $this->clearSession();
         return $resultPage;
     }
@@ -55,11 +53,6 @@ class Success extends \Magento\Framework\App\Action\Action
     private function order()
     {
         return $this->_objectManager->create('Magento\Sales\Model\Order')->load($this->session()->order_id);
-    }
-
-    private function products()
-    {
-        return $this->session()->order_products;
     }
 
     private function status()
