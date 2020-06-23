@@ -25,7 +25,8 @@ class Request extends \Magento\Framework\App\Action\Action
         if (is_null($lastRealOrder->getPayment())) {
             throw new \Magento\Framework\Exception\NotFoundException(__('No order associated.'));
         }
-        $paymentData = $lastRealOrder->getPayment()->getData();
+        $payment = $lastRealOrder->getPayment();
+        $paymentData = $payment->getData();
 
         if ($paymentData['method'] === 'tuna') {
             $this->orderId = $lastRealOrder->getId();
@@ -47,17 +48,22 @@ class Request extends \Magento\Framework\App\Action\Action
                     $orderProducts  = array_merge($orderProducts, $cItem);
                 }
 
-
+                $isBoletoPayment = $payment->getAdditionalInformation()["is_boleto_payment"];
                 $this->session()->setData([
                     'tuna_payment' => [
                         'payment_type'  => $paymentData['method'],
                         'order_id'      => $this->orderId,
                         'order_products' => $orderProducts,
-                        'order_status' => $orderStatus
+                        'order_status' => $orderStatus,
+                        'is_boleto' => $isBoletoPayment,
+                        'boleto_url' => $isBoletoPayment ? "http://www.google.com" : "",
                     ]
                 ]);
-
-                return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
+                if ($isBoletoPayment) {
+                    return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/successBoleto'));
+                } else{
+                    return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
+                }
             } else {
                 $this->session()->setData([
                     'tuna_payment' => [
