@@ -77,16 +77,17 @@ class CreateTunaOrder implements ObserverInterface
       if (strlen($payment->getAdditionalInformation()["buyer_document"]) > 17) {
         $documentType = "CNPJ";
       }
+      $PaymentMethodType = "1";
       $cardInfo = null;
       $boletoInfo = null;
-      if ($payment->getAdditionalInformation()["is_boleto_payment"]==false){
+      if ($payment->getAdditionalInformation()["is_boleto_payment"]=="false"){
       $cardInfo = [
-        "CardNumber" => $payment->getAdditionalInformation()["credit_card_hash"],
+        "CardNumber" => $payment->getAdditionalInformation()["credit_card_token"],
         "CardHolderName" => $payment->getAdditionalInformation()["buyer_name"],
-        "CVV" => null,
+        "CVV" => 428,
         "BrandName" => "",
-        "ExpirationMonth" => null,
-        "ExpirationYear" => null,
+        "ExpirationMonth" => 1,
+        "ExpirationYear" => 2090,
         "Token" => $payment->getAdditionalInformation()["session_id"],
         "TokenSingleUse" => 0,
         "SaveCard" => true,
@@ -108,6 +109,7 @@ class CreateTunaOrder implements ObserverInterface
           ];
         }else
         {
+          $PaymentMethodType = "3";
           $boletoInfo = [
               "BillingInfo" => [
               "Document" => $payment->getAdditionalInformation()["buyer_document"],
@@ -247,7 +249,7 @@ class CreateTunaOrder implements ObserverInterface
             break;
       }
       $order->save();
-      if (true) //TODO: Pegar url do boleto $response["message"]!=null)
+      if ($payment->getAdditionalInformation()["is_boleto_payment"]=="true")
       {
           $additionalData = $payment->getAdditionalInformation();
           $additionalData["boleto_url"] ="http://tuna.uy/";    
@@ -259,6 +261,7 @@ class CreateTunaOrder implements ObserverInterface
 
     #return $this;
   }
+
   public function saveLog($txt)
   {
     $filename = "/var/www/html/app/code/Tuna/newfile.txt";
