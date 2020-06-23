@@ -217,24 +217,15 @@ define(
                 return true;
 
             },
-            endOrder: function (self, tunaCardToken, paymentData, messageContainer, isBoleto = false) {
-                let additionalData;
-                if (isBoleto) {
-                    additionalData = {
-                        'buyer_document': $('#tuna_credit_card_document')[0].value,
-                        'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
-                        'buyer_name': $('#tuna_credit_card_holder')[0].value,
-                        'is_boleto_payment': true
-                    };
-                } else {
-                    additionalData = {
-                        'buyer_document': $('#tuna_credit_card_document')[0].value,
-                        'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
-                        'credit_card_token': tunaCardToken,
-                        'buyer_name': $('#tuna_credit_card_holder')[0].value,
-                        'is_boleto_payment': false
-                    };
-                }
+            endOrder: function (self, tunaCardToken, creditCardCvv, paymentData, messageContainer, isBoleto = false) {
+                let additionalData = {
+                    'buyer_document': $('#tuna_credit_card_document')[0].value,
+                    'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
+                    'credit_card_token': tunaCardToken,
+                    'credit_card_cvv': creditCardCvv,
+                    'buyer_name': $('#tuna_credit_card_holder')[0].value,
+                    'is_boleto_payment': isBoleto ? "true" : "false"
+                };
 
                 $.when(setPaymentInformationAction(messageContainer, {
                     'method': this.getCode(),
@@ -285,7 +276,7 @@ define(
                     if (!$('#tuna_credit_card_expiration_month')[0].value || !$('#tuna_credit_card_expiration_year')[0].value)
                         return false;
 
-                    if (!$('#tuna_credit_card_code')[0].value || $('#tuna_credit_card_code')[0].value.length < 3)
+                    if (!$(".CcCvv")[0].value || $(".CcCvv")[0].value < 3)
                         return false;
                 }
 
@@ -298,21 +289,21 @@ define(
                 if (this.isFieldsValid()) {
 
                     if (this.isUsingSavedCard()) {
-                        self.endOrder(self, this.getSelectedCardToken(), paymentData, messageContainer);
+                        self.endOrder(self, this.getSelectedCardToken(), $(".CcCvv")[0].value, paymentData, messageContainer);
                     } else if (this.isBoletoPayment()) {
-                        self.endOrder(self, "", paymentData, messageContainer, true);
+                        self.endOrder(self, "", "", paymentData, messageContainer, true);
                     } else {
                         let data = {
                             tunaSessionId: window.checkoutConfig.payment.tunagateway.sessionid,
                             cardHolder: $('#tuna_credit_card_holder')[0].value,
                             cardNumber: this.onlyNumbers($('#tuna_credit_card_number')[0].value),
                             creditCardDocument: this.onlyNumbers($('#tuna_credit_card_document')[0].value),
-                            cvv: $('#tuna_credit_card_code')[0].value,
+                            cvv: $(".CcCvv")[0].value,
                             expirationMonth: $('#tuna_credit_card_expiration_month')[0].value,
                             expirationYear: $('#tuna_credit_card_expiration_year')[0].value
                         };
                         $.post("http://tuna.mypig.com.br/Card/SaveData", data, function (returnedData) {
-                            self.endOrder(self, returnedData.sessionID, paymentData, messageContainer);
+                            self.endOrder(self, returnedData.tunaCardToken, $(".CcCvv")[0].value, paymentData, messageContainer);
                         });
                     }
                 } else {

@@ -215,7 +215,7 @@ class CreateTunaOrder implements ObserverInterface
         case '5':
               $order->setStatus('tuna_Cancelled');
             break;
-        case '-1':
+        case '-11':
               $order->setStatus('tuna_Cancelled');
             break;
         case '6':
