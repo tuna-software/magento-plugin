@@ -79,7 +79,7 @@ class CreateTunaOrder implements ObserverInterface
       }
       $cardInfo = null;
       $boletoInfo = null;
-      if ($payment->getAdditionalInformation()["is_boleto_payment"]==false){
+      if ($payment->getAdditionalInformation()["is_boleto_payment"]=="false"){
       $cardInfo = [
         "CardNumber" => $payment->getAdditionalInformation()["credit_card_hash"],
         "CardHolderName" => $payment->getAdditionalInformation()["buyer_name"],
@@ -247,7 +247,7 @@ class CreateTunaOrder implements ObserverInterface
             break;
       }
       $order->save();
-      if (true) //TODO: Pegar url do boleto $response["message"]!=null)
+      if ($payment->getAdditionalInformation()["is_boleto_payment"]=="true")
       {
           $additionalData = $payment->getAdditionalInformation();
           $additionalData["boleto_url"] ="http://tuna.uy/";    
@@ -259,6 +259,7 @@ class CreateTunaOrder implements ObserverInterface
 
     #return $this;
   }
+
   public function saveLog($txt)
   {
     $filename = "/var/www/html/app/code/Tuna/newfile.txt";
