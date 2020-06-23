@@ -77,6 +77,56 @@ class CreateTunaOrder implements ObserverInterface
       if (strlen($payment->getAdditionalInformation()["buyer_document"]) > 17) {
         $documentType = "CNPJ";
       }
+      $cardInfo = null;
+      $boletoInfo = null;
+      if ($payment->getAdditionalInformation()["is_boleto_payment"]==false){
+      $cardInfo = [
+        "CardNumber" => $payment->getAdditionalInformation()["credit_card_hash"],
+        "CardHolderName" => $payment->getAdditionalInformation()["buyer_name"],
+        "CVV" => null,
+        "BrandName" => "",
+        "ExpirationMonth" => null,
+        "ExpirationYear" => null,
+        "Token" => $payment->getAdditionalInformation()["session_id"],
+        "TokenSingleUse" => 0,
+        "SaveCard" => true,
+        "BillingInfo" => [
+          "Document" => $payment->getAdditionalInformation()["buyer_document"],
+          "DocumentType" => $documentType,
+          "Address" => [
+            "Street" => $addressB[0],
+            "Number" => $numberB,
+            "Complement" => $complementB,
+            "Neighborhood" => $billing["telephone"],
+            "City" => $billing["city"],
+            "State" => $billing["region"],
+            "Country" => $billing["country_id"],
+            "PostalCode" => $billing["postcode"],
+            "Phone" => $billing["telephone"]
+          ]
+        ]
+          ];
+        }else
+        {
+          $boletoInfo = [
+              "BillingInfo" => [
+              "Document" => $payment->getAdditionalInformation()["buyer_document"],
+              "DocumentType" => $documentType,
+              "Address" => [
+                "Street" => $addressB[0],
+                "Number" => $numberB,
+                "Complement" => $complementB,
+                "Neighborhood" => $billing["telephone"],
+                "City" => $billing["city"],
+                "State" => $billing["region"],
+                "Country" => $billing["country_id"],
+                "PostalCode" => $billing["postcode"],
+                "Phone" => $billing["telephone"]
+              ]
+            ]
+              ];
+
+        }
       #$url = 'http://host.docker.internal:45455/api/Payment/Init'; //pass dynamic url
       $url  = 'http://tuna.construcodeapp.com/api/Payment/Init';
       $requstbody = [
@@ -129,32 +179,8 @@ class CreateTunaOrder implements ObserverInterface
               "PaymentMethodType" => "1",
               "Amount" => $order->getGrandTotal(),
               "Installments" => 1,
-              "CardInfo" => [
-                "CardNumber" => $payment->getAdditionalInformation()["credit_card_hash"],
-                "CardHolderName" => $payment->getAdditionalInformation()["buyer_name"],
-                "CVV" => null,
-                "BrandName" => "",
-                "ExpirationMonth" => null,
-                "ExpirationYear" => null,
-                "Token" => $payment->getAdditionalInformation()["session_id"],
-                "TokenSingleUse" => 0,
-                "SaveCard" => true,
-                "BillingInfo" => [
-                  "Document" => $payment->getAdditionalInformation()["buyer_document"],
-                  "DocumentType" => $documentType,
-                  "Address" => [
-                    "Street" => $addressB[0],
-                    "Number" => $numberB,
-                    "Complement" => $complementB,
-                    "Neighborhood" => $billing["telephone"],
-                    "City" => $billing["city"],
-                    "State" => $billing["region"],
-                    "Country" => $billing["country_id"],
-                    "PostalCode" => $billing["postcode"],
-                    "Phone" => $billing["telephone"]
-                  ]
-                ]
-              ]
+              "CardInfo" => $cardInfo,
+              "BoletoInfo" => $boletoInfo
             ]
           ]
         ]
@@ -189,6 +215,9 @@ class CreateTunaOrder implements ObserverInterface
         case '5':
               $order->setStatus('tuna_Cancelled');
             break;
+        case '-1':
+              $order->setStatus('tuna_Cancelled');
+            break;
         case '6':
               $order->setStatus('tuna_Expired');
             break;
@@ -218,16 +247,13 @@ class CreateTunaOrder implements ObserverInterface
             break;
       }
       $order->save();
-      // if ($response["message"]!="")
-      // {
+      if (true) //TODO: Pegar url do boleto $response["message"]!=null)
+      {
           $additionalData = $payment->getAdditionalInformation();
-          #$additionalData->setData("boleto_url","Tapioca ");         
-          $additionalData["boleto_url"] ="Tapioca ";    
-           
+          $additionalData["boleto_url"] ="http://tuna.uy/";    
           $payment->setData('additional_information',$additionalData);   
           $payment->save(); 
-         # $this->saveLog($additionalData);    
-      // }
+      }
   
     }
 
