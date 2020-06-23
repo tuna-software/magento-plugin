@@ -74,7 +74,7 @@ class CreateTunaOrder implements ObserverInterface
         $complementB = $addressB[2];
       }
       $documentType = "CPF";
-      if (strlen($payment->getAdditionalInformation()["credit_card_document"]) > 17) {
+      if (strlen($payment->getAdditionalInformation()["buyer_document"]) > 17) {
         $documentType = "CNPJ";
       }
       #$url = 'http://host.docker.internal:45455/api/Payment/Init'; //pass dynamic url
@@ -88,7 +88,7 @@ class CreateTunaOrder implements ObserverInterface
           'Email' => $billing["email"],
           'Name' => $billing["firstname"] . " " . $billing["lastname"],
           'ID' => $custormerID,
-          'Document' => $payment->getAdditionalInformation()["credit_card_document"],
+          'Document' => $payment->getAdditionalInformation()["buyer_document"],
           'DocumentType' => $documentType
         ],
         "AntiFraud" => [
@@ -131,16 +131,16 @@ class CreateTunaOrder implements ObserverInterface
               "Installments" => 1,
               "CardInfo" => [
                 "CardNumber" => $payment->getAdditionalInformation()["credit_card_hash"],
-                "CardHolderName" => $payment->getAdditionalInformation()["credit_card_holder_name"],
+                "CardHolderName" => $payment->getAdditionalInformation()["buyer_name"],
                 "CVV" => null,
                 "BrandName" => "",
                 "ExpirationMonth" => null,
                 "ExpirationYear" => null,
-                "Token" => $payment->getAdditionalInformation()["credit_card_token"],
+                "Token" => $payment->getAdditionalInformation()["session_id"],
                 "TokenSingleUse" => 0,
                 "SaveCard" => true,
                 "BillingInfo" => [
-                  "Document" => $payment->getAdditionalInformation()["credit_card_document"],
+                  "Document" => $payment->getAdditionalInformation()["buyer_document"],
                   "DocumentType" => $documentType,
                   "Address" => [
                     "Street" => $addressB[0],

@@ -218,16 +218,27 @@ define(
 
             },
             endOrder: function (self, tunaCardToken, paymentData, messageContainer, isBoleto = false) {
+                let additionalData;
+                if (isBoleto) {
+                    additionalData = {
+                        'buyer_document': $('#tuna_credit_card_document')[0].value,
+                        'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
+                        'buyer_name': $('#tuna_credit_card_holder')[0].value,
+                        'is_boleto_payment': true
+                    };
+                } else {
+                    additionalData = {
+                        'buyer_document': $('#tuna_credit_card_document')[0].value,
+                        'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
+                        'credit_card_token': tunaCardToken,
+                        'buyer_name': $('#tuna_credit_card_holder')[0].value,
+                        'is_boleto_payment': false
+                    };
+                }
+
                 $.when(setPaymentInformationAction(messageContainer, {
                     'method': this.getCode(),
-                    'additional_data': {
-                        'credit_card_document': $('#tuna_credit_card_document')[0].value,
-                        'credit_card_hash': window.checkoutConfig.payment.tunagateway.sessionid,
-                        'credit_card_token': tunaCardToken,
-                        'credit_card_holder_name': $('#tuna_credit_card_holder')[0].value,
-                        'boleto_url': '',
-                        'is_boleto_payment': isBoleto
-                    }
+                    'additional_data': additionalData
                 })).done(function () {
                     console.log("done set payment information");
                     $.when(placeOrder(paymentData, messageContainer)).done(function () {
