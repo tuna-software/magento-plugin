@@ -38,6 +38,9 @@ class Success extends \Magento\Framework\App\Action\Action
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderId($this->order()->getIncrementId());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderProducts($this->products());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setStatus($this->status());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setBoletoURL($this->boletoURL());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setIsBoleto($this->isBoleto());
+
         $this->clearSession();
         return $resultPage;
     }
@@ -66,7 +69,14 @@ class Success extends \Magento\Framework\App\Action\Action
     {
         return $this->session()->order_status;
     }
-
+    private function boletoURL()
+    {
+        return $this->session()->boleto_url;
+    }
+    private function isBoleto()
+    {
+        return $this->session()->is_boleto;
+    }
     /**
      * Get session
      *

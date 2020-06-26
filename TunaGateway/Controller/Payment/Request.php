@@ -59,11 +59,7 @@ class Request extends \Magento\Framework\App\Action\Action
                         'boleto_url' => $isBoletoPayment == "true" ? $payment->getAdditionalInformation()["boleto_url"] : "",
                     ]
                 ]);
-                if ($isBoletoPayment == "true") {
-                    return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/successBoleto'));
-                } else{
-                    return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
-                }
+                return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
             } else {
                 $this->session()->setData([
                     'tuna_payment' => [

@@ -10,10 +10,15 @@
 ?>
 <?php /** @var $block \Magento\Checkout\Block\Onepage\Success */ ?>
 <div>
-    <?php if ($block->getStatus() == "tuna_Authorized" ) { ?>
+    <?php if ($block->getStatus() == "tuna_Authorized") { ?>
         <h2><?php echo __('Compra concluída com sucesso # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
     <?php } else { ?>
-        <h2><?php echo __('Sua compra esta sendo processada. Número do pedido # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
+        <?php if ($block->getIsBoleto() == "true") { ?>
+            <h2><?php echo __('Pedido de compra concluído com sucesso # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
+            <h3><?php echo __('Clique <a href="%1" target="_blank"> aqui</a> e imprima seu boleto para realizar o pagamento', $block->escapeHtml($block->getBoletoURL())) ?></h3>
+        <?php } else { ?>
+            <h2><?php echo __('Sua compra esta sendo processada. Número do pedido # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
+        <?php } ?>
     <?php } ?>
 
     <div>
@@ -27,7 +32,7 @@
             </tr>
             <?php foreach ($block->getOrderProducts() as $key => $product) : ?>
                 <tr>
-                    <td><?php echo $key+1 ?></td>
+                    <td><?php echo $key + 1 ?></td>
                     <td><?php echo $product["ProductDescription"] ?></td>
                     <td><?php echo $product["Amount"] ?></td>
                     <td><?php echo $product["ItemQuantity"] ?></td>
