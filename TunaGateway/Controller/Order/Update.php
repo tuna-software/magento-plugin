@@ -29,16 +29,34 @@ class Update extends \Magento\Framework\App\Action\Action
     {     
         $appkey = $this->getRequest()->getParam('appkey');
         $orderID = $this->getRequest()->getParam('orderid');
-        $status = $this->getRequest()->getParam('status');
+        $status = $this->getRequest()->getParam('status');        
+        if ($orderID==null)
+        {
+            echo print_r("ERROR");
+            exit;
+        }
+        if ($status==null)
+        {
+            echo print_r("ERROR");
+            exit;
+        }
+        if ($appkey==null)
+        {
+            echo print_r("ERROR");
+            exit;
+        }
         if ($this->scopeConfig->getValue('payment/tuna/appKey')!= $appkey )
         {
             echo print_r("ERROR");
             exit; 
         }
         $order = $this->_objectManager->create('Magento\Sales\Model\Order')->load($orderID );
+        if ($order==null)
+        {
+            echo print_r("ERROR");
+            exit;
+        }
         $payment = $order->getPayment();    
-           #$order =  Mage::getModel('sales/order')->loadByIncrementId($orderID);
-        /** change payment status in magento */
         switch ($status.'') {
             case '0':
                 $status = ('tuna_Started');
@@ -92,7 +110,7 @@ class Update extends \Magento\Framework\App\Action\Action
             $order->setStatus($status);
             $order->save();
         }
-        echo print_r("OK". $payment->getAdditionalInformation()["boleto_url"]); 
+        echo print_r("OK"); 
         exit;
         
     }
