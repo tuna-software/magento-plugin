@@ -236,7 +236,6 @@ define(
                         console.log("done place order");
                         $.mage.redirect(window.checkoutConfig.tuna_payment);
                     });
-                    //return;
                 }).fail(function () {
                     console.log("fail");
                 }).always(function () {
@@ -256,37 +255,38 @@ define(
             },
             isFieldsValid: function () {
                 if (!$('#tuna_credit_card_holder')[0].value)
-                    return false;
+                    return "holderInvalidInfo";
 
                 let document = $('#tuna_credit_card_document')[0].value;
                 if (!document || (!this.isCNPJValid(document) && !this.isCPFValid(document)))
-                    return false;
+                    return "cpfInvalidInfo";
 
                 if (this.isUsingSavedCard()) {
-                    if ($("input[name='storedCard']:checked")) {
+                    if ($("input[name='storedCard']:checked").length > 0) {
                         if (!$("#tuna_card_cvv_" + this.getSelectedCardToken()).val())
-                            return false;
+                            return "cvvSavedInvalidInfo";
                     } else
-                        return false
+                        return "noCreditCardSelected";
                 } else if (!this.isBoletoPayment()) {
                     let cardNumber = this.onlyNumbers($('#tuna_credit_card_number')[0].value);
                     if (!cardNumber || cardNumber.length != 16)
-                        return false;
+                        return "creditCardInvalidInfo";
 
                     if (!$('#tuna_credit_card_expiration_month')[0].value || !$('#tuna_credit_card_expiration_year')[0].value)
-                        return false;
+                        return "validityDateInvalidInfo";
 
-                    if (!$(".CcCvv")[0].value || $(".CcCvv")[0].value < 3)
-                        return false;
+                    if (!$("#tuna_credit_card_code")[0].value || $("#tuna_credit_card_code")[0].value < 3)
+                        return "cvvInvalidInfo";
                 }
 
-                return true;
+                return null;
             },
             placeOrder: function () {
                 let self = this;
-                var paymentData = quote.paymentMethod();
-                var messageContainer = this.messageContainer;
-                if (this.isFieldsValid()) {
+                let paymentData = quote.paymentMethod();
+                let messageContainer = this.messageContainer;
+                let fieldCheckResponse = this.isFieldsValid();
+                if (!fieldCheckResponse) {
 
                     if (this.isUsingSavedCard()) {
                         self.endOrder(self, this.getSelectedCardToken(), $(".CcCvv")[0].value, paymentData, messageContainer);
@@ -307,7 +307,13 @@ define(
                         });
                     }
                 } else {
-                    alert("invalid")
+                    let validationLabels = ["holderInvalidInfo", "cpfInvalidInfo", "cvvSavedInvalidInfo",
+                        "creditCardInvalidInfo", "validityDateInvalidInfo", "cvvInvalidInfo", "noCreditCardSelected"];
+                    validationLabels.forEach(fieldID => {
+                        $("#" + fieldID).hide();
+                    });
+
+                    $("#" + fieldCheckResponse).show();
                 }
             }
         });
