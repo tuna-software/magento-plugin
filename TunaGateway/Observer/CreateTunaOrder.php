@@ -178,7 +178,7 @@ class CreateTunaOrder implements ObserverInterface
           "SalesChannel" => "ECOMMERCE",
           "PaymentMethods" => [
             [
-              "PaymentMethodType" => "1",
+              "PaymentMethodType" => $PaymentMethodType,
               "Amount" => $order->getGrandTotal(),
               "Installments" => 1,
               "CardInfo" => $cardInfo,
@@ -217,7 +217,7 @@ class CreateTunaOrder implements ObserverInterface
         case '5':
               $order->setStatus('tuna_Cancelled');
             break;
-        case '-11':
+        case '-1':
               $order->setStatus('tuna_Cancelled');
             break;
         case '6':
@@ -251,10 +251,12 @@ class CreateTunaOrder implements ObserverInterface
       $order->save();
       if ($payment->getAdditionalInformation()["is_boleto_payment"]=="true")
       {
+        if ($response["methods"]!=null && $response["methods"][0]["redirectInfo"]!=null){
           $additionalData = $payment->getAdditionalInformation();
-          $additionalData["boleto_url"] ="http://tuna.uy/";    
+          $additionalData["boleto_url"] =$response["methods"][0]["redirectInfo"]["url"];    
           $payment->setData('additional_information',$additionalData);   
           $payment->save(); 
+        }
       }
   
     }
