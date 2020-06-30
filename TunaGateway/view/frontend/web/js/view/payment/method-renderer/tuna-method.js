@@ -227,11 +227,11 @@ define(
             },
             endOrder: function (self, tunaCardToken, creditCardCvv, paymentData, messageContainer, isBoleto = false) {
                 let additionalData = {
-                    'buyer_document': $('#tuna_credit_card_document')[0].value,
+                    'buyer_document': $('#tuna_credit_card_document').val(),
                     'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
                     'credit_card_token': tunaCardToken,
                     'credit_card_cvv': creditCardCvv,
-                    'buyer_name': $('#tuna_credit_card_holder')[0].value,
+                    'buyer_name': $('#tuna_credit_card_holder').val(),
                     'is_boleto_payment': isBoleto ? "true" : "false"
                 };
 
@@ -302,13 +302,13 @@ define(
                         self.endOrder(self, "", "", paymentData, messageContainer, true);
                     } else {
                         let data = {
-                            tunaSessionId: window.checkoutConfig.payment.tunagateway.sessionid,
-                            cardHolder: $('#tuna_credit_card_holder').val(),
-                            cardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
-                            creditCardDocument: this.onlyNumbers($('#tuna_credit_card_document').val()),
-                            cvv: $("#tuna_credit_card_code").val(),
-                            expirationMonth: $('#tuna_credit_card_expiration_month').val(),
-                            expirationYear: $('#tuna_credit_card_expiration_year').val()
+                            "SessionId": window.checkoutConfig.payment.tunagateway.sessionid,
+                            "Card": {
+                                "CardNumber": this.onlyNumbers($('#tuna_credit_card_number').val()),
+                                "CardHolderName": $('#tuna_credit_card_holder').val(),
+                                "ExpirationMonth": $('#tuna_credit_card_expiration_month').val(),
+                                "ExpirationYear": $('#tuna_credit_card_expiration_year').val()
+                            }
                         };
                         $.post("http://tuna.mypig.com.br/Card/SaveData", data, function (returnedData) {
                             self.endOrder(self, returnedData.tunaCardToken, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
