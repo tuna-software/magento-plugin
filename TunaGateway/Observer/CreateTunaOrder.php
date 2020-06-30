@@ -249,15 +249,18 @@ class CreateTunaOrder implements ObserverInterface
             break;
       }
       $order->save();
-      if ($payment->getAdditionalInformation()["is_boleto_payment"]=="true")
+      if ($response["code"]=="1" && $response["status"]=="C")
       {
-        if ($response["methods"]!=null && $response["methods"][0]["redirectInfo"]!=null){
-          $additionalData = $payment->getAdditionalInformation();
-          $additionalData["boleto_url"] =$response["methods"][0]["redirectInfo"]["url"];    
-          $payment->setData('additional_information',$additionalData);   
-          $payment->save(); 
+        if ($payment->getAdditionalInformation()["is_boleto_payment"]=="true")
+        {
+          if ($response["methods"]!=null && $response["methods"][0]["redirectInfo"]!=null){
+            $additionalData = $payment->getAdditionalInformation();
+            $additionalData["boleto_url"] =$response["methods"][0]["redirectInfo"]["url"];    
+            $payment->setData('additional_information',$additionalData);   
+            $payment->save(); 
+          }
         }
-      }
+     }
   
     }
 
