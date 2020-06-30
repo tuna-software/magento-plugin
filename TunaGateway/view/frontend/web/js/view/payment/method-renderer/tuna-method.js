@@ -297,21 +297,21 @@ define(
                 if (!fieldCheckResponse) {
 
                     if (this.isUsingSavedCard()) {
-                        self.endOrder(self, this.getSelectedCardToken(), $(".CcCvv")[0].value, paymentData, messageContainer);
+                        self.endOrder(self, this.getSelectedCardToken(), $(".CcCvv").val(), paymentData, messageContainer);
                     } else if (this.isBoletoPayment()) {
                         self.endOrder(self, "", "", paymentData, messageContainer, true);
                     } else {
                         let data = {
                             tunaSessionId: window.checkoutConfig.payment.tunagateway.sessionid,
-                            cardHolder: $('#tuna_credit_card_holder')[0].value,
-                            cardNumber: this.onlyNumbers($('#tuna_credit_card_number')[0].value),
-                            creditCardDocument: this.onlyNumbers($('#tuna_credit_card_document')[0].value),
-                            cvv: $(".CcCvv")[0].value,
-                            expirationMonth: $('#tuna_credit_card_expiration_month')[0].value,
-                            expirationYear: $('#tuna_credit_card_expiration_year')[0].value
+                            cardHolder: $('#tuna_credit_card_holder').val(),
+                            cardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
+                            creditCardDocument: this.onlyNumbers($('#tuna_credit_card_document').val()),
+                            cvv: $("#tuna_credit_card_code").val(),
+                            expirationMonth: $('#tuna_credit_card_expiration_month').val(),
+                            expirationYear: $('#tuna_credit_card_expiration_year').val()
                         };
                         $.post("http://tuna.mypig.com.br/Card/SaveData", data, function (returnedData) {
-                            self.endOrder(self, returnedData.tunaCardToken, $(".CcCvv")[0].value, paymentData, messageContainer);
+                            self.endOrder(self, returnedData.tunaCardToken, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
                         });
                     }
                 } else {
