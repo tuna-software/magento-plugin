@@ -75,8 +75,9 @@ class TunaProvider implements ConfigProviderInterface
                 'tunagateway' => [
                     'sessionid' =>  $tunaSessionID,
                     'savedCreditCards' => ($response <> null && $response["Code"] == 1) ? $response["Tokens"] : null,
-                    'is_user_logged_in' => $customerSession->isLoggedIn()
-                ]
+                    'is_user_logged_in' => $customerSession->isLoggedIn(),
+                    'allow_boleto' => $this->scopeConfig->getValue('payment/tuna/allow_boleto'),
+                    ]
                 ],
                 'tuna_payment' => $this->tunaPaymentMethod->getStandardCheckoutPaymentUrl(),
         ];
