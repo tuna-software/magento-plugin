@@ -11,6 +11,9 @@
 				<field id="title" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="label" type="text">
 					<label>Title</label>
 				</field>
+				<field id="partnerid" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="label" type="text">
+					<label>ID</label>
+				</field>
 				<field id="appKey" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="label" type="text">
 					<label>AppKey</label>
 				</field>

@@ -39,23 +39,36 @@ class TunaProvider implements ConfigProviderInterface
      */
     public function getConfig()
     {
-        $url = 'http://tuna.mypig.com.br/home/index'; //pass dynamic url
-        $requstbody = 'session_id=' . $this->_session->getSessionId() .
-            '&appKey=' . $this->scopeConfig->getValue('payment/tuna/appKey') .
-            '&partnerAccount=' . $this->scopeConfig->getValue('payment/tuna/partner_account');
+        $url = 'http://token.construcodeapp.com/api/Token/NewSession'; 
+
+        $om = \Magento\Framework\App\ObjectManager::getInstance();
+        $customerSession = $om->get('Magento\Customer\Model\Session');
+        $customerSessionID="0";        
+        $customerSessionEmail="";
+        if ($customerSession->isLoggedIn()) 
+        {
+            $customerSessionID=$customerSession->getCustomer()->getId().'';        
+            $customerSessionEmail=$customerSession->getCustomer()->getEmail();;
+        }
+        $cItem = [
+            "AppToken" =>$this->scopeConfig->getValue('payment/tuna/appKey'),
+            "PartnerID" => $this->scopeConfig->getValue('payment/tuna/partnerid')*1,
+            "Customer" => [
+                "Email" => $customerSessionEmail,
+                "ID" => $customerSessionID,
+            ]
+            ];
+        $bodyJsonRequest = json_encode($cItem);
 
         /* Create curl factory */
         $httpAdapter = $this->curlFactory->create();
         /* Forth parameter is POST body */
-        $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', [], $requstbody);
+        $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
         $result = $httpAdapter->read();
         $body = \Zend_Http_Response::extractBody($result);
         /* convert JSON to Array */
         $response = $this->jsonHelper->jsonDecode($body);
-
-        $om = \Magento\Framework\App\ObjectManager::getInstance();
-        $customerSession = $om->get('Magento\Customer\Model\Session');
-        $tunaSessionID = $response["code"];
+        $tunaSessionID = $response["sessionId"];
 
         $response = null;
         if ($customerSession->isLoggedIn()) {
