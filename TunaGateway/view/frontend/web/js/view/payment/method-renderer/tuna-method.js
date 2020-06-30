@@ -85,6 +85,14 @@ define(
                     $("#newCardDiv").show();
                     $("#savedCardDiv").hide();
                 }
+
+                if (window.checkoutConfig.payment.tunagateway.allow_boleto === "0") {
+                    $("#tuna_boleto_label").remove();
+                    $("#boletoDiv").remove();
+                }
+            },
+            allowBoleto: function () {
+                return window.checkoutConfig.payment.tunagateway.allow_boleto;
             },
             getStoredCreditCards: function () {
                 return window.checkoutConfig.payment.tunagateway.savedCreditCards;

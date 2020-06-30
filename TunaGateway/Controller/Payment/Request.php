@@ -2,17 +2,22 @@
 
 namespace Tuna\TunaGateway\Controller\Payment;
 
+use \Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
+
 class Request extends \Magento\Framework\App\Action\Action
 {
     private $_checkoutSession;
     protected $resultJsonFactory;
     protected $result;
     private $orderId;
+    protected $scopeConfig;
 
-    public function __construct(\Magento\Framework\App\Action\Context $context)
-    {
+    public function __construct(
+        \Magento\Framework\App\Action\Context $context,
+        ScopeConfig $scopeConfig
+    ) {
         parent::__construct($context);
-
+        $this->scopeConfig = $scopeConfig;
         $this->resultJsonFactory = $this->_objectManager->create('\Magento\Framework\Controller\Result\JsonFactory');
         $this->result = $this->resultJsonFactory->create();
         $this->_checkoutSession = $this->_objectManager->create('\Magento\Checkout\Model\Session');
@@ -49,6 +54,11 @@ class Request extends \Magento\Framework\App\Action\Action
                 }
 
                 $isBoletoPayment = $payment->getAdditionalInformation()["is_boleto_payment"];
+
+                if ($isBoletoPayment == "true" && $this->scopeConfig->getValue('payment/tuna/allow_boleto') === "0") {
+                    return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
+                }
+
                 $this->session()->setData([
                     'tuna_payment' => [
                         'payment_type'  => $paymentData['method'],
