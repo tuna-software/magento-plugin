@@ -84,7 +84,7 @@ class CreateTunaOrder implements ObserverInterface
       $cardInfo = [
         "CardNumber" => $payment->getAdditionalInformation()["credit_card_token"],
         "CardHolderName" => $payment->getAdditionalInformation()["buyer_name"],
-        "CVV" => 428,
+        "CVV" => $payment->getAdditionalInformation()["credit_card_cvv"],
         "BrandName" => "",
         "ExpirationMonth" => 1,
         "ExpirationYear" => 2090,
@@ -191,7 +191,7 @@ class CreateTunaOrder implements ObserverInterface
       /* Create curl factory */
       $httpAdapter = $this->curlFactory->create();
       $bodyJsonRequest = json_encode($requstbody);
-      $this->saveLog($bodyJsonRequest);
+      #$this->saveLog($bodyJsonRequest);
       $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
       $result = $httpAdapter->read();
