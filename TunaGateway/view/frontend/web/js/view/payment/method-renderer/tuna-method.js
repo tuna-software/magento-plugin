@@ -1,12 +1,13 @@
 define(
     [
+        'Magento_Ui/js/modal/alert',
         'jquery',
         'Magento_Checkout/js/model/quote',
         'Magento_Checkout/js/view/payment/default',
         'Magento_Checkout/js/action/set-payment-information',
         'Magento_Checkout/js/action/place-order',
     ],
-    function ($, quote, Component, setPaymentInformationAction, placeOrder) {
+    function (alert, $, quote, Component, setPaymentInformationAction, placeOrder) {
         'use strict';
         require(['jquery', 'jquery_mask'], function ($) {
 
@@ -89,6 +90,12 @@ define(
                 if (window.checkoutConfig.payment.tunagateway.allow_boleto === "0") {
                     $("#tuna_boleto_label").remove();
                     $("#boletoDiv").remove();
+                }
+
+                if(!this.getStoredCreditCards() || this.getStoredCreditCards().length == 0){
+                    $("#tuna_savedCard_label").remove();
+                    $("#tuna_card_radio_new").prop("checked", true);
+                    $("#newCardDiv").show();
                 }
             },
             allowBoleto: function () {
@@ -306,8 +313,8 @@ define(
                             Card: {
                                 CardHolderName: $('#tuna_credit_card_holder').val(),
                                 CardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
-                                ExpirationMonth: $('#tuna_credit_card_expiration_month').val()*1,
-                                ExpirationYear: $('#tuna_credit_card_expiration_year').val()*1
+                                ExpirationMonth: parseInt($('#tuna_credit_card_expiration_month').val()),
+                                ExpirationYear: parseInt ($('#tuna_credit_card_expiration_year').val())
                             }
                         };
                         $.ajax({
@@ -315,11 +322,19 @@ define(
                             url: "https://token.construcodeapp.com/api/Token/Generate",
                             data: JSON.stringify(data),
                             success: function (returnedData) {
-                                self.endOrder(self, returnedData.Token, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
+                                if(returnedData.code == 1)
+                                    self.endOrder(self, returnedData.Token, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
+                                    else{
+                                        alert({
+                                            title: $.mage.__('Mensagem da Tuna'),
+                                            content: $.mage.__('Infelizmente tiver um problema. Por favor, tente novamente')
+                                        });
+                                        return;
+                                    }
                             },
                             dataType: 'json',
                             contentType: "application/json"
-                          });     
+                        });
                     }
                 } else {
                     let validationLabels = ["holderInvalidInfo", "cpfInvalidInfo", "cvvSavedInvalidInfo",
