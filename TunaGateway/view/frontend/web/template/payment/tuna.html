@@ -8,7 +8,7 @@
         <label data-bind="attr: {'for': getCode()}" class="label">
             <span data-bind="text: getTitle()"></span></label>
     </div>
-    <div class="payment-method-content">
+    <div class="payment-method-content" id="tuna_payment_method_content">
         <div class="field _required">
             <label data-bind="attr: {for: getCode() + 'number'}" class="label">
                 <span>
@@ -48,7 +48,7 @@
             <label class="radio-inline" id="tuna_savedCard_label">
                 <input id="tuna_card_radio_saved" type="radio" name="cardRadio" checked>Usar cartão salvo
             </label>
-            <label class="radio-inline">
+            <label class="radio-inline" id="tuna_newCard_label">
                 <input id="tuna_card_radio_new" type="radio" name="cardRadio">Usar novo cartão
             </label>
             <label class="radio-inline" id="tuna_boleto_label">
@@ -157,10 +157,13 @@
             <div class="primary">
                 <button class="action primary checkout" type="submit" data-bind="
                         click: placeOrder,
-                        attr: {title: 'Pagar'}">
+                        attr: {title: 'Pagar', id: 'placeOrder'}">
                     <span data-bind="text: 'Pagar'"></span>
                 </button>
             </div>
         </div>
+    </div>
+    <div id="badNewsDiv" style="display: none;">
+        <h2>Método de pagamento não disponível para as configurações da loja.</2>
     </div>
 </div>

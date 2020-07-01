@@ -78,6 +78,22 @@ define(
 
 
             afterRender: function () {
+                if (!window.checkoutConfig.payment.tunagateway.sessionid) {
+                    if (!this.allowBoleto()) {
+                        $("#tuna_payment_method_content").remove();
+                        $("#badNewsDiv").show();
+                        return;
+                    } else {
+                        $("#tuna_savedCard_label").remove();
+                        $("#tuna_newCard_label").remove();
+                        $("#tuna_boleto_radio").prop("checked", true);
+                        $("#boletoDiv").show();
+                        $("#newCardDiv").remove();
+                        $("#savedCardDiv").remove();
+                        return;
+                    }
+                }
+
                 if (window.checkoutConfig.payment.tunagateway.is_user_logged_in) {
                     $("#tuna_card_radio_saved").prop("checked", true);
                 } else {
@@ -87,19 +103,20 @@ define(
                     $("#savedCardDiv").hide();
                 }
 
-                if (window.checkoutConfig.payment.tunagateway.allow_boleto === "0") {
+                if (this.allowBoleto()) {
                     $("#tuna_boleto_label").remove();
                     $("#boletoDiv").remove();
                 }
 
-                if(!this.getStoredCreditCards() || this.getStoredCreditCards().length == 0){
+                if (!this.getStoredCreditCards() || this.getStoredCreditCards().length == 0) {
                     $("#tuna_savedCard_label").remove();
                     $("#tuna_card_radio_new").prop("checked", true);
                     $("#newCardDiv").show();
                 }
             },
             allowBoleto: function () {
-                return window.checkoutConfig.payment.tunagateway.allow_boleto;
+                return window.checkoutConfig.payment.tunagateway.allow_boleto &&
+                    window.checkoutConfig.payment.tunagateway.allow_boleto === "1";
             },
             getStoredCreditCards: function () {
                 return window.checkoutConfig.payment.tunagateway.savedCreditCards;
@@ -314,7 +331,7 @@ define(
                                 CardHolderName: $('#tuna_credit_card_holder').val(),
                                 CardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
                                 ExpirationMonth: parseInt($('#tuna_credit_card_expiration_month').val()),
-                                ExpirationYear: parseInt ($('#tuna_credit_card_expiration_year').val())
+                                ExpirationYear: parseInt($('#tuna_credit_card_expiration_year').val())
                             }
                         };
                         $.ajax({
@@ -322,15 +339,15 @@ define(
                             url: "https://token.construcodeapp.com/api/Token/Generate",
                             data: JSON.stringify(data),
                             success: function (returnedData) {
-                                if(returnedData.code == 1)
+                                if (returnedData.code == 1)
                                     self.endOrder(self, returnedData.Token, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
-                                    else{
-                                        alert({
-                                            title: $.mage.__('Mensagem da Tuna'),
-                                            content: $.mage.__('Infelizmente tiver um problema. Por favor, tente novamente')
-                                        });
-                                        return;
-                                    }
+                                else {
+                                    alert({
+                                        title: $.mage.__('Mensagem da Tuna'),
+                                        content: $.mage.__('Infelizmente tiver um problema. Por favor, tente novamente')
+                                    });
+                                    return;
+                                }
                             },
                             dataType: 'json',
                             contentType: "application/json"

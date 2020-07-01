@@ -71,7 +71,7 @@ class TunaProvider implements ConfigProviderInterface
         $tunaSessionID = $response["sessionId"];
 
         $response = null;
-        if ($customerSession->isLoggedIn()) {
+        if ($tunaSessionID <> null && $customerSession->isLoggedIn()) {
             $url = 'https://token.construcodeapp.com/api/Token/List';
             $cItem = [
                 "SessionId" => $tunaSessionID
