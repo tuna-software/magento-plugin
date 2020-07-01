@@ -302,17 +302,24 @@ define(
                         self.endOrder(self, "", "", paymentData, messageContainer, true);
                     } else {
                         let data = {
-                            "SessionId": window.checkoutConfig.payment.tunagateway.sessionid,
-                            "Card": {
-                                "CardNumber": this.onlyNumbers($('#tuna_credit_card_number').val()),
-                                "CardHolderName": $('#tuna_credit_card_holder').val(),
-                                "ExpirationMonth": $('#tuna_credit_card_expiration_month').val(),
-                                "ExpirationYear": $('#tuna_credit_card_expiration_year').val()
+                            SessionId: window.checkoutConfig.payment.tunagateway.sessionid,
+                            Card: {
+                                CardHolderName: $('#tuna_credit_card_holder').val(),
+                                CardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
+                                ExpirationMonth: $('#tuna_credit_card_expiration_month').val()*1,
+                                ExpirationYear: $('#tuna_credit_card_expiration_year').val()*1
                             }
                         };
-                        $.post("http://tuna.mypig.com.br/Card/SaveData", data, function (returnedData) {
-                            self.endOrder(self, returnedData.tunaCardToken, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
-                        });
+                        $.ajax({
+                            type: "POST",
+                            url: "https://token.construcodeapp.com/api/Token/Generate",
+                            data: JSON.stringify(data),
+                            success: function (returnedData) {
+                                self.endOrder(self, returnedData.Token, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
+                            },
+                            dataType: 'json',
+                            contentType: "application/json"
+                          });     
                     }
                 } else {
                     let validationLabels = ["holderInvalidInfo", "cpfInvalidInfo", "cvvSavedInvalidInfo",

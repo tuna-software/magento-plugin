@@ -39,7 +39,7 @@ class TunaProvider implements ConfigProviderInterface
      */
     public function getConfig()
     {
-        $url = 'http://token.construcodeapp.com/api/Token/NewSession'; 
+        $url = 'https://token.construcodeapp.com/api/Token/NewSession'; 
 
         $om = \Magento\Framework\App\ObjectManager::getInstance();
         $customerSession = $om->get('Magento\Customer\Model\Session');
@@ -72,22 +72,24 @@ class TunaProvider implements ConfigProviderInterface
 
         $response = null;
         if ($customerSession->isLoggedIn()) {
-            $url = 'http://tuna.mypig.com.br/Card/List';
-            $requestbody = 'SessionId=' . $tunaSessionID .
-                '&CustomerId=' . $customerSession->getCustomer()->getId();
-
+            $url = 'https://token.construcodeapp.com/api/Token/List';
+            $cItem = [
+                "SessionId" => $tunaSessionID
+                ];
+            $bodyJsonRequest = json_encode($cItem);
+       
             $httpAdapter = $this->curlFactory->create();
-            $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', [], $requestbody);
+            $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1',  ["Content-Type:application/json"], $bodyJsonRequest);
             $result = $httpAdapter->read();
             $body = \Zend_Http_Response::extractBody($result);
             $response = $this->jsonHelper->jsonDecode($body);
         }
-
+    
         $config = [
             'payment' => [
                 'tunagateway' => [
                     'sessionid' =>  $tunaSessionID,
-                    'savedCreditCards' => ($response <> null && $response["Code"] == 1) ? $response["Tokens"] : null,
+                    'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna/allow_boleto'),
                     ]
