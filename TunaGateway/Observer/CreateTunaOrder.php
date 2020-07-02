@@ -101,7 +101,7 @@ class CreateTunaOrder implements ObserverInterface
             "Neighborhood" => $billing["telephone"],
             "City" => $billing["city"],
             "State" => $billing["region"],
-            "Country" => $billing["country_id"],
+            "Country" => $billing["country_id"]!=null?$billing["country_id"]:"BR",
             "PostalCode" => $billing["postcode"],
             "Phone" => $billing["telephone"]
           ]
@@ -121,7 +121,7 @@ class CreateTunaOrder implements ObserverInterface
                 "Neighborhood" => $billing["telephone"],
                 "City" => $billing["city"],
                 "State" => $billing["region"],
-                "Country" => $billing["country_id"],
+                "Country" => $billing["country_id"]!=null?$billing["country_id"]:"BR",
                 "PostalCode" => $billing["postcode"],
                 "Phone" => $billing["telephone"]
               ]
@@ -153,7 +153,7 @@ class CreateTunaOrder implements ObserverInterface
           "Neighborhood" => "",
           "City" => $shipping["city"],
           "State" => $shipping["region"],
-          "Country" => $shipping["country_id"],
+          "Country" => $shipping["country_id"]!=null?$shipping["country_id"]:"BR",
           "PostalCode" => $shipping["postcode"],
           "Phone" => $shipping["telephone"]
         ],
@@ -167,14 +167,14 @@ class CreateTunaOrder implements ObserverInterface
           "Items" => [[
             "Type" => $order->getShippingDescription(),
             "Amount" => $order->getBaseShippingAmount(),
-            "Code" =>  $order->getShippingMethod(true)['carrier_code']
+            "Code" =>  ""
           ]]
         ],
         "PaymentItems" => [
           "Items" => $itens
         ],
         "PaymentData" => [
-          'Countrycode' => $shipping["country_id"],
+          'Countrycode' => $billing["country_id"]!=null?$billing["country_id"]:"BR",
           "SalesChannel" => "ECOMMERCE",
           "PaymentMethods" => [
             [
