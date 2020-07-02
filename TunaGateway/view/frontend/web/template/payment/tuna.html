@@ -60,14 +60,14 @@
             <div>
                 <!-- ko foreach: getStoredCreditCards() -->
                 <p class="radio-inline">
-                    <input type="radio" name="storedCard" data-bind="attr: {id: 'tuna_card_'+Token},
+                    <input type="radio" name="storedCard" data-bind="attr: {id: 'tuna_card_'+token},
                             event: {change: $parent.selectStoredCard}">
 
-                    <img data-bind="attr: {src: $parent.getCreditCardFlag(Brand), height: '', width: '60' }"
+                    <img data-bind="attr: {src: $parent.getCreditCardFlag(brand), height: '', width: '60' }"
                         class="payment-icon" />
-                    <span data-bind="text: MaskedNumber"></span>
+                    <span data-bind="text: maskedNumber"></span>
                     <input class="CcCvv" style="width: 90px; display: none;" type="text" placeholder="CVV" maxlength="4"
-                        data-bind="attr: {id: 'tuna_card_cvv_'+Token}" />
+                        data-bind="attr: {id: 'tuna_card_cvv_'+token}" />
                 </p>
                 <!-- /ko -->
                 <label id="cvvSavedInvalidInfo" style="display: none;">* O cvv deve ter ao menos 3 caractéres</label>

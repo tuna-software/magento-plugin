@@ -122,12 +122,7 @@ define(
                 return window.checkoutConfig.payment.tunagateway.savedCreditCards;
             },
             getCreditCardFlag: function (brand) {
-                let brandDict = {};
-                brandDict.VISA = window.tunaImages.VISA_flag;
-                brandDict.MASTER = window.tunaImages.MASTERCARD_flag;
-                brandDict.AMER = window.tunaImages.AMEX_flag;
-
-                return brandDict[brand];
+                return window.tunaImages[brand];
             },
             getMailingAddress: function () {
                 return window.checkoutConfig.payment.checkmo.mailingAddress;
@@ -344,7 +339,7 @@ define(
                                 else {
                                     alert({
                                         title: $.mage.__('Mensagem da Tuna'),
-                                        content: $.mage.__('Infelizmente tiver um problema. Por favor, tente novamente')
+                                        content: $.mage.__('Infelizmente tivemos um problema. Por favor, tente novamente')
                                     });
                                     return;
                                 }

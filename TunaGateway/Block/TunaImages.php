@@ -8,7 +8,6 @@ class TunaImages extends \Magento\Framework\View\Element\Template
 {
     protected $assetRepository;
 
-
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         AssetRepository $assetRepository,
@@ -21,29 +20,29 @@ class TunaImages extends \Magento\Framework\View\Element\Template
     public function fillCardFlags()
     {
         $output = [];
-        $output['AMAZON_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/AMAZON.png');
-        $output['AMEX_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/AMEX.png');
-        $output['CIRRUS_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/CIRRUS.png');
-        $output['DINNERS_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/DINNERS.png');
-        $output['DIRECT_DEBIT_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/DIRECT DEBIT.png');
-        $output['DISCOVER_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/DISCOVER.png');
-        $output['EBAY_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/EBAY.png');
-        $output['EWAY_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/EWAY.png');
-        $output['JCB_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/JCB.png');
-        $output['MAESTRO_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/MAESTRO.png');
-        $output['MASTERCARD_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/MASTERCARD.png');
-        $output['PAYPAL_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/PAYPAL.png');
-        $output['SAGE_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SAGE.png');
-        $output['SHOPIFY_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SHOPIFY.png');
-        $output['SKRILL_MONEYBOOKERS_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SKRILL MONEYBOOKERS.png');
-        $output['SKRILL_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SKRILL.png');
-        $output['SOLO_2_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SOLO 2.png');
-        $output['SOLO_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SOLO.png');
-        $output['VISA_ELECTRON_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/VISA ELECTRON.png');
-        $output['VISA_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/VISA.png');
-        $output['WESTERN_UNION_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/WESTERN UNION.png');
-        $output['WORLDPAY_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/WORLDPAY.png');
-        $output['W_flag'] = $this->getViewFileUrl('Tuna_TunaGateway::images/W.png');
+        $output['Amazon'] = $this->getViewFileUrl('Tuna_TunaGateway::images/AMAZON.png');
+        $output['Amex'] = $this->getViewFileUrl('Tuna_TunaGateway::images/AMEX.png');
+        $output['Cirrus'] = $this->getViewFileUrl('Tuna_TunaGateway::images/CIRRUS.png');
+        $output['Dinners'] = $this->getViewFileUrl('Tuna_TunaGateway::images/DINNERS.png');
+        $output['DirectDebit'] = $this->getViewFileUrl('Tuna_TunaGateway::images/DIRECT DEBIT.png');
+        $output['Discover'] = $this->getViewFileUrl('Tuna_TunaGateway::images/DISCOVER.png');
+        $output['Ebay'] = $this->getViewFileUrl('Tuna_TunaGateway::images/EBAY.png');
+        $output['Eway'] = $this->getViewFileUrl('Tuna_TunaGateway::images/EWAY.png');
+        $output['Jcb'] = $this->getViewFileUrl('Tuna_TunaGateway::images/JCB.png');
+        $output['Maestro'] = $this->getViewFileUrl('Tuna_TunaGateway::images/MAESTRO.png');
+        $output['Master'] = $this->getViewFileUrl('Tuna_TunaGateway::images/MASTERCARD.png');
+        $output['Paypal'] = $this->getViewFileUrl('Tuna_TunaGateway::images/PAYPAL.png');
+        $output['Sage'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SAGE.png');
+        $output['Shopify'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SHOPIFY.png');
+        $output['SkrillMoneyBookers'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SKRILL MONEYBOOKERS.png');
+        $output['Skrill'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SKRILL.png');
+        $output['Solo2'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SOLO 2.png');
+        $output['Solo'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SOLO.png');
+        $output['VisaElectron'] = $this->getViewFileUrl('Tuna_TunaGateway::images/VISA ELECTRON.png');
+        $output['Visa'] = $this->getViewFileUrl('Tuna_TunaGateway::images/VISA.png');
+        $output['WesternUnion'] = $this->getViewFileUrl('Tuna_TunaGateway::images/WESTERN UNION.png');
+        $output['WorldPay'] = $this->getViewFileUrl('Tuna_TunaGateway::images/WORLDPAY.png');
+        $output['W'] = $this->getViewFileUrl('Tuna_TunaGateway::images/W.png');
 
         return $output;
     }
