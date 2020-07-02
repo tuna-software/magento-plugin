@@ -103,7 +103,7 @@ define(
                     $("#savedCardDiv").hide();
                 }
 
-                if (this.allowBoleto()) {
+                if (!this.allowBoleto()) {
                     $("#tuna_boleto_label").remove();
                     $("#boletoDiv").remove();
                 }
