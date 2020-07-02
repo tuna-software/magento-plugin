@@ -340,7 +340,7 @@ define(
                             data: JSON.stringify(data),
                             success: function (returnedData) {
                                 if (returnedData.code == 1)
-                                    self.endOrder(self, returnedData.Token, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
+                                    self.endOrder(self, returnedData.token, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
                                 else {
                                     alert({
                                         title: $.mage.__('Mensagem da Tuna'),
