@@ -263,7 +263,7 @@ class CreateTunaOrder implements ObserverInterface
           }
        }
       }catch(\Exception $e){
-        $order->setStatus('tuna_Error');
+        $order->setStatus('tuna_Cancelled');
       }
       
       $order->save();
