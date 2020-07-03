@@ -197,71 +197,76 @@ class CreateTunaOrder implements ObserverInterface
       $result = $httpAdapter->read();
       
       $body = \Zend_Http_Response::extractBody($result);
-      $response = $this->jsonHelper->jsonDecode($body);      
-      switch (strval($response["code"])) {
-        case '0':
-              $order->setStatus('tuna_Started');
-            break;
-        case '1':
-              $order->setStatus('tuna_Authorized');
-            break;
-        case '2':
-              $order->setStatus('tuna_Captured');
-            break;
-        case '3':
-              $order->setStatus('tuna_Refunded');
-            break;
-        case '4':
-              $order->setStatus('tuna_Denied');
-            break;
-        case '5':
-              $order->setStatus('tuna_Cancelled');
-            break;
-        case '-1':
-              $order->setStatus('tuna_Cancelled');
-            break;
-        case '6':
-              $order->setStatus('tuna_Expired');
-            break;
-        case '7':
-              $order->setStatus('tuna_Chargeback');
-            break;
-        case '8':
-              $order->setStatus('tuna_MoneyReceived');
-            break;
-        case '9':
-              $order->setStatus('tuna_PartialCancel');
-            break;
-        case 'A':
-              $order->setStatus('tuna_Error');
-            break;
-        case 'B':
-              $order->setStatus('tuna_RedFlag');
-            break;
-        case 'C':
-              $order->setStatus('tuna_PendingCapture');
-            break;
-        case 'D':
-              $order->setStatus('tuna_PendingAntiFraud');
-            break;
-        case 'E':
-              $order->setStatus('tuna_DeniedAntiFraud');
-            break;
-      }
-      $order->save();
-      if (strval($response["code"])=="1" && $response["status"]=="C")
-      {
-        if ($payment->getAdditionalInformation()["is_boleto_payment"]=="true")
-        {
-          if ($response["methods"]!=null && $response["methods"][0]["redirectInfo"]!=null){
-            $additionalData = $payment->getAdditionalInformation();
-            $additionalData["boleto_url"] =$response["methods"][0]["redirectInfo"]["url"];    
-            $payment->setData('additional_information',$additionalData);   
-            $payment->save(); 
-          }
+      
+      try{
+        $response = $this->jsonHelper->jsonDecode($body);
+        switch (strval($response["code"])) {
+          case '0':
+                $order->setStatus('tuna_Started');
+              break;
+          case '1':
+                $order->setStatus('tuna_Authorized');
+              break;
+          case '2':
+                $order->setStatus('tuna_Captured');
+              break;
+          case '3':
+                $order->setStatus('tuna_Refunded');
+              break;
+          case '4':
+                $order->setStatus('tuna_Denied');
+              break;
+          case '5':
+                $order->setStatus('tuna_Cancelled');
+              break;
+          case '-1':
+                $order->setStatus('tuna_Cancelled');
+              break;
+          case '6':
+                $order->setStatus('tuna_Expired');
+              break;
+          case '7':
+                $order->setStatus('tuna_Chargeback');
+              break;
+          case '8':
+                $order->setStatus('tuna_MoneyReceived');
+              break;
+          case '9':
+                $order->setStatus('tuna_PartialCancel');
+              break;
+          case 'A':
+                $order->setStatus('tuna_Error');
+              break;
+          case 'B':
+                $order->setStatus('tuna_RedFlag');
+              break;
+          case 'C':
+                $order->setStatus('tuna_PendingCapture');
+              break;
+          case 'D':
+                $order->setStatus('tuna_PendingAntiFraud');
+              break;
+          case 'E':
+                $order->setStatus('tuna_DeniedAntiFraud');
+              break;
         }
-     }
-  
+        if (strval($response["code"])=="1" && $response["status"]=="C")
+        {
+          if ($payment->getAdditionalInformation()["is_boleto_payment"]=="true")
+          {
+            if ($response["methods"]!=null && $response["methods"][0]["redirectInfo"]!=null){
+              $additionalData = $payment->getAdditionalInformation();
+              $additionalData["boleto_url"] =$response["methods"][0]["redirectInfo"]["url"];    
+              $payment->setData('additional_information',$additionalData);   
+              $payment->save(); 
+            }
+          }
+       }
+      }catch(\Exception $e){
+        $order->setStatus('tuna_Error');
+      }
+      
+      $order->save();
     }
 
     #return $this;
