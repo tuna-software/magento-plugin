@@ -198,7 +198,7 @@ class CreateTunaOrder implements ObserverInterface
       
       $body = \Zend_Http_Response::extractBody($result);
       $response = $this->jsonHelper->jsonDecode($body);      
-      switch ($response["code"].'') {
+      switch (strval($response["code"])) {
         case '0':
               $order->setStatus('tuna_Started');
             break;
@@ -249,7 +249,7 @@ class CreateTunaOrder implements ObserverInterface
             break;
       }
       $order->save();
-      if ($response["code"]=="1" && $response["status"]=="C")
+      if (strval($response["code"])=="1" && $response["status"]=="C")
       {
         if ($payment->getAdditionalInformation()["is_boleto_payment"]=="true")
         {
