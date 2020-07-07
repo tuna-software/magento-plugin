@@ -200,7 +200,7 @@ class CreateTunaOrder implements ObserverInterface
       
       try{
         $response = $this->jsonHelper->jsonDecode($body);
-        switch (strval($response["code"])) {
+        switch (strval($response["status"])) {
           case '0':
                 $order->setStatus('tuna_Started');
               break;
