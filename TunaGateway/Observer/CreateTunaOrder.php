@@ -98,7 +98,7 @@ class CreateTunaOrder implements ObserverInterface
             "Street" => $addressB[0],
             "Number" => $numberB,
             "Complement" => $complementB,
-            "Neighborhood" => $billing["telephone"],
+            "Neighborhood" => "",
             "City" => $billing["city"],
             "State" => $billing["region"],
             "Country" => $billing["country_id"]!=null?$billing["country_id"]:"BR",

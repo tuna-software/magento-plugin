@@ -45,10 +45,33 @@ class TunaProvider implements ConfigProviderInterface
         $customerSession = $om->get('Magento\Customer\Model\Session');
         $customerSessionID="0";        
         $customerSessionEmail="";
+        $previousAddresses=[];
         if ($customerSession->isLoggedIn()) 
         {
             $customerSessionID=$customerSession->getCustomer()->getId().'';        
-            $customerSessionEmail=$customerSession->getCustomer()->getEmail();;
+            $customerSessionEmail=$customerSession->getCustomer()->getEmail();
+            foreach ($customerSession->getCustomer()->getAddresses() as $address) {
+                $addressB  = preg_split("/(\r\n|\n|\r)/", $address["street"]);
+                $numberB = "";
+                if (sizeof($addressB) > 1) {
+                  $numberB = $addressB[1];
+                }
+                $complementB = "";
+                if (sizeof($addressB) > 2) {
+                  $complementB = $addressB[2];
+                }
+                array_push($previousAddresses, [
+                    "Street" => $addressB[0],
+                    "Number" => $numberB,
+                    "Complement" => $complementB,
+                    "Neighborhood" => "",
+                    "City" => $address["city"],
+                    "State" => $address["region"],
+                    "Country" => $address["country_id"]!=null?$address["country_id"]:"BR",
+                    "PostalCode" => $address["postcode"],
+                    "Phone" => $address["telephone"]
+                ]);
+            }
         }
         $cItem = [
             "AppToken" =>$this->scopeConfig->getValue('payment/tuna/appKey'),
@@ -92,6 +115,7 @@ class TunaProvider implements ConfigProviderInterface
                     'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna/allow_boleto'),
+                    'previousAddresses' => $previousAddresses,
                     ]
                 ],
                 'tuna_payment' => $this->tunaPaymentMethod->getStandardCheckoutPaymentUrl(),

@@ -25,7 +25,21 @@ define(
             $("#tuna_credit_card_code").mask("9999");
             $(".CcCvv").mask("9999");
             $("#tuna_credit_card_number").mask("9999 9999 9999 9999");
+            $("#tuna_billing_address_zip").mask("99.999-999");
 
+            $('#tuna_billing_address_phone').mask('(00) 0000-00009');
+
+            $("#tuna_billing_address_phone").live("blur", function (event) {
+                if ($(this).val().length == 15) {
+                    $('#tuna_billing_address_phone').mask('(00) 00000-0009');
+                } else {
+                    $('#tuna_billing_address_phone').mask('(00) 0000-00009');
+                }
+            });
+        });
+
+        $('input[type=radio][name=previousAddress]').live("change",function() {
+            $("#billingAddressFields").hide();
         });
 
         function cardRadioChanged() {
@@ -113,6 +127,18 @@ define(
                     $("#tuna_card_radio_new").prop("checked", true);
                     $("#newCardDiv").show();
                 }
+
+                if (this.getPreviousAddresses() && this.getPreviousAddresses().length > 0) {
+                    $($("input[name='previousAddress']")[0]).prop("checked", true);
+                }
+
+            },
+            enableBillingAddressFields: function () {
+                $("#billingAddressFields").show();
+                $("input[name='previousAddress']").prop("checked", false);
+            },
+            hideBillingAddressFields: function(){
+                $('#billingAddressFields').hide();
             },
             allowBoleto: function () {
                 return window.checkoutConfig.payment.tunagateway.allow_boleto &&
@@ -120,6 +146,9 @@ define(
             },
             getStoredCreditCards: function () {
                 return window.checkoutConfig.payment.tunagateway.savedCreditCards;
+            },
+            getPreviousAddresses: function () {
+                return window.checkoutConfig.payment.tunagateway.previousAddresses;
             },
             getCreditCardFlag: function (brand) {
                 return window.tunaImages[brand];
