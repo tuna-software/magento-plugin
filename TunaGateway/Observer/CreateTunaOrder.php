@@ -31,7 +31,7 @@ class CreateTunaOrder implements ObserverInterface
       $billing = $order->getBillingAddress();
       $payment = $order->getPayment();
 
-
+      $bill = json_decode($payment->getAdditionalInformation()["billingAddress"]);
 
       $payItens = $order->getPaymentsCollection()->getItems();
 
