@@ -62,6 +62,33 @@ define(
         $("#tuna_card_radio_saved").live("change", cardRadioChanged);
         $("#tuna_boleto_radio").live("change", cardRadioChanged);
 
+        if (quote.shippingAddress()) {
+            let shippingAddress = quote.shippingAddress();
+            let billingAddress = {
+                City: shippingAddress.city,
+                CountryID: shippingAddress.countryId,
+                Country: "Brasil",
+                State: shippingAddress.region,
+                PostalCode: shippingAddress.postcode,
+                Phone: shippingAddress.telephone,
+                Street: shippingAddress.street[0].split(',')[0],
+                Number: shippingAddress.street[0].split(',')[1],
+                Complement: shippingAddress.street[0].split(',')[2] +
+                    (shippingAddress.street[0].split(',').length == 4 ? " , " + shippingAddress.street[0].split(',')[3] : ""),
+            }
+            window.checkoutConfig.payment.tunagateway.previousAddresses.unshift(billingAddress);
+        }
+
+        $("#tuna_billing_address_country").live("change", _ => {
+            let selectCountryID = $( "#tuna_billing_address_country option:selected" ).val();
+            let countryRegions = window.checkoutConfig.countries.find(c => c.id == selectCountryID).regions;
+            $('#tuna_billing_address_state').find('option').remove();
+            countryRegions.forEach(region => {
+                let option = new Option(region.name, region.id);
+                $('#tuna_billing_address_state').append(option);
+            });
+        });
+
         return Component.extend({
             defaults: {
                 template: 'Tuna_TunaGateway/payment/tuna',
@@ -92,7 +119,6 @@ define(
 
 
             afterRender: function () {
-                console.log(1);
                 if (!window.checkoutConfig.payment.tunagateway.sessionid) {
                     if (!this.allowBoleto()) {
                         $("#tuna_payment_method_content").remove();
@@ -153,6 +179,12 @@ define(
             },
             getPreviousAddresses: function () {
                 return window.checkoutConfig.payment.tunagateway.previousAddresses;
+            },
+            getCountries: function () {
+                return window.checkoutConfig.countries;
+            },
+            changeCountry: function () {
+                console.log(1);
             },
             getCreditCardFlag: function (brand) {
                 return window.tunaImages[brand];

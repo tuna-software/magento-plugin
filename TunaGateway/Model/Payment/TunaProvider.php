@@ -13,6 +13,7 @@ class TunaProvider implements ConfigProviderInterface
      */
     protected $scopeConfig;
     protected $_session;
+    protected $countryInformationAcquirer;
     /**
      * first config value config path
      */
@@ -26,39 +27,65 @@ class TunaProvider implements ConfigProviderInterface
         \Magento\Framework\Session\SessionManager $sessionManager,
         \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
         \Magento\Framework\Json\Helper\Data $jsonHelper,
-        PaymentHelper $helper
+        PaymentHelper $helper,
+        \Magento\Directory\Api\CountryInformationAcquirerInterface $countryInformationAcquirer
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->_session = $sessionManager;
         $this->curlFactory = $curlFactory;
         $this->jsonHelper = $jsonHelper;
         $this->tunaPaymentMethod = $helper->getMethodInstance(self::PAYMENT_METHOD_CODE);
+        $this->countryInformationAcquirer = $countryInformationAcquirer;
     }
     /**
      * {@inheritdoc}
      */
     public function getConfig()
     {
-        $url = 'https://token.construcodeapp.com/api/Token/NewSession'; 
+        $url = 'https://token.construcodeapp.com/api/Token/NewSession';
+        $countriesInfo = $this->countryInformationAcquirer->getCountriesInfo();
+        $countries = [];
+
+        foreach ($countriesInfo as $country) {
+            // Get regions for this country:
+            $regions = [];
+    
+            if ($availableRegions = $country->getAvailableRegions()) {
+                foreach ($availableRegions as $region) {
+                    $regions[] = [
+                        'id'   => $region->getId(),
+                        'code' => $region->getCode(),
+                        'name' => $region->getName()
+                    ];
+                }
+            }
+    
+            // Add to data:
+            $countries[] = [
+                'id' => $country->getId(),
+                'abbreviation'   => $country->getTwoLetterAbbreviation(),
+                'name'   => $country->getFullNameLocale(),
+                'regions' => $regions
+            ];
+        }
 
         $om = \Magento\Framework\App\ObjectManager::getInstance();
         $customerSession = $om->get('Magento\Customer\Model\Session');
-        $customerSessionID="0";        
-        $customerSessionEmail="";
-        $previousAddresses=[];
-        if ($customerSession->isLoggedIn()) 
-        {
-            $customerSessionID=$customerSession->getCustomer()->getId().'';        
-            $customerSessionEmail=$customerSession->getCustomer()->getEmail();
+        $customerSessionID = "0";
+        $customerSessionEmail = "";
+        $previousAddresses = [];
+        if ($customerSession->isLoggedIn()) {
+            $customerSessionID = $customerSession->getCustomer()->getId() . '';
+            $customerSessionEmail = $customerSession->getCustomer()->getEmail();
             foreach ($customerSession->getCustomer()->getAddresses() as $address) {
                 $addressB  = preg_split("/(\r\n|\n|\r)/", $address["street"]);
                 $numberB = "";
                 if (sizeof($addressB) > 1) {
-                  $numberB = $addressB[1];
+                    $numberB = $addressB[1];
                 }
                 $complementB = "";
                 if (sizeof($addressB) > 2) {
-                  $complementB = $addressB[2];
+                    $complementB = $addressB[2];
                 }
                 array_push($previousAddresses, [
                     "Street" => $addressB[0],
@@ -67,20 +94,20 @@ class TunaProvider implements ConfigProviderInterface
                     "Neighborhood" => "",
                     "City" => $address["city"],
                     "State" => $address["region"],
-                    "Country" => $address["country_id"]!=null?$address["country_id"]:"BR",
+                    "Country" => $address["country_id"] != null ? $address["country_id"] : "BR",
                     "PostalCode" => $address["postcode"],
                     "Phone" => $address["telephone"]
                 ]);
             }
         }
         $cItem = [
-            "AppToken" =>$this->scopeConfig->getValue('payment/tuna/appKey'),
-            "PartnerID" => $this->scopeConfig->getValue('payment/tuna/partnerid')*1,
+            "AppToken" => $this->scopeConfig->getValue('payment/tuna/appKey'),
+            "PartnerID" => $this->scopeConfig->getValue('payment/tuna/partnerid') * 1,
             "Customer" => [
                 "Email" => $customerSessionEmail,
                 "ID" => $customerSessionID,
             ]
-            ];
+        ];
         $bodyJsonRequest = json_encode($cItem);
 
         /* Create curl factory */
@@ -98,16 +125,16 @@ class TunaProvider implements ConfigProviderInterface
             $url = 'https://token.construcodeapp.com/api/Token/List';
             $cItem = [
                 "SessionId" => $tunaSessionID
-                ];
+            ];
             $bodyJsonRequest = json_encode($cItem);
-       
+
             $httpAdapter = $this->curlFactory->create();
             $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1',  ["Content-Type:application/json"], $bodyJsonRequest);
             $result = $httpAdapter->read();
             $body = \Zend_Http_Response::extractBody($result);
             $response = $this->jsonHelper->jsonDecode($body);
         }
-    
+
         $config = [
             'payment' => [
                 'tunagateway' => [
@@ -116,9 +143,10 @@ class TunaProvider implements ConfigProviderInterface
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna/allow_boleto'),
                     'previousAddresses' => $previousAddresses,
-                    ]
-                ],
-                'tuna_payment' => $this->tunaPaymentMethod->getStandardCheckoutPaymentUrl(),
+                ]
+            ],
+            'tuna_payment' => $this->tunaPaymentMethod->getStandardCheckoutPaymentUrl(),
+            'countries' => $countries,
         ];
         return $config;
     }
