@@ -25,8 +25,11 @@
                         <input type="radio" name="previousAddress"
                             data-bind="attr:{id: 'tuna_previous_address_radio_'+$index()}">
                         <span class="previous_address_street" data-bind="text: Street"></span>
+                        <span class="previous_address_number" data-bind="text: Number"></span>
                     </p>
-                    <p class="previous_address_additional" data-bind="text: City + ',' + State + ',' + Country"></p>
+                    <span class="previous_address_complement" data-bind="text: Complement"></span>
+                    <p class="previous_address_additional" data-bind="text: City + ',' + State + ',' + CountryName"></p>
+                    <p class="previous_address_countryID" data-bind="text: CountryID"></p>
                     <p class="previous_address_postalCode" data-bind="text: PostalCode"></p>
                     <p class="previous_address_phone" data-bind="text: Phone"></p>
                 </div>

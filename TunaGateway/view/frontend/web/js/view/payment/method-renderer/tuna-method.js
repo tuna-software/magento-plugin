@@ -64,19 +64,24 @@ define(
 
         if (quote.shippingAddress()) {
             let shippingAddress = quote.shippingAddress();
-            let billingAddress = {
-                City: shippingAddress.city,
-                CountryID: shippingAddress.countryId,
-                Country: "Brasil",
-                State: shippingAddress.region,
-                PostalCode: shippingAddress.postcode,
-                Phone: shippingAddress.telephone,
-                Street: shippingAddress.street[0].split(',')[0],
-                Number: shippingAddress.street[0].split(',')[1],
-                Complement: shippingAddress.street[0].split(',')[2] +
-                    (shippingAddress.street[0].split(',').length == 4 ? " , " + shippingAddress.street[0].split(',')[3] : ""),
+            let countryName = "Brazil"
+            
+            if(shippingAddress){
+                countryName = window.checkoutConfig.countries.find(c => c.id == shippingAddress.countryId).name;
+                
+                let billingAddress = {
+                    City: shippingAddress.city,
+                    CountryID: shippingAddress.countryId,
+                    CountryName: countryName,
+                    State: shippingAddress.region,
+                    PostalCode: shippingAddress.postcode,
+                    Phone: shippingAddress.telephone,
+                    Street: shippingAddress.street[0] ?? "",
+                    Number: shippingAddress.street[1] ?? "",
+                    Complement: shippingAddress.street[2] ?? ""
+                }
+                window.checkoutConfig.payment.tunagateway.previousAddresses.unshift(billingAddress);
             }
-            window.checkoutConfig.payment.tunagateway.previousAddresses.unshift(billingAddress);
         }
 
         $("#tuna_billing_address_country").live("change", _ => {
@@ -315,6 +320,8 @@ define(
 
                 return {
                     street: $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_street")[0]).text(),
+                    complement: $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_complement")[0]).text(),
+                    number: $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_number")[0]).text(),
                     postalCode: $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_postalCode")[0]).text(),
                     phone: $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_phone")[0]).text(),
                     city: additionalAddressInfo.split(",")[0],
@@ -339,7 +346,7 @@ define(
                     billingAddress = this.getSelectedBillingAddress();
                 else
                     billingAddress = this.getTypedBillingAddress();
-
+                return;
                 let additionalData = {
                     'buyer_document': $('#tuna_credit_card_document').val(),
                     'session_id': window.checkoutConfig.payment.tunagateway.sessionid,

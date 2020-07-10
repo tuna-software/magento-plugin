@@ -60,10 +60,9 @@ class TunaProvider implements ConfigProviderInterface
                 }
             }
     
-            // Add to data:
             $countries[] = [
                 'id' => $country->getId(),
-                'abbreviation'   => $country->getTwoLetterAbbreviation(),
+                'abbreviation' => $country->getTwoLetterAbbreviation(),
                 'name'   => $country->getFullNameLocale(),
                 'regions' => $regions
             ];
@@ -87,6 +86,16 @@ class TunaProvider implements ConfigProviderInterface
                 if (sizeof($addressB) > 2) {
                     $complementB = $addressB[2];
                 }
+                $countryName = "";
+                
+                if($address["country_id"] != null){
+                    foreach ($countries as &$c) {
+                        if($c["id"] == $address["country_id"]){
+                            $countryName = $c["name"];
+                        }
+                    }
+                }
+
                 array_push($previousAddresses, [
                     "Street" => $addressB[0],
                     "Number" => $numberB,
@@ -94,7 +103,8 @@ class TunaProvider implements ConfigProviderInterface
                     "Neighborhood" => "",
                     "City" => $address["city"],
                     "State" => $address["region"],
-                    "Country" => $address["country_id"] != null ? $address["country_id"] : "BR",
+                    "CountryID" => $address["country_id"] != null ? $address["country_id"] : "BR",
+                    "CountryName" => $countryName,
                     "PostalCode" => $address["postcode"],
                     "Phone" => $address["telephone"]
                 ]);
