@@ -38,7 +38,7 @@ define(
             });
         });
 
-        $('input[type=radio][name=previousAddress]').live("change", function () {
+        $('input[type=radio][name=billingAddress]').live("change", function () {
             $("#billingAddressFields").hide();
         });
 
@@ -80,7 +80,7 @@ define(
                     Number: shippingAddress.street[1] ?? "",
                     Complement: shippingAddress.street[2] ?? ""
                 }
-                window.checkoutConfig.payment.tunagateway.previousAddresses.unshift(billingAddress);
+                window.checkoutConfig.payment.tunagateway.billingAddresses.unshift(billingAddress);
             }
         }
 
@@ -160,8 +160,8 @@ define(
                     $("#newCardDiv").show();
                 }
 
-                if (this.getPreviousAddresses() && this.getPreviousAddresses().length > 0) {
-                    $($("input[name='previousAddress']")[0]).prop("checked", true);
+                if (this.getBillingAddresses() && this.getBillingAddresses().length > 0) {
+                    $($("input[name='billingAddress']")[0]).prop("checked", true);
                 } else {
                     this.enableBillingAddressFields();
                     $("#enableAddressInputLink").remove();
@@ -170,7 +170,7 @@ define(
             },
             enableBillingAddressFields: function () {
                 $("#billingAddressFields").show();
-                $("input[name='previousAddress']").prop("checked", false);
+                $("input[name='billingAddress']").prop("checked", false);
             },
             hideBillingAddressFields: function () {
                 $('#billingAddressFields').hide();
@@ -182,8 +182,8 @@ define(
             getStoredCreditCards: function () {
                 return window.checkoutConfig.payment.tunagateway.savedCreditCards;
             },
-            getPreviousAddresses: function () {
-                return window.checkoutConfig.payment.tunagateway.previousAddresses;
+            getBillingAddresses: function () {
+                return window.checkoutConfig.payment.tunagateway.billingAddresses;
             },
             getCountries: function () {
                 return window.checkoutConfig.countries;
@@ -315,15 +315,15 @@ define(
 
             },
             getSelectedBillingAddress: function () {
-                let selectedRadioID = $("input[name='previousAddress']:checked").attr('id').split("tuna_previous_address_radio_")[1];
-                let additionalAddressInfo = $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_additional")[0]).text();
+                let selectedRadioID = $("input[name='billingAddress']:checked").attr('id').split("tuna_billing_address_radio_")[1];
+                let additionalAddressInfo = $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_additional")[0]).text();
 
                 return {
-                    street: $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_street")[0]).text(),
-                    complement: $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_complement")[0]).text(),
-                    number: $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_number")[0]).text(),
-                    postalCode: $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_postalCode")[0]).text(),
-                    phone: $($("#tuna_previous_address_" + selectedRadioID).find(".previous_address_phone")[0]).text(),
+                    street: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_street")[0]).text(),
+                    complement: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_complement")[0]).text(),
+                    number: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_number")[0]).text(),
+                    postalCode: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_postalCode")[0]).text(),
+                    phone: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_phone")[0]).text(),
                     city: additionalAddressInfo.split(",")[0],
                     state: additionalAddressInfo.split(",")[1],
                     country: additionalAddressInfo.split(",")[2],
@@ -342,7 +342,7 @@ define(
             endOrder: function (self, tunaCardToken, creditCardCvv, paymentData, messageContainer, isBoleto = false) {
                 let billingAddress = {};
 
-                if ($("input[name='previousAddress']").prop("checked"))
+                if ($("input[name='billingAddress']:checked").length > 0)
                     billingAddress = this.getSelectedBillingAddress();
                 else
                     billingAddress = this.getTypedBillingAddress();
@@ -409,7 +409,7 @@ define(
                         return "cvvInvalidInfo";
                 }
 
-                if (!$("input[name='previousAddress']").prop("checked")) {
+                if ($("input[name='billingAddress']:checked").length == 0) {
 
                     if ($("#tuna_billing_address_street").val().trim().length == 0 ||
                         $("#tuna_billing_address_city").val().trim().length == 0 ||

@@ -72,7 +72,7 @@ class TunaProvider implements ConfigProviderInterface
         $customerSession = $om->get('Magento\Customer\Model\Session');
         $customerSessionID = "0";
         $customerSessionEmail = "";
-        $previousAddresses = [];
+        $billingAddresses = [];
         if ($customerSession->isLoggedIn()) {
             $customerSessionID = $customerSession->getCustomer()->getId() . '';
             $customerSessionEmail = $customerSession->getCustomer()->getEmail();
@@ -96,7 +96,7 @@ class TunaProvider implements ConfigProviderInterface
                     }
                 }
 
-                array_push($previousAddresses, [
+                array_push($billingAddresses, [
                     "Street" => $addressB[0],
                     "Number" => $numberB,
                     "Complement" => $complementB,
@@ -152,7 +152,7 @@ class TunaProvider implements ConfigProviderInterface
                     'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna/allow_boleto'),
-                    'previousAddresses' => $previousAddresses,
+                    'billingAddresses' => $billingAddresses,
                 ]
             ],
             'tuna_payment' => $this->tunaPaymentMethod->getStandardCheckoutPaymentUrl(),
