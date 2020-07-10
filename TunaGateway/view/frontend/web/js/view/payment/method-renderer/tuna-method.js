@@ -333,8 +333,8 @@ define(
             getTypedBillingAddress: function () {
                 return {
                     street: $("#tuna_billing_address_street").val(),
-                    complement: "",
-                    number: "",
+                    complement: $("#tuna_billing_address_complement").val(),
+                    number: $("#tuna_billing_address_number").val(),
                     postalCode: $("#tuna_billing_address_zip").val(),
                     phone: $("#tuna_billing_address_phone").val(),
                     city: $("#tuna_billing_address_city").val(),
@@ -419,7 +419,8 @@ define(
                         $("#tuna_billing_address_city").val().trim().length == 0 ||
                         $("#tuna_billing_address_state").val().trim().length == 0 ||
                         $("#tuna_billing_address_country").val().trim().length == 0 ||
-                        $("#tuna_billing_address_country").val().trim().length == 0) {
+                        $("#tuna_billing_address_number").val().trim().length == 0 ||
+                        $("#tuna_billing_address_complement").val().trim().length == 0) {
                         alert({
                             title: $.mage.__('Mensagem da Tuna'),
                             content: $.mage.__('Por favor, preencha todos os dados do endereço da compra')
