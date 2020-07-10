@@ -10,6 +10,7 @@
     </div>
 
     <div class="payment-method-content" id="tuna_payment_method_content">
+        <span id="control"></span>
         <label data-bind="attr: {for: 'addressContainer'}" class="label">
             <span>
                 <!-- ko i18n: 'Endereço da compra' -->
@@ -58,8 +59,7 @@
                     <label for="tuna_billing_address_country">País</label>
                     <select id="tuna_billing_address_country" data-bind="options: getCountries(),
                        optionsText: 'name',
-                       optionsValue: 'id',
-                       event:{ change: $parent.changeCountry}"></select>
+                       optionsValue: 'id'"></select>
                 </div>
                 <div class="control">
                     <label for="tuna_billing_address_state">Estado</label>

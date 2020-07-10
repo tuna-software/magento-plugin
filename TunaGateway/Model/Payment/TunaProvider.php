@@ -45,11 +45,10 @@ class TunaProvider implements ConfigProviderInterface
         $url = 'https://token.construcodeapp.com/api/Token/NewSession';
         $countriesInfo = $this->countryInformationAcquirer->getCountriesInfo();
         $countries = [];
-
         foreach ($countriesInfo as $country) {
             // Get regions for this country:
             $regions = [];
-    
+
             if ($availableRegions = $country->getAvailableRegions()) {
                 foreach ($availableRegions as $region) {
                     $regions[] = [
@@ -59,6 +58,10 @@ class TunaProvider implements ConfigProviderInterface
                     ];
                 }
             }
+
+            usort($regions, function($a, $b) {
+                return strcmp($a["name"], $b["name"]);
+            });
     
             $countries[] = [
                 'id' => $country->getId(),
@@ -67,6 +70,9 @@ class TunaProvider implements ConfigProviderInterface
                 'regions' => $regions
             ];
         }
+        usort($countries, function($a, $b) {
+            return strcmp($a["name"], $b["name"]);
+        });
 
         $om = \Magento\Framework\App\ObjectManager::getInstance();
         $customerSession = $om->get('Magento\Customer\Model\Session');
