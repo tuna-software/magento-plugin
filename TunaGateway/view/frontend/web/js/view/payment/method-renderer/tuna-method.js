@@ -327,16 +327,20 @@ define(
                     city: additionalAddressInfo.split(",")[0],
                     state: additionalAddressInfo.split(",")[1],
                     country: additionalAddressInfo.split(",")[2],
+                    countryID: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_countryID")[0]).text()
                 };
             },
             getTypedBillingAddress: function () {
                 return {
                     street: $("#tuna_billing_address_street").val(),
+                    complement: "",
+                    number: "",
                     postalCode: $("#tuna_billing_address_zip").val(),
                     phone: $("#tuna_billing_address_phone").val(),
                     city: $("#tuna_billing_address_city").val(),
-                    state: $("#tuna_billing_address_state").val(),
-                    country: $("#tuna_billing_address_country").val()
+                    state: $( "#tuna_billing_address_state option:selected").text(),
+                    country: $( "#tuna_billing_address_country option:selected" ).text(),
+                    countryID: $("#tuna_billing_address_country").val()
                 };
             },
             endOrder: function (self, tunaCardToken, creditCardCvv, paymentData, messageContainer, isBoleto = false) {
@@ -346,7 +350,7 @@ define(
                     billingAddress = this.getSelectedBillingAddress();
                 else
                     billingAddress = this.getTypedBillingAddress();
-                return;
+                
                 let additionalData = {
                     'buyer_document': $('#tuna_credit_card_document').val(),
                     'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
