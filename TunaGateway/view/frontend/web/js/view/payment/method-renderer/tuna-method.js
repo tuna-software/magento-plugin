@@ -85,6 +85,12 @@ define(
         }
 
         $("#tuna_billing_address_country").live("change", _ => {
+            // I swear I'll make it better. Sorry =( 
+            if($("#control").length == 1){
+                $("#control").remove();
+                $( "#tuna_billing_address_country").val("BR");
+            }
+
             let selectCountryID = $( "#tuna_billing_address_country option:selected" ).val();
             let countryRegions = window.checkoutConfig.countries.find(c => c.id == selectCountryID).regions;
             $('#tuna_billing_address_state').find('option').remove();
@@ -142,7 +148,6 @@ define(
                     this.enableBillingAddressFields();
                     $("#enableAddressInputLink").remove();
                 }
-
             },
             enableBillingAddressFields: function () {
                 $("#billingAddressFields").show();
@@ -163,9 +168,6 @@ define(
             },
             getCountries: function () {
                 return window.checkoutConfig.countries;
-            },
-            changeCountry: function () {
-                console.log(1);
             },
             getCreditCardFlag: function (brand) {
                 return window.tunaImages[brand];
