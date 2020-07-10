@@ -31,7 +31,7 @@ class CreateTunaOrder implements ObserverInterface
       $billing = $order->getBillingAddress();
       $payment = $order->getPayment();
 
-      $bill = json_decode($payment->getAdditionalInformation()["billingAddress"]);
+      $bill = $this->jsonHelper->jsonDecode($payment->getAdditionalInformation()["billingAddress"]);
       $billing["telephone"]=$bill["phone"];
       $billing["city"]=$bill["city"];
       $billing["region"]=$bill["state"];
@@ -71,9 +71,9 @@ class CreateTunaOrder implements ObserverInterface
       if (sizeof($address) > 2) {
         $complement = $address[2];
       }
-      $addressB  = bill["street"];
-      $numberB = bill["number"];
-      $complementB = bill["complement"];
+      $addressB  = $bill["street"];
+      $numberB = $bill["number"];
+      $complementB = $bill["complement"];
       $documentType = "CPF";
       if (strlen($payment->getAdditionalInformation()["buyer_document"]) > 17) {
         $documentType = "CNPJ";
