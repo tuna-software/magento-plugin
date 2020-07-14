@@ -35,7 +35,7 @@ class CreateTunaOrder implements ObserverInterface
       $billing["telephone"]=$bill["phone"];
       $billing["city"]=$bill["city"];
       $billing["region"]=$bill["state"];
-      $billing["country_id"]=$bill["country"];
+      $billing["country_id"]=$bill["countryID"];
       $billing["postcode"]=$bill["postalCode"];
        
       //$billing["email"]=$bill[""];
