@@ -141,9 +141,10 @@ define(
                     $("#tuna_card_radio_new").prop("checked", true);
                     $("#newCardDiv").show();
                 }
-
+                
                 if (this.getBillingAddresses() && this.getBillingAddresses().length > 0) {
-                    $($("input[name='billingAddress']")[0]).prop("checked", true);
+                    // $($("input[name='billingAddress']")[0]).prop("checked", true);
+                    // setTimeout(_ => $($("input[name='billingAddress']")[0]).prop("checked", true), 300);
                 } else {
                     this.enableBillingAddressFields();
                     $("#enableAddressInputLink").remove();
@@ -349,7 +350,10 @@ define(
                         $.mage.redirect(window.checkoutConfig.tuna_payment);
                     });
                 }).fail(function () {
-                    console.log("fail");
+                    alert({
+                        title: $.mage.__('Mensagem da Tuna'),
+                        content: $.mage.__('Ocorreu um erro. Por favor, atualize a página e tente novamente')
+                    });
                 }).always(function () {
                     console.log("always");
                     // fullScreenLoader.stopLoader();

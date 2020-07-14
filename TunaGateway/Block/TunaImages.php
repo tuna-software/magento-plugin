@@ -30,7 +30,7 @@ class TunaImages extends \Magento\Framework\View\Element\Template
         $output['Eway'] = $this->getViewFileUrl('Tuna_TunaGateway::images/EWAY.png');
         $output['Jcb'] = $this->getViewFileUrl('Tuna_TunaGateway::images/JCB.png');
         $output['Maestro'] = $this->getViewFileUrl('Tuna_TunaGateway::images/MAESTRO.png');
-        $output['Master'] = $this->getViewFileUrl('Tuna_TunaGateway::images/MASTERCARD.png');
+        $output['MasterCard'] = $this->getViewFileUrl('Tuna_TunaGateway::images/MASTERCARD.png');
         $output['Paypal'] = $this->getViewFileUrl('Tuna_TunaGateway::images/PAYPAL.png');
         $output['Sage'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SAGE.png');
         $output['Shopify'] = $this->getViewFileUrl('Tuna_TunaGateway::images/SHOPIFY.png');
