@@ -62,6 +62,26 @@ define(
         $("#tuna_card_radio_saved").live("change", cardRadioChanged);
         $("#tuna_boleto_radio").live("change", cardRadioChanged);
 
+
+        function isEquivalent(a, b) {
+            var aProps = Object.getOwnPropertyNames(a);
+            var bProps = Object.getOwnPropertyNames(b);
+        
+            if (aProps.length != bProps.length) {
+                return false;
+            }
+        
+            for (var i = 0; i < aProps.length; i++) {
+                var propName = aProps[i];
+        
+                if (a[propName] !== b[propName]) {
+                    return false;
+                }
+            }
+        
+            return true;
+        }
+
         if (quote.shippingAddress()) {
             let shippingAddress = quote.shippingAddress();
             let countryName = "Brazil"
@@ -74,13 +94,23 @@ define(
                     CountryID: shippingAddress.countryId,
                     CountryName: countryName,
                     State: shippingAddress.region,
-                    PostalCode: shippingAddress.postcode,
+                    PostalCode: shippingAddress.postcode ?? "",
                     Phone: shippingAddress.telephone,
                     Street: shippingAddress.street[0] ?? "",
                     Number: shippingAddress.street[1] ?? "",
                     Complement: shippingAddress.street[2] ?? ""
                 }
-                window.checkoutConfig.payment.tunagateway.billingAddresses.unshift(billingAddress);
+                let alreadyAdded = false;
+
+                window.checkoutConfig.payment.tunagateway.billingAddresses.forEach(ba => {
+                    if(isEquivalent(billingAddress, ba)){
+                        alreadyAdded = true;
+                        return;
+                    }
+                });
+
+                if(!alreadyAdded)
+                    window.checkoutConfig.payment.tunagateway.billingAddresses.unshift(billingAddress);
             }
         }
 

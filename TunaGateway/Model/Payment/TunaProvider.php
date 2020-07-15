@@ -106,7 +106,6 @@ class TunaProvider implements ConfigProviderInterface
                     "Street" => $addressB[0],
                     "Number" => $numberB,
                     "Complement" => $complementB,
-                    "Neighborhood" => "",
                     "City" => $address["city"],
                     "State" => $address["region"],
                     "CountryID" => $address["country_id"] != null ? $address["country_id"] : "BR",
