@@ -351,7 +351,7 @@ define(
                     countryID: $("#tuna_billing_address_country").val()
                 };
             },
-            endOrder: function (self, tunaCardToken, creditCardCvv, paymentData, messageContainer, isBoleto = false) {
+            endOrder: function (self, tunaCardToken, tunaCardBrand, creditCardCvv, paymentData, messageContainer, isBoleto = false) {
                 let billingAddress = {};
 
                 if ($("input[name='billingAddress']:checked").length > 0)
@@ -363,6 +363,7 @@ define(
                     'buyer_document': $('#tuna_credit_card_document').val(),
                     'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
                     'credit_card_token': tunaCardToken,
+                    'credit_card_brand': tunaCardBrand,
                     'credit_card_cvv': creditCardCvv,
                     'buyer_name': $('#tuna_credit_card_holder').val(),
                     'is_boleto_payment': isBoleto ? "true" : "false",
@@ -397,6 +398,10 @@ define(
             },
             getSelectedCardToken: function () {
                 return $("input[name='storedCard']:checked").attr("id").substring(10, $("input[name='storedCard']:checked").attr("id").length);
+            },
+            getSelectedCardBrand: function () {
+                let cardToken =  this.getSelectedCardToken();
+                return $("#tuna_card_brand_"+cardToken).text();
             },
             isFieldsValid: function () {
                 if (!$('#tuna_credit_card_holder')[0].value)
@@ -466,9 +471,9 @@ define(
                 if (!fieldCheckResponse) {
 
                     if (this.isUsingSavedCard()) {
-                        self.endOrder(self, this.getSelectedCardToken(), $(".CcCvv").val(), paymentData, messageContainer);
+                        self.endOrder(self, this.getSelectedCardToken(), this.getSelectedCardBrand(), $(".CcCvv").val(), paymentData, messageContainer);
                     } else if (this.isBoletoPayment()) {
-                        self.endOrder(self, "", "", paymentData, messageContainer, true);
+                        self.endOrder(self, "", "", "", paymentData, messageContainer, true);
                     } else {
                         let data = {
                             SessionId: window.checkoutConfig.payment.tunagateway.sessionid,
@@ -486,7 +491,7 @@ define(
                             data: JSON.stringify(data),
                             success: function (returnedData) {
                                 if (returnedData.code == 1)
-                                    self.endOrder(self, returnedData.token, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
+                                    self.endOrder(self, returnedData.token, "cardBrand", $("#tuna_credit_card_code").val(), paymentData, messageContainer);
                                 else {
                                     alert({
                                         title: $.mage.__('Mensagem da Tuna'),
