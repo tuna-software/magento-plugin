@@ -23,7 +23,7 @@ class CreateTunaOrder implements ObserverInterface
   public function execute(\Magento\Framework\Event\Observer $observer)
   {
     $order = $observer->getEvent()->getOrder();
-
+     
     //verify transaction
     if ($order->getStatus() == 'tuna_Started') {
       $orderId = $order->getId();
@@ -34,7 +34,7 @@ class CreateTunaOrder implements ObserverInterface
       $bill = $this->jsonHelper->jsonDecode($payment->getAdditionalInformation()["billingAddress"]);
       $billing["telephone"]=$bill["phone"];
       $billing["city"]=$bill["city"];
-      $billing["region"]=$bill["state"];
+      $billing["region"]=$this->getStateCode($bill["state"]);
       $billing["country_id"]=$bill["countryID"];
       $billing["postcode"]=$bill["postalCode"];
        
@@ -83,13 +83,14 @@ class CreateTunaOrder implements ObserverInterface
       $boletoInfo = null;
       if ($payment->getAdditionalInformation()["is_boleto_payment"]=="false"){
       $cardInfo = [
-        "CardNumber" => $payment->getAdditionalInformation()["credit_card_token"],
+        "TokenProvider" => "Tuna",
+        "CardNumber" => "",
         "CardHolderName" => $payment->getAdditionalInformation()["buyer_name"],
         "CVV" => $payment->getAdditionalInformation()["credit_card_cvv"],
-        "BrandName" => "",
+        "BrandName" => "MASTER",
         "ExpirationMonth" => 1,
-        "ExpirationYear" => 2090,
-        "Token" => $payment->getAdditionalInformation()["session_id"],
+        "ExpirationYear" => 2021,
+        "Token" => $payment->getAdditionalInformation()["credit_card_token"],
         "TokenSingleUse" => 0,
         "SaveCard" => true,
         "BillingInfo" => [
@@ -130,13 +131,14 @@ class CreateTunaOrder implements ObserverInterface
               ];
 
         }
-      #$url = 'http://host.docker.internal:45455/api/Payment/Init'; //pass dynamic url
+      #$url = 'http://host.docker.internal:45457/api/Payment/Init'; //pass dynamic url
       $url  = 'http://tuna.construcodeapp.com/api/Payment/Init';
       $requstbody = [
         'AppToken' => $this->_scopeConfig->getValue('payment/tuna/appKey'),
         'Account' => $this->_scopeConfig->getValue('payment/tuna/partner_account'),
         'PartnerUniqueID' => $orderId,
-        'PartnerID' => 1,
+        'TokenSession' => $payment->getAdditionalInformation()["session_id"] ,
+        'PartnerID' => $this->_scopeConfig->getValue('payment/tuna/partnerid')*1,
         'Customer' => [
           'Email' => $billing["email"],
           'Name' =>$fullName,
@@ -153,7 +155,7 @@ class CreateTunaOrder implements ObserverInterface
           "Complement" => $complement,
           "Neighborhood" => "",
           "City" => $shipping["city"],
-          "State" => $shipping["region"],
+          "State" => $this->getStateCode($shipping["region"]),
           "Country" => $shipping["country_id"]!=null?$shipping["country_id"]:"BR",
           "PostalCode" => $shipping["postcode"],
           "Phone" => $shipping["telephone"]
@@ -192,7 +194,7 @@ class CreateTunaOrder implements ObserverInterface
       /* Create curl factory */
       $httpAdapter = $this->curlFactory->create();
       $bodyJsonRequest = json_encode($requstbody);
-      #$this->saveLog($bodyJsonRequest);
+      $this->saveLog($bodyJsonRequest);
       $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
       $result = $httpAdapter->read();
@@ -284,5 +286,97 @@ class CreateTunaOrder implements ObserverInterface
     }
     fwrite($file, $txt . " | " . date("j/n/Y h:i:s") . "\n");
     fclose($file);
+  }
+
+  public function getStateCode($state)
+  {
+    $code = "BA";
+    switch ($state) {
+      case 'Bahia':
+        $code = "BA";
+          break;
+          case 'Acre':
+            $code = "AC";
+          break;
+          case 'Alagoas':
+            $code = "AL";
+          break;
+          case 'Amapá':
+            $code = "AP";
+          break;
+          case 'Amazonas':
+            $code = "AM";
+          break;
+          case 'Bahia':
+            $code = "BA";
+          break;
+          case 'Ceará':
+            $code = "CE";
+          break;
+          case 'Distrito Federal':
+            $code = "DF";
+          break;
+          case 'Espírito Santo':
+            $code = "ES";
+          break;
+          case 'Goiás':
+            $code = "GO";
+          break;
+          case 'Maranhão':
+            $code = "MA";
+          break;
+          case 'Mato Grosso':
+            $code = "MT";
+          break;
+          case 'Mato Grosso do Sul':
+            $code = "MS";
+          break;
+          case 'Minas Gerais':
+            $code = "MG";
+          break;
+          case 'Pará':
+            $code = "PA";
+          break;
+          case 'Paraíba':
+            $code = "PB";
+          break;
+          case 'Paraná':
+            $code = "PR";
+          break;
+          case 'Pernambuco':
+            $code = "PE";
+          break;
+          case 'Piauí':
+            $code = "PI";
+          break;
+          case 'Rio de Janeiro':
+            $code = "RJ";
+          break;
+          case 'Rio Grande do Norte':
+            $code = "RN";
+          break;
+          case 'Rio Grande do Sul':
+            $code = "RS";
+          break;
+          case 'Rondônia':
+            $code = "RO";
+          break;
+          case 'Roraima':
+            $code = "RR";
+          break;
+          case 'Santa Catarina':
+            $code = "SC";
+          break;
+          case 'São Paulo':
+            $code = "SP";
+          break;
+          case 'Sergipe':
+            $code = "SE";
+          break;
+          case 'Tocantins':
+            $code = "TO";
+          break;
+    }
+    return $code;
   }
 }

@@ -43,6 +43,7 @@ class TunaProvider implements ConfigProviderInterface
     public function getConfig()
     {
         $url = 'https://token.construcodeapp.com/api/Token/NewSession';
+        #$url = 'http://host.docker.internal:45455/api/Token/NewSession';
         $countriesInfo = $this->countryInformationAcquirer->getCountriesInfo();
         $countries = [];
         foreach ($countriesInfo as $country) {
@@ -138,6 +139,7 @@ class TunaProvider implements ConfigProviderInterface
         $response = null;
         if ($tunaSessionID <> null && $customerSession->isLoggedIn()) {
             $url = 'https://token.construcodeapp.com/api/Token/List';
+            #$url = 'http://host.docker.internal:45455/api/Token/List';
             $cItem = [
                 "SessionId" => $tunaSessionID
             ];
