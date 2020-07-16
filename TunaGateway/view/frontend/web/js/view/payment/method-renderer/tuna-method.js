@@ -84,10 +84,9 @@ define(
 
         if (quote.shippingAddress()) {
             let shippingAddress = quote.shippingAddress();
-            let countryName = "Brazil"
-            
-            if(shippingAddress){
-                countryName = window.checkoutConfig.countries.find(c => c.id == shippingAddress.countryId).name;
+
+            if(shippingAddress && shippingAddress.city && shippingAddress.region){
+                let countryName = window.checkoutConfig.countries.find(c => c.id == shippingAddress.countryId).name;
                 
                 let billingAddress = {
                     City: shippingAddress.city,
@@ -96,9 +95,9 @@ define(
                     State: shippingAddress.region,
                     PostalCode: shippingAddress.postcode ?? "",
                     Phone: shippingAddress.telephone,
-                    Street: shippingAddress.street[0] ?? "",
-                    Number: shippingAddress.street[1] ?? "",
-                    Complement: shippingAddress.street[2] ?? ""
+                    Street: shippingAddress.street ? shippingAddress.street[0] ?? "" : "",
+                    Number: shippingAddress.street ? shippingAddress.street[1] ?? "" : "",
+                    Complement: shippingAddress.street ? shippingAddress.street[2] ?? "" : ""
                 }
                 let alreadyAdded = false;
 
