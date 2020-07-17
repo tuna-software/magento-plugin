@@ -340,13 +340,16 @@ define(
             },
             getTypedBillingAddress: function () {
                 return {
-                    street: $("#tuna_billing_address_street").val(),
+                    street: [$("#tuna_billing_address_street").val()],//
                     complement: $("#tuna_billing_address_complement").val(),
                     number: $("#tuna_billing_address_number").val(),
                     postalCode: $("#tuna_billing_address_zip").val(),
+                    postCode: $("#tuna_billing_address_zip").val(),//
                     phone: $("#tuna_billing_address_phone").val(),
+                    telephone: $("#tuna_billing_address_phone").val(),//
                     city: $("#tuna_billing_address_city").val(),
                     state: $("#tuna_billing_address_state option:selected").text(),
+                    region: $("#tuna_billing_address_state option:selected").text(),//
                     country: $("#tuna_billing_address_country option:selected").text(),
                     countryID: $("#tuna_billing_address_country").val()
                 };
@@ -358,6 +361,8 @@ define(
                     billingAddress = this.getSelectedBillingAddress();
                 else
                     billingAddress = this.getTypedBillingAddress();
+
+                quote.billingAddress(billingAddress);//
 
                 let additionalData = {
                     'buyer_document': $('#tuna_credit_card_document').val(),
