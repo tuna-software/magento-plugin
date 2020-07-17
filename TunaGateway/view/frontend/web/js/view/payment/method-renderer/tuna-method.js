@@ -66,28 +66,28 @@ define(
         function isEquivalent(a, b) {
             var aProps = Object.getOwnPropertyNames(a);
             var bProps = Object.getOwnPropertyNames(b);
-        
+
             if (aProps.length != bProps.length) {
                 return false;
             }
-        
+
             for (var i = 0; i < aProps.length; i++) {
                 var propName = aProps[i];
-        
+
                 if (a[propName] !== b[propName]) {
                     return false;
                 }
             }
-        
+
             return true;
         }
 
         if (quote.shippingAddress()) {
             let shippingAddress = quote.shippingAddress();
 
-            if(shippingAddress && shippingAddress.city && shippingAddress.region){
+            if (shippingAddress && shippingAddress.city && shippingAddress.region) {
                 let countryName = window.checkoutConfig.countries.find(c => c.id == shippingAddress.countryId).name;
-                
+
                 let billingAddress = {
                     City: shippingAddress.city,
                     CountryID: shippingAddress.countryId,
@@ -102,25 +102,25 @@ define(
                 let alreadyAdded = false;
 
                 window.checkoutConfig.payment.tunagateway.billingAddresses.forEach(ba => {
-                    if(isEquivalent(billingAddress, ba)){
+                    if (isEquivalent(billingAddress, ba)) {
                         alreadyAdded = true;
                         return;
                     }
                 });
 
-                if(!alreadyAdded)
+                if (!alreadyAdded)
                     window.checkoutConfig.payment.tunagateway.billingAddresses.unshift(billingAddress);
             }
         }
 
         $("#tuna_billing_address_country").live("change", _ => {
             // I swear I'll make it better. Sorry =( 
-            if($("#control").length == 1){
+            if ($("#control").length == 1) {
                 $("#control").remove();
-                $( "#tuna_billing_address_country").val("BR");
+                $("#tuna_billing_address_country").val("BR");
             }
 
-            let selectCountryID = $( "#tuna_billing_address_country option:selected" ).val();
+            let selectCountryID = $("#tuna_billing_address_country option:selected").val();
             let countryRegions = window.checkoutConfig.countries.find(c => c.id == selectCountryID).regions;
             $('#tuna_billing_address_state').find('option').remove();
             countryRegions.forEach(region => {
@@ -170,7 +170,7 @@ define(
                     $("#tuna_card_radio_new").prop("checked", true);
                     $("#newCardDiv").show();
                 }
-                
+
                 if (this.getBillingAddresses() && this.getBillingAddresses().length > 0) {
                     // $($("input[name='billingAddress']")[0]).prop("checked", true);
                     // setTimeout(_ => $($("input[name='billingAddress']")[0]).prop("checked", true), 300);
@@ -346,19 +346,19 @@ define(
                     postalCode: $("#tuna_billing_address_zip").val(),
                     phone: $("#tuna_billing_address_phone").val(),
                     city: $("#tuna_billing_address_city").val(),
-                    state: $( "#tuna_billing_address_state option:selected").text(),
-                    country: $( "#tuna_billing_address_country option:selected" ).text(),
+                    state: $("#tuna_billing_address_state option:selected").text(),
+                    country: $("#tuna_billing_address_country option:selected").text(),
                     countryID: $("#tuna_billing_address_country").val()
                 };
             },
-            endOrder: function (self, creditCardData, creditCardCvv, paymentData, messageContainer, isBoleto = false) {
+            endOrder: function (self, creditCardData, paymentData, messageContainer, isBoleto = false) {
                 let billingAddress = {};
 
                 if ($("input[name='billingAddress']:checked").length > 0)
                     billingAddress = this.getSelectedBillingAddress();
                 else
                     billingAddress = this.getTypedBillingAddress();
-                
+
                 let additionalData = {
                     'buyer_document': $('#tuna_credit_card_document').val(),
                     'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
@@ -366,7 +366,7 @@ define(
                     'credit_card_brand': creditCardData.brand,
                     'credit_card_expiration_month': creditCardData.expirationMonth,
                     'credit_card_expiration_year': creditCardData.expirationYear,
-                    'credit_card_cvv': creditCardCvv,
+                    'credit_card_cvv': creditCardData.creditCardCvv,
                     'buyer_name': $('#tuna_credit_card_holder').val(),
                     'is_boleto_payment': isBoleto ? "true" : "false",
                     'billingAddress': JSON.stringify(billingAddress)
@@ -470,9 +470,10 @@ define(
 
                     if (this.isUsingSavedCard()) {
                         let creditCardData = this.getStoredCreditCards().find(cc => cc.token === this.getSelectedCardToken());
-                        self.endOrder(self, creditCardData, $(".CcCvv").val(), paymentData, messageContainer);
+                        creditCardData.creditCardCvv = $(".CcCvv").val();
+                        self.endOrder(self, creditCardData, paymentData, messageContainer);
                     } else if (this.isBoletoPayment()) {
-                        self.endOrder(self, null, null, paymentData, messageContainer, true);
+                        self.endOrder(self, null, paymentData, messageContainer, true);
                     } else {
                         let data = {
                             SessionId: window.checkoutConfig.payment.tunagateway.sessionid,
@@ -489,8 +490,16 @@ define(
                             //url : "http://localhost:5234/api/Token/Generate",
                             data: JSON.stringify(data),
                             success: function (returnedData) {
-                                if (returnedData.code == 1)
-                                    self.endOrder(self, returnedData.token, $("#tuna_credit_card_code").val(), paymentData, messageContainer);
+                                if (returnedData.code == 1) {
+                                    let creditCardData = {
+                                        token: returnedData.token,
+                                        brand: returnedData.cardBrand,
+                                        expirationMonth: data.Card.ExpirationMonth,
+                                        expirationYear: data.Card.ExpirationYear,
+                                        creditCardCvv: $("#tuna_credit_card_code").val()
+                                    };
+                                    self.endOrder(self, creditCardData, paymentData, messageContainer);
+                                }
                                 else {
                                     alert({
                                         title: $.mage.__('Mensagem da Tuna'),
