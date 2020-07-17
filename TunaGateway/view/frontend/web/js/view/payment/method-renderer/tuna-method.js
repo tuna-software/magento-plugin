@@ -362,11 +362,11 @@ define(
                 let additionalData = {
                     'buyer_document': $('#tuna_credit_card_document').val(),
                     'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
-                    'credit_card_token': creditCardData.token,
-                    'credit_card_brand': creditCardData.brand,
-                    'credit_card_expiration_month': creditCardData.expirationMonth,
-                    'credit_card_expiration_year': creditCardData.expirationYear,
-                    'credit_card_cvv': creditCardData.creditCardCvv,
+                    'credit_card_token': isBoleto ? "" : creditCardData.token,
+                    'credit_card_brand': isBoleto ? "" : creditCardData.brand,
+                    'credit_card_expiration_month': isBoleto ? "" : creditCardData.expirationMonth,
+                    'credit_card_expiration_year': isBoleto ? "" : creditCardData.expirationYear,
+                    'credit_card_cvv': isBoleto ? "" : creditCardData.creditCardCvv,
                     'buyer_name': $('#tuna_credit_card_holder').val(),
                     'is_boleto_payment': isBoleto ? "true" : "false",
                     'billingAddress': JSON.stringify(billingAddress)
@@ -433,8 +433,7 @@ define(
                         $("#tuna_billing_address_city").val().trim().length == 0 ||
                         $("#tuna_billing_address_state").val().trim().length == 0 ||
                         $("#tuna_billing_address_country").val().trim().length == 0 ||
-                        $("#tuna_billing_address_number").val().trim().length == 0 ||
-                        $("#tuna_billing_address_complement").val().trim().length == 0) {
+                        $("#tuna_billing_address_number").val().trim().length == 0) {
                         alert({
                             title: $.mage.__('Mensagem da Tuna'),
                             content: $.mage.__('Por favor, preencha todos os dados do endereço da compra')
