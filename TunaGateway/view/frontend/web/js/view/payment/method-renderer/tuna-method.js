@@ -355,15 +355,7 @@ define(
                 };
             },
             endOrder: function (self, creditCardData, paymentData, messageContainer, isBoleto = false) {
-                let billingAddress = {};
-
-                if ($("input[name='billingAddress']:checked").length > 0)
-                    billingAddress = this.getSelectedBillingAddress();
-                else
-                    billingAddress = this.getTypedBillingAddress();
-
-                quote.billingAddress(billingAddress);//
-
+                
                 let additionalData = {
                     'buyer_document': $('#tuna_credit_card_document').val(),
                     'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
@@ -373,8 +365,7 @@ define(
                     'credit_card_expiration_year': isBoleto ? "" : creditCardData.expirationYear,
                     'credit_card_cvv': isBoleto ? "" : creditCardData.creditCardCvv,
                     'buyer_name': $('#tuna_credit_card_holder').val(),
-                    'is_boleto_payment': isBoleto ? "true" : "false",
-                    'billingAddress': JSON.stringify(billingAddress)
+                    'is_boleto_payment': isBoleto ? "true" : "false"
                 };
 
                 $.when(setPaymentInformationAction(messageContainer, {
@@ -432,36 +423,7 @@ define(
                         return "cvvInvalidInfo";
                 }
 
-                if ($("input[name='billingAddress']:checked").length == 0) {
-
-                    if ($("#tuna_billing_address_street").val().trim().length == 0 ||
-                        $("#tuna_billing_address_city").val().trim().length == 0 ||
-                        $("#tuna_billing_address_state").val().trim().length == 0 ||
-                        $("#tuna_billing_address_country").val().trim().length == 0 ||
-                        $("#tuna_billing_address_number").val().trim().length == 0) {
-                        alert({
-                            title: $.mage.__('Mensagem da Tuna'),
-                            content: $.mage.__('Por favor, preencha todos os dados do endereço da compra')
-                        });
-                        return "billing";
-                    }
-
-                    if (this.onlyNumbers($("#tuna_billing_address_zip").val()).length != 8) {
-                        alert({
-                            title: $.mage.__('Mensagem da Tuna'),
-                            content: $.mage.__('Por favor, informe um CEP válido')
-                        });
-                        return "billing";
-                    }
-
-                    if (this.onlyNumbers($("#tuna_billing_address_phone").val()).length < 10) {
-                        alert({
-                            title: $.mage.__('Mensagem da Tuna'),
-                            content: $.mage.__('Por favor, informe um telefone válido')
-                        });
-                        return "billing";
-                    }
-                }
+               
 
                 return null;
             },

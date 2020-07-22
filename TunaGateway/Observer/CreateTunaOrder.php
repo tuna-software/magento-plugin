@@ -31,12 +31,12 @@ class CreateTunaOrder implements ObserverInterface
       $billing = $order->getBillingAddress();
       $payment = $order->getPayment();
 
-      $bill = $this->jsonHelper->jsonDecode($payment->getAdditionalInformation()["billingAddress"]);
-      $billing["telephone"]=$bill["phone"];
-      $billing["city"]=$bill["city"];
-      $billing["region"]=$this->getStateCode($bill["state"]);
-      $billing["country_id"]=$bill["countryID"];
-      $billing["postcode"]=$bill["postalCode"];
+      // $bill = $this->jsonHelper->jsonDecode($payment->getAdditionalInformation()["billingAddress"]);
+      // $billing["telephone"]=$bill["phone"];
+      // $billing["city"]=$bill["city"];
+      // $billing["region"]=$this->getStateCode($bill["state"]);
+      // $billing["country_id"]=$bill["countryID"];
+      // $billing["postcode"]=$bill["postalCode"];
        
       //$billing["email"]=$bill[""];
       $fullName =  $billing["firstname"] . " " . $billing["lastname"];
@@ -71,9 +71,17 @@ class CreateTunaOrder implements ObserverInterface
       if (sizeof($address) > 2) {
         $complement = $address[2];
       }
-      $addressB  = $bill["street"];
-      $numberB = $bill["number"];
-      $complementB = $bill["complement"];
+      $addressB  = preg_split("/(\r\n|\n|\r)/", $billing["street"]);
+      $numberB = "";
+      if (sizeof($addressB) > 1) {
+        $numberB = $addressB[1];
+      }
+      $complementB = "";
+      if (sizeof($addressB) > 2) {
+        $complementB = $addressB[2];
+      }
+
+
       $documentType = "CPF";
       if (strlen($payment->getAdditionalInformation()["buyer_document"]) > 17) {
         $documentType = "CNPJ";
@@ -97,7 +105,7 @@ class CreateTunaOrder implements ObserverInterface
           "Document" => $payment->getAdditionalInformation()["buyer_document"],
           "DocumentType" => $documentType,
           "Address" => [
-            "Street" => $addressB,
+            "Street" => $addressB[0],
             "Number" => $numberB,
             "Complement" => $complementB,
             "Neighborhood" => "",
@@ -117,7 +125,7 @@ class CreateTunaOrder implements ObserverInterface
               "Document" => $payment->getAdditionalInformation()["buyer_document"],
               "DocumentType" => $documentType,
               "Address" => [
-                "Street" => $addressB,
+                "Street" => $addressB[0],
                 "Number" => $numberB,
                 "Complement" => $complementB,
                 "Neighborhood" => "",
