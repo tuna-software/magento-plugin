@@ -202,7 +202,7 @@ class CreateTunaOrder implements ObserverInterface
       /* Create curl factory */
       $httpAdapter = $this->curlFactory->create();
       $bodyJsonRequest = json_encode($requstbody);
-      $this->saveLog($bodyJsonRequest);
+      #$this->saveLog($bodyJsonRequest);
       $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
       $result = $httpAdapter->read();
