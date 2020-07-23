@@ -110,7 +110,7 @@ class CreateTunaOrder implements ObserverInterface
             "Complement" => $complementB,
             "Neighborhood" => "",
             "City" => $billing["city"],
-            "State" => $billing["region"],
+            "State" => $this->getStateCode($billing["region"]),
             "Country" => $billing["country_id"]!=null?$billing["country_id"]:"BR",
             "PostalCode" => $billing["postcode"],
             "Phone" => $billing["telephone"]
@@ -130,7 +130,7 @@ class CreateTunaOrder implements ObserverInterface
                 "Complement" => $complementB,
                 "Neighborhood" => "",
                 "City" => $billing["city"],
-                "State" => $billing["region"],
+                "State" =>  $this->getStateCode($billing["region"]),
                 "Country" => $billing["country_id"]!=null?$billing["country_id"]:"BR",
                 "PostalCode" => $billing["postcode"],
                 "Phone" => $billing["telephone"]

@@ -82,36 +82,7 @@ define(
             return true;
         }
 
-        if (quote.shippingAddress()) {
-            let shippingAddress = quote.shippingAddress();
-
-            if (shippingAddress && shippingAddress.city && shippingAddress.region) {
-                let countryName = window.checkoutConfig.countries.find(c => c.id == shippingAddress.countryId).name;
-
-                let billingAddress = {
-                    City: shippingAddress.city,
-                    CountryID: shippingAddress.countryId,
-                    CountryName: countryName,
-                    State: shippingAddress.region,
-                    PostalCode: shippingAddress.postcode ?? "",
-                    Phone: shippingAddress.telephone,
-                    Street: shippingAddress.street ? shippingAddress.street[0] ?? "" : "",
-                    Number: shippingAddress.street ? shippingAddress.street[1] ?? "" : "",
-                    Complement: shippingAddress.street ? shippingAddress.street[2] ?? "" : ""
-                }
-                let alreadyAdded = false;
-
-                window.checkoutConfig.payment.tunagateway.billingAddresses.forEach(ba => {
-                    if (isEquivalent(billingAddress, ba)) {
-                        alreadyAdded = true;
-                        return;
-                    }
-                });
-
-                if (!alreadyAdded)
-                    window.checkoutConfig.payment.tunagateway.billingAddresses.unshift(billingAddress);
-            }
-        }
+       
 
         $("#tuna_billing_address_country").live("change", _ => {
             // I swear I'll make it better. Sorry =( 
@@ -321,38 +292,6 @@ define(
 
                 return true;
 
-            },
-            getSelectedBillingAddress: function () {
-                let selectedRadioID = $("input[name='billingAddress']:checked").attr('id').split("tuna_billing_address_radio_")[1];
-                let additionalAddressInfo = $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_additional")[0]).text();
-
-                return {
-                    street: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_street")[0]).text(),
-                    complement: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_complement")[0]).text(),
-                    number: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_number")[0]).text(),
-                    postalCode: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_postalCode")[0]).text(),
-                    phone: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_phone")[0]).text(),
-                    city: additionalAddressInfo.split(",")[0],
-                    state: additionalAddressInfo.split(",")[1],
-                    country: additionalAddressInfo.split(",")[2],
-                    countryID: $($("#tuna_billing_address_" + selectedRadioID).find(".billing_address_countryID")[0]).text()
-                };
-            },
-            getTypedBillingAddress: function () {
-                return {
-                    street: [$("#tuna_billing_address_street").val()],//
-                    complement: $("#tuna_billing_address_complement").val(),
-                    number: $("#tuna_billing_address_number").val(),
-                    postalCode: $("#tuna_billing_address_zip").val(),
-                    postCode: $("#tuna_billing_address_zip").val(),//
-                    phone: $("#tuna_billing_address_phone").val(),
-                    telephone: $("#tuna_billing_address_phone").val(),//
-                    city: $("#tuna_billing_address_city").val(),
-                    state: $("#tuna_billing_address_state option:selected").text(),
-                    region: $("#tuna_billing_address_state option:selected").text(),//
-                    country: $("#tuna_billing_address_country option:selected").text(),
-                    countryID: $("#tuna_billing_address_country").val()
-                };
             },
             endOrder: function (self, creditCardData, paymentData, messageContainer, isBoleto = false) {
                 
