@@ -1,3 +1,9 @@
+<style>
+   .payment-method-billing-address {display:none}
+    .lbl-billing-address {display:none}
+    .discount-code {float:left;clear: both;}
+</style>
+
 <div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}, afterRender: afterRender">
 
     <div class="payment-method-title field choice">
@@ -5,13 +11,13 @@
                 checked: isChecked, 
                 click: selectPaymentMethod, 
                 visible: isRadioButtonVisible()" />
-        <label data-bind="attr: {'for': getCode()}" class="label">
+        <label data-bind="attr: {'for': getCode()}" class="label lbl-billing-address">
             <span data-bind="text: getTitle()"></span></label>
     </div>
 
     <div class="payment-method-content" id="tuna_payment_method_content">
         <span id="control"></span>
-        <label data-bind="attr: {for: 'addressContainer'}" class="label">
+        <label data-bind="attr: {for: 'addressContainer'}" class="label lbl-billing-address">
             <span>
                 <!-- ko i18n: 'Endereço da compra' -->
                 <!-- /ko -->
@@ -23,12 +29,16 @@
             <!--/ko-->
         </div>
         <div class="field _required">
-            <label data-bind="attr: {for: getCode() + 'number'}" class="label">
+            <label data-bind="attr: {for: getCode() + 'number'}" class="label" id="lblHolderNameCard">
                 <span>
                     <!-- ko i18n: 'Nome impresso no cartão' -->
                     <!-- /ko --></span>
             </label>
-
+            <label data-bind="attr: {for: getCode() + 'number'}" class="label" id="lblHolderNameBoleto" style="display:none">
+                <span>
+                    <!-- ko i18n: 'Nome completo' -->
+                    <!-- /ko --></span>
+            </label>
             <div class="control">
                 <input class="input-text required" name="payment[credit_card_holder]" type="text" minlength="3"
                     data-validate="{required:true}" required data-bind="attr: {
@@ -65,7 +75,7 @@
                 <input id="tuna_card_radio_new" type="radio" name="cardRadio">Usar novo cartão
             </label>
             <label class="radio-inline" id="tuna_boleto_label">
-                <input id="tuna_boleto_radio" type="radio" name="cardRadio">boleto
+                <input id="tuna_boleto_radio" type="radio" name="cardRadio">Boleto
             </label>
         </div>
 
@@ -84,8 +94,7 @@
                 </p>
                 <!-- /ko -->
                 <label id="cvvSavedInvalidInfo" style="display: none;">* O cvv deve ter ao menos 3 caractéres</label>
-                <label id="noCreditCardSelected" style="display: none;">* Selecione um cartão como forma de
-                    pagamento</label>
+                <label id="noCreditCardSelected" style="display: none;">* Selecione um cartão como forma de pagamento</label>
             </div>
         </div>
 
@@ -109,7 +118,7 @@
                 <label id="creditCardInvalidInfo" style="display: none;">* Insira um número de cartão válido</label>
             </div>
 
-            <div class="field date required" data-bind="attr: {id: getCode() + '_cc_type_exp_div'}">
+            <div class="field date required" data-bind="attr: {id: getCode() + '_cc_type_exp_div'}" style="float:left;padding-right:10px">
                 <label data-bind="attr: {for: getCode() + '_expiration'}" class="label">
                     <span>
                         <!-- ko i18n: 'Data de Validade'-->
@@ -139,12 +148,12 @@
                                 </select>
                             </div>
                         </div>
+                        
                     </div>
                 </div>
                 <label id="validityDateInvalidInfo" style="display: none;">* Insira uma data válida</label>
             </div>
-
-            <div class="field _required">
+            <div class="field _required" style="float:left">
                 <label data-bind="attr: {for: 'tuna_credit_card_code'}" class="label">
                     <span>
                         <!-- ko i18n: 'Código de segurança (CVV)' -->
@@ -161,12 +170,9 @@
                 <label id="cvvInvalidInfo" style="display: none;">* Insira um cvv válido</label>
 
             </div>
+           
         </div>
-        
-        <div id="boletoDiv" style="display: none;">
-            <p>Seu pagamento será processado via boleto</p>
-        </div>
-        <div class="actions-toolbar" style="margin-top: 15px;">
+        <div class="actions-toolbar" style="margin-top: 15px;float:left;clear:both;margin-bottom: 15px;">
             <div class="primary">
                 <button class="action primary checkout" type="submit" data-bind="
                         click: placeOrder,

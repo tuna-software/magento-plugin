@@ -8,7 +8,7 @@ use Magento\Framework\Event\ObserverInterface;
 class CreateTunaOrder implements ObserverInterface
 {
   protected $_scopeConfig;
-
+  protected $_code = "tuna";
   public function __construct(
     \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
     \Magento\Framework\Session\SessionManager $sessionManager,
