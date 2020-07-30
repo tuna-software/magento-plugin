@@ -108,7 +108,7 @@ class CreateTunaOrder implements ObserverInterface
             "Street" => $addressB[0],
             "Number" => $numberB,
             "Complement" => $complementB,
-            "Neighborhood" => "",
+            "Neighborhood" => "Centro",
             "City" => $billing["city"],
             "State" => $this->getStateCode($billing["region"]),
             "Country" => $billing["country_id"]!=null?$billing["country_id"]:"BR",
@@ -128,7 +128,7 @@ class CreateTunaOrder implements ObserverInterface
                 "Street" => $addressB[0],
                 "Number" => $numberB,
                 "Complement" => $complementB,
-                "Neighborhood" => "",
+                "Neighborhood" => "Centro",
                 "City" => $billing["city"],
                 "State" =>  $this->getStateCode($billing["region"]),
                 "Country" => $billing["country_id"]!=null?$billing["country_id"]:"BR",
@@ -202,7 +202,7 @@ class CreateTunaOrder implements ObserverInterface
       /* Create curl factory */
       $httpAdapter = $this->curlFactory->create();
       $bodyJsonRequest = json_encode($requstbody);
-      #$this->saveLog($bodyJsonRequest);
+      $this->saveLog($bodyJsonRequest);
       $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
       $result = $httpAdapter->read();
