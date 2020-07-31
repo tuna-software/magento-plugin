@@ -40,7 +40,8 @@ class Request extends \Magento\Framework\App\Action\Action
             if (
                 $orderStatus == "tuna_Started" ||
                 $orderStatus == "tuna_Authorized" ||
-                $orderStatus == "tuna_Captured"
+                $orderStatus == "tuna_Captured" ||
+                $orderStatus == "tuna_PendingCapture"
             ) {
                 $itemsCollection = $lastRealOrder->getAllVisibleItems();
                 $orderProducts = [];

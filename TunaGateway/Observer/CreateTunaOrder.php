@@ -30,15 +30,8 @@ class CreateTunaOrder implements ObserverInterface
       $shipping = $order->getShippingAddress();
       $billing = $order->getBillingAddress();
       $payment = $order->getPayment();
-
-      // $bill = $this->jsonHelper->jsonDecode($payment->getAdditionalInformation()["billingAddress"]);
-      // $billing["telephone"]=$bill["phone"];
-      // $billing["city"]=$bill["city"];
-      // $billing["region"]=$this->getStateCode($bill["state"]);
-      // $billing["country_id"]=$bill["countryID"];
-      // $billing["postcode"]=$bill["postalCode"];
-       
-      //$billing["email"]=$bill[""];
+      $tokenSessionParam= $payment->getAdditionalInformation()["session_id"];
+  
       $fullName =  $billing["firstname"] . " " . $billing["lastname"];
       $payItens = $order->getPaymentsCollection()->getItems();
 
@@ -72,7 +65,7 @@ class CreateTunaOrder implements ObserverInterface
         $complement = $address[2];
       }
       $addressB  = preg_split("/(\r\n|\n|\r)/", $billing["street"]);
-      $numberB = "";
+      $numberB = "1";
       if (sizeof($addressB) > 1) {
         $numberB = $addressB[1];
       }
@@ -145,7 +138,7 @@ class CreateTunaOrder implements ObserverInterface
         'AppToken' => $this->_scopeConfig->getValue('payment/tuna/appKey'),
         'Account' => $this->_scopeConfig->getValue('payment/tuna/partner_account'),
         'PartnerUniqueID' => $orderId,
-        'TokenSession' => $payment->getAdditionalInformation()["session_id"] ,
+        'TokenSession' =>  $tokenSessionParam,
         'PartnerID' => $this->_scopeConfig->getValue('payment/tuna/partnerid')*1,
         'Customer' => [
           'Email' => $billing["email"],
@@ -202,7 +195,7 @@ class CreateTunaOrder implements ObserverInterface
       /* Create curl factory */
       $httpAdapter = $this->curlFactory->create();
       $bodyJsonRequest = json_encode($requstbody);
-      $this->saveLog($bodyJsonRequest);
+      #$this->saveLog($bodyJsonRequest);
       $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
       $result = $httpAdapter->read();
