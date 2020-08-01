@@ -41,8 +41,12 @@ class Error extends \Magento\Framework\App\Action\Action
     }
 
     private function clearSession()
-    {
-        $this->_objectManager->create('Magento\Framework\Session\SessionManager')->clearStorage();
+    { 
+        $this->_objectManager->create('Magento\Framework\Session\SessionManager')->getData(
+        'tuna_payment', true
+        );
+        
+        $this->_objectManager->create('Magento\Framework\Session\SessionManager')->unsetData('tuna_payment');
     }
 
     /**

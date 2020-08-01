@@ -3,6 +3,7 @@
 namespace Tuna\TunaGateway\Controller\Payment;
 
 use \Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
+use Magento\Checkout\Model\Session as CheckoutSession;
 
 class Request extends \Magento\Framework\App\Action\Action
 {
@@ -14,13 +15,15 @@ class Request extends \Magento\Framework\App\Action\Action
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
+		CheckoutSession $checkoutSession,
         ScopeConfig $scopeConfig
     ) {
         parent::__construct($context);
         $this->scopeConfig = $scopeConfig;
         $this->resultJsonFactory = $this->_objectManager->create('\Magento\Framework\Controller\Result\JsonFactory');
         $this->result = $this->resultJsonFactory->create();
-        $this->_checkoutSession = $this->_objectManager->create('\Magento\Checkout\Model\Session');
+        $this->_isScopePrivate = true;
+        $this->_checkoutSession = $checkoutSession;
     }
 
     public function execute()
@@ -60,8 +63,8 @@ class Request extends \Magento\Framework\App\Action\Action
                     return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
                 }
 
-                $this->session()->setData([
-                    'tuna_payment' => [
+                $this->session()->setData(
+                    'tuna_payment' , [
                         'payment_type'  => $paymentData['method'],
                         'order_id'      => $this->orderId,
                         'order_products' => $orderProducts,
@@ -69,16 +72,16 @@ class Request extends \Magento\Framework\App\Action\Action
                         'is_boleto' => $isBoletoPayment,
                         'boleto_url' => $isBoletoPayment == "true" ? $payment->getAdditionalInformation()["boleto_url"] : "",
                     ]
-                ]);
+                );
                 return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
             } else {
-                $this->session()->setData([
-                    'tuna_payment' => [
+                $this->session()->setData(
+                    'tuna_payment', [
                         'payment_type'  => $paymentData['method'],
                         'order_id'      => $this->orderId,
                         'order_status' => $orderStatus
                     ]
-                ]);
+                );
                 return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
             }
         }
