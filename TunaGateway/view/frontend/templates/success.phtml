@@ -15,15 +15,16 @@
                 <tr>
                     <th>#</th>
                     <th>Produto</th>
-                    <th>Preço</th>
-                    <th>Quantidade</th>
+					<th>Quantidade</th>
+                    <th>Preço Final</th>
+                   
                 </tr>
                 <?php foreach ($block->getOrderProducts() as $key => $product) : ?>
                     <tr>
                         <td><?php echo $key + 1 ?></td>
-                        <td><?php echo $product["ProductDescription"] ?></td>
-                        <td><?php echo $product["Amount"] ?></td>
+                        <td><?php echo $product["ProductDescription"] ?></td>                        
                         <td><?php echo $product["ItemQuantity"] ?></td>
+						<td><?php echo number_format((float)$product["Amount"]*$product["ItemQuantity"], 2, ',', '') ?></td>
                     </tr>
                 <?php endforeach; ?>
             </table>
