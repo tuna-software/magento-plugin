@@ -13,9 +13,11 @@ class Request extends \Magento\Framework\App\Action\Action
     private $orderId;
     protected $scopeConfig;
 
+
+
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
-		CheckoutSession $checkoutSession,
+        CheckoutSession $checkoutSession,
         ScopeConfig $scopeConfig
     ) {
         parent::__construct($context);
@@ -39,6 +41,17 @@ class Request extends \Magento\Framework\App\Action\Action
         if ($paymentData['method'] === 'tuna') {
             $this->orderId = $lastRealOrder->getId();
             $orderStatus = $lastRealOrder->getStatus();
+            $itemsCollection = $lastRealOrder->getAllVisibleItems();
+            $orderProducts = [];
+            foreach ($itemsCollection as $item) {
+                $cItem = [[
+                    "Amount" => $item->getPrice(),
+                    "ProductUrl" =>  $item->getProduct()->getProductUrl(),
+                    "ProductDescription" => $item->getProduct()->getName(),
+                    "ItemQuantity" => $item->getQtyToInvoice()
+                ]];
+                $orderProducts  = array_merge($orderProducts, $cItem);
+            }
 
             if (
                 $orderStatus == "tuna_Started" ||
@@ -46,17 +59,7 @@ class Request extends \Magento\Framework\App\Action\Action
                 $orderStatus == "tuna_Captured" ||
                 $orderStatus == "tuna_PendingCapture"
             ) {
-                $itemsCollection = $lastRealOrder->getAllVisibleItems();
-                $orderProducts = [];
-                foreach ($itemsCollection as $item) {
-                    $cItem = [[
-                        "Amount" => $item->getPrice(),
-                        "ProductDescription" => $item->getProduct()->getName(),
-                        "ItemQuantity" => $item->getQtyToInvoice()
-                    ]];
-                    $orderProducts  = array_merge($orderProducts, $cItem);
-                }
-
+               
                 $isBoletoPayment = $payment->getAdditionalInformation()["is_boleto_payment"];
 
                 if ($isBoletoPayment == "true" && $this->scopeConfig->getValue('payment/tuna/allow_boleto') === "0") {
@@ -79,6 +82,7 @@ class Request extends \Magento\Framework\App\Action\Action
                     'tuna_payment', [
                         'payment_type'  => $paymentData['method'],
                         'order_id'      => $this->orderId,
+                        'order_products' => $orderProducts,
                         'order_status' => $orderStatus
                     ]
                 );
