@@ -36,13 +36,18 @@ class Error extends \Magento\Framework\App\Action\Action
         $resultPage = $this->_resultPageFactory->create();
         $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderId($this->order()->getIncrementId());
         $resultPage->getLayout()->getBlock('tuna.response.error')->setStatus($this->status());
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderProducts($this->products());
         $this->clearSession();
         return $resultPage;
     }
 
     private function clearSession()
-    {
-        $this->_objectManager->create('Magento\Framework\Session\SessionManager')->clearStorage();
+    { 
+        $this->_objectManager->create('Magento\Framework\Session\SessionManager')->getData(
+        'tuna_payment', true
+        );
+        
+        $this->_objectManager->create('Magento\Framework\Session\SessionManager')->unsetData('tuna_payment');
     }
 
     /**
@@ -59,7 +64,10 @@ class Error extends \Magento\Framework\App\Action\Action
     {
         return $this->session()->order_status;
     }
-
+    private function products()
+    {
+        return $this->session()->order_products;
+    }
     /**
      * Get session
      *

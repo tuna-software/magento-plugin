@@ -8,7 +8,7 @@ use Magento\Framework\Event\ObserverInterface;
 class CreateTunaOrder implements ObserverInterface
 {
   protected $_scopeConfig;
-
+  protected $_code = "tuna";
   public function __construct(
     \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
     \Magento\Framework\Session\SessionManager $sessionManager,
@@ -30,15 +30,8 @@ class CreateTunaOrder implements ObserverInterface
       $shipping = $order->getShippingAddress();
       $billing = $order->getBillingAddress();
       $payment = $order->getPayment();
-
-      // $bill = $this->jsonHelper->jsonDecode($payment->getAdditionalInformation()["billingAddress"]);
-      // $billing["telephone"]=$bill["phone"];
-      // $billing["city"]=$bill["city"];
-      // $billing["region"]=$this->getStateCode($bill["state"]);
-      // $billing["country_id"]=$bill["countryID"];
-      // $billing["postcode"]=$bill["postalCode"];
-       
-      //$billing["email"]=$bill[""];
+      $tokenSessionParam= $payment->getAdditionalInformation()["session_id"];
+  
       $fullName =  $billing["firstname"] . " " . $billing["lastname"];
       $payItens = $order->getPaymentsCollection()->getItems();
 
@@ -72,7 +65,7 @@ class CreateTunaOrder implements ObserverInterface
         $complement = $address[2];
       }
       $addressB  = preg_split("/(\r\n|\n|\r)/", $billing["street"]);
-      $numberB = "";
+      $numberB = "1";
       if (sizeof($addressB) > 1) {
         $numberB = $addressB[1];
       }
@@ -108,7 +101,7 @@ class CreateTunaOrder implements ObserverInterface
             "Street" => $addressB[0],
             "Number" => $numberB,
             "Complement" => $complementB,
-            "Neighborhood" => "",
+            "Neighborhood" => "Centro",
             "City" => $billing["city"],
             "State" => $this->getStateCode($billing["region"]),
             "Country" => $billing["country_id"]!=null?$billing["country_id"]:"BR",
@@ -128,7 +121,7 @@ class CreateTunaOrder implements ObserverInterface
                 "Street" => $addressB[0],
                 "Number" => $numberB,
                 "Complement" => $complementB,
-                "Neighborhood" => "",
+                "Neighborhood" => $complementB!=""?$complementB:"Centro",
                 "City" => $billing["city"],
                 "State" =>  $this->getStateCode($billing["region"]),
                 "Country" => $billing["country_id"]!=null?$billing["country_id"]:"BR",
@@ -145,7 +138,7 @@ class CreateTunaOrder implements ObserverInterface
         'AppToken' => $this->_scopeConfig->getValue('payment/tuna/appKey'),
         'Account' => $this->_scopeConfig->getValue('payment/tuna/partner_account'),
         'PartnerUniqueID' => $orderId,
-        'TokenSession' => $payment->getAdditionalInformation()["session_id"] ,
+        'TokenSession' =>  $tokenSessionParam,
         'PartnerID' => $this->_scopeConfig->getValue('payment/tuna/partnerid')*1,
         'Customer' => [
           'Email' => $billing["email"],

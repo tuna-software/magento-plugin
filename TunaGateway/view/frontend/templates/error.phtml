@@ -1,15 +1,13 @@
 <?php
-
-/**
- * Copyright © 2016 Magento. All rights reserved.
- * See COPYING.txt for license details.
- */
-
-// @codingStandardsIgnoreFile
-
 ?>
 <?php /** @var $block \Magento\Checkout\Block\Onepage\Success */ ?>
 <div>
-    <h2><?php echo __('Tivemos um erro ao processar essa compra # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
-
+    <h2><?php echo __('Tivemos um erro ao processar esse pagamento # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
+   <table>
+    <?php foreach ($block->getOrderProducts() as $key => $product) : ?>
+        <tr>         
+            <td><?php echo $product["ProductDescription"] ?> - <a href="<?php echo $product["ProductUrl"] ?>"> Tente novamente</a> </td>         
+        </tr>
+    <?php endforeach; ?>
+ </table>
 </div>

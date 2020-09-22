@@ -19,7 +19,9 @@ define(
                         field.mask(CpfCnpjMaskBehavior.apply({}, arguments), options);
                     }
                 };
-
+             
+              
+                
             $('#tuna_credit_card_document').mask(CpfCnpjMaskBehavior, cpfCnpjpOptions);
 
             $("#tuna_credit_card_code").mask("9999");
@@ -45,16 +47,22 @@ define(
         function cardRadioChanged() {
             if ($("#tuna_card_radio_saved").prop("checked")) {
                 $("#newCardDiv").hide();
-                $("#boletoDiv").hide();
+                $("#lblHolderNameBoleto").hide();
+              $("#lblHolderNameCard").show();
                 $("#savedCardDiv").show();
+                $(".checkout").html("Pagar");
             } else if ($("#tuna_card_radio_new").prop("checked")) {
                 $("#savedCardDiv").hide();
-                $("#boletoDiv").hide();
+                $("#lblHolderNameBoleto").hide();
+               $("#lblHolderNameCard").show();
                 $("#newCardDiv").show();
+                $(".checkout").html("Pagar");
             } else {
                 $("#savedCardDiv").hide();
                 $("#newCardDiv").hide();
-                $("#boletoDiv").show();
+                $("#lblHolderNameCard").hide();
+                $("#lblHolderNameBoleto").show();
+                $(".checkout").html("Gerar boleto");
             }
         };
 
@@ -96,9 +104,9 @@ define(
             countryRegions.forEach(region => {
                 let option = new Option(region.name, region.id);
                 $('#tuna_billing_address_state').append(option);
-            });
-        });
-
+            });}
+        );
+          
         return Component.extend({
             defaults: {
                 template: 'Tuna_TunaGateway/payment/tuna',
@@ -139,15 +147,8 @@ define(
                     $("#tuna_savedCard_label").remove();
                     $("#tuna_card_radio_new").prop("checked", true);
                     $("#newCardDiv").show();
-                }
-
-                if (this.getBillingAddresses() && this.getBillingAddresses().length > 0) {
-                    // $($("input[name='billingAddress']")[0]).prop("checked", true);
-                    // setTimeout(_ => $($("input[name='billingAddress']")[0]).prop("checked", true), 300);
-                } else {
-                    this.enableBillingAddressFields();
-                    $("#enableAddressInputLink").remove();
-                }
+                }                  
+                 
             },
             enableBillingAddressFields: function () {
                 $("#billingAddressFields").show();
@@ -170,7 +171,7 @@ define(
                 return window.checkoutConfig.countries;
             },
             getCreditCardFlag: function (brand) {
-                return window.tunaImages[brand];
+                return window.tunaImages[brand.toUpperCase()];
             },
             getMailingAddress: function () {
                 return window.checkoutConfig.payment.checkmo.mailingAddress;
@@ -311,14 +312,16 @@ define(
                     'additional_data': additionalData
                 })).done(function () {
                     console.log("done set payment information");
-                    $.when(placeOrder(paymentData, messageContainer)).done(function () {
+                    delete paymentData['title'];
+                    $.when(
+                        placeOrder(paymentData, messageContainer)).done(function () {
                         console.log("done place order");
                         $.mage.redirect(window.checkoutConfig.tuna_payment);
                     });
                 }).fail(function () {
                     alert({
-                        title: $.mage.__('Mensagem da Tuna'),
-                        content: $.mage.__('Ocorreu um erro. Por favor, atualize a página e tente novamente')
+                        title: $.mage.__('Algo deu errado'),
+                        content: $.mage.__('Ocorreu um erro no processamento. Por favor, tente novamente')
                     });
                 }).always(function () {
                     console.log("always");
@@ -338,7 +341,7 @@ define(
             isFieldsValid: function () {
                 if (!$('#tuna_credit_card_holder')[0].value)
                     return "holderInvalidInfo";
-
+                
                 let document = $('#tuna_credit_card_document')[0].value;
                 if (!document || (!this.isCNPJValid(document) && !this.isCPFValid(document)))
                     return "cpfInvalidInfo";
@@ -366,6 +369,14 @@ define(
                 return null;
             },
             placeOrder: function () {
+                if ($("#customer-email").val()=="" && $(".authentication-wrapper").css("display")=="block")
+                {
+                    alert({
+                        title: $.mage.__('Algo deu errado'),
+                        content: $.mage.__('Operação só pode ser realizada após o preenchimento do campo e-mail.')
+                    });
+                return false;
+                }
                 let self = this;
                 let paymentData = quote.paymentMethod();
                 let messageContainer = this.messageContainer;
@@ -406,8 +417,8 @@ define(
                                 }
                                 else {
                                     alert({
-                                        title: $.mage.__('Mensagem da Tuna'),
-                                        content: $.mage.__('Infelizmente tivemos um problema. Por favor, tente novamente')
+                                        title: $.mage.__('Algo deu errado'),
+                                        content: $.mage.__('Ocorreu um erro no processamento. Por favor, tente novamente')
                                     });
                                     return;
                                 }
