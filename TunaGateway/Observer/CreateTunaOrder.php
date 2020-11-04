@@ -93,7 +93,7 @@ class CreateTunaOrder implements ObserverInterface
         "ExpirationYear" =>  $payment->getAdditionalInformation()["credit_card_expiration_year"]*1,
         "Token" => $payment->getAdditionalInformation()["credit_card_token"],
         "TokenSingleUse" => 0,
-        "SaveCard" => true,
+        "SaveCard" => false,
         "BillingInfo" => [
           "Document" => $payment->getAdditionalInformation()["buyer_document"],
           "DocumentType" => $documentType,
@@ -184,7 +184,7 @@ class CreateTunaOrder implements ObserverInterface
             [
               "PaymentMethodType" => $PaymentMethodType,
               "Amount" => $order->getGrandTotal(),
-              "Installments" => 1,
+              "Installments" =>$payment->getAdditionalInformation()["credit_card_installments"]*1,
               "CardInfo" => $cardInfo,
               "BoletoInfo" => $boletoInfo
             ]

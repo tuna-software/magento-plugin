@@ -24,6 +24,10 @@
 					<label>Permite pagamento com boleto</label>
 					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 				</field>
+				<field id="installments" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label" type="select">
+					<label>Permitir parcelamento em até</label>
+					<source_model>Tuna\TunaGateway\Model\Config\Source\InstallmentOption</source_model>
+				</field>
 				<field id="sort_order" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="60" translate="label" type="text">
 					<label>Sort Order</label>
 				</field>

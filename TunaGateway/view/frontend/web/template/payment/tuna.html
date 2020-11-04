@@ -26,6 +26,19 @@
             <!-- ko template: getTemplate() --><!-- /ko -->
             <!--/ko-->
         </div>
+
+        <div>
+            <label class="radio-inline" id="tuna_savedCard_label">
+                <input id="tuna_card_radio_saved" type="radio" name="cardRadio" checked>Usar cartão salvo
+            </label>
+            <label class="radio-inline" id="tuna_newCard_label">
+                <input id="tuna_card_radio_new" type="radio" name="cardRadio">Usar novo cartão
+            </label>
+            <label class="radio-inline" id="tuna_boleto_label">
+                <input id="tuna_boleto_radio" type="radio" name="cardRadio">Boleto
+            </label>
+        </div>
+        
         <div class="field _required">
             <label data-bind="attr: {for: getCode() + 'number'}" class="label" id="lblHolderNameCard">
                 <span>
@@ -64,35 +77,42 @@
             </div>
             <label id="cpfInvalidInfo" style="display: none;">* insira um CPF/CNPJ válido</label>
         </div>
+        <div class="field _required" id="installmentsDiv">
+            <label data-bind="attr: {for: 'tuna_credit_card_installments'}" class="label">
+                <span>
+                    <!-- ko i18n: 'Parcelas' -->
+                    <!-- /ko --></span>
+            </label>
 
-        <div>
-            <label class="radio-inline" id="tuna_savedCard_label">
-                <input id="tuna_card_radio_saved" type="radio" name="cardRadio" checked>Usar cartão salvo
-            </label>
-            <label class="radio-inline" id="tuna_newCard_label">
-                <input id="tuna_card_radio_new" type="radio" name="cardRadio">Usar novo cartão
-            </label>
-            <label class="radio-inline" id="tuna_boleto_label">
-                <input id="tuna_boleto_radio" type="radio" name="cardRadio">Boleto
-            </label>
+            <div class="control">
+                <select name="payment[tuna_credit_card_installments]" class="select " data-bind="attr: {id: 'tuna_credit_card_installments'},
+                enable: true,
+                options: getInstallments(),
+                optionsValue: 'value',
+                optionsText: 'text',
+                optionsCaption: $t('Parcelas')">
+    </select> 
+            </div> 
+            <label id="installmentsInvalidInfo" style="display: none;">* insira parcelas</label>
         </div>
+
 
         <div id="savedCardDiv">
             <div>
                 <!-- ko foreach: getStoredCreditCards() -->
-                <p class="radio-inline">
+                <p class="radio-inline" style="clear:both;float:left;padding:10px 0px">
                     <input type="radio" name="storedCard" data-bind="attr: {id: 'tuna_card_'+token},
-                            event: {change: $parent.selectStoredCard}">
+                            event: {change: $parent.selectStoredCard}"  style="float:left;margin-top:10px" >
 
-                    <img data-bind="attr: {src: $parent.getCreditCardFlag(brand), height: '', width: '60' }"
-                        class="payment-icon" />
-                    <span data-bind="text: maskedNumber"></span>
-                    <input class="CcCvv" style="width: 90px; display: none;" type="text" placeholder="CVV" maxlength="4"
+                    <img data-bind="attr: {src: $parent.getCreditCardFlag(brand), height: '', width: '50' }"
+                        class="payment-icon" style="float:left" />
+                    <span data-bind="text: maskedNumber" style="float:left;margin-top:6px;padding:0px 10px" ></span>
+                    <input class="CcCvv" style="width: 90px; display: none;float:left;" type="text" placeholder="CVV" maxlength="4"
                         data-bind="attr: {id: 'tuna_card_cvv_'+token}" />
                 </p>
                 <!-- /ko -->
-                <label id="cvvSavedInvalidInfo" style="display: none;">* O cvv deve ter ao menos 3 caractéres</label>
-                <label id="noCreditCardSelected" style="display: none;">* Selecione um cartão como forma de pagamento</label>
+                <label id="cvvSavedInvalidInfo" style="display: none;float:left;clear: both">* O cvv deve ter ao menos 3 caractéres</label>
+                <label id="noCreditCardSelected" style="display: none;float:left;clear: both;">* Selecione um cartão como forma de pagamento</label>
             </div>
         </div>
 

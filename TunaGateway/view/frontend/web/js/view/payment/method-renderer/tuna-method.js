@@ -38,6 +38,8 @@ define(
                     $('#tuna_billing_address_phone').mask('(00) 0000-00009');
                 }
             });
+           
+            
         });
 
         $('input[type=radio][name=billingAddress]').live("change", function () {
@@ -50,18 +52,21 @@ define(
                 $("#lblHolderNameBoleto").hide();
               $("#lblHolderNameCard").show();
                 $("#savedCardDiv").show();
+                $("#installmentsDiv").show();
                 $(".checkout").html("Pagar");
             } else if ($("#tuna_card_radio_new").prop("checked")) {
                 $("#savedCardDiv").hide();
                 $("#lblHolderNameBoleto").hide();
                $("#lblHolderNameCard").show();
                 $("#newCardDiv").show();
+                $("#installmentsDiv").show();
                 $(".checkout").html("Pagar");
             } else {
                 $("#savedCardDiv").hide();
                 $("#newCardDiv").hide();
                 $("#lblHolderNameCard").hide();
                 $("#lblHolderNameBoleto").show();
+                $("#installmentsDiv").hide();
                 $(".checkout").html("Gerar boleto");
             }
         };
@@ -93,6 +98,7 @@ define(
        
 
         $("#tuna_billing_address_country").live("change", _ => {
+            // I swear I'll make it better. Sorry =( 
             if ($("#control").length == 1) {
                 $("#control").remove();
                 $("#tuna_billing_address_country").val("BR");
@@ -206,6 +212,18 @@ define(
                     };
                 });
             },
+            getInstallments: function () { 
+                let installments = [];
+                for (let i = 1; i <= window.checkoutConfig.payment.tunagateway.installments; i++) {
+                    installments.push(i);
+                }
+                return _.map(installments, function (value, key) {
+                    return {
+                        'value': value,
+                        'text': value+'x'
+                    };
+                });
+            },
             onlyNumbers: function (value) {
                 return value.replace(/\D/g, '');
             },
@@ -303,6 +321,7 @@ define(
                     'credit_card_expiration_month': isBoleto ? "" : creditCardData.expirationMonth,
                     'credit_card_expiration_year': isBoleto ? "" : creditCardData.expirationYear,
                     'credit_card_cvv': isBoleto ? "" : creditCardData.creditCardCvv,
+                    'credit_card_installments': isBoleto ? "1" :  $('#tuna_credit_card_installments').val(),
                     'buyer_name': $('#tuna_credit_card_holder').val(),
                     'is_boleto_payment': isBoleto ? "true" : "false"
                 };
@@ -345,7 +364,8 @@ define(
                 let document = $('#tuna_credit_card_document')[0].value;
                 if (!document || (!this.isCNPJValid(document) && !this.isCPFValid(document)))
                     return "cpfInvalidInfo";
-
+                if (!$('#tuna_credit_card_installments')[0].value)
+                    return "installmentsInvalidInfo";
                 if (this.isUsingSavedCard()) {
                     if ($("input[name='storedCard']:checked").length > 0) {
                         if (!$("#tuna_card_cvv_" + this.getSelectedCardToken()).val())
@@ -362,6 +382,8 @@ define(
 
                     if (!$("#tuna_credit_card_code")[0].value || $("#tuna_credit_card_code")[0].value < 3)
                         return "cvvInvalidInfo";
+
+                    
                 }
 
                
@@ -384,8 +406,8 @@ define(
                 if (!fieldCheckResponse) {
 
                     if (this.isUsingSavedCard()) {
-                        let creditCardData = this.getStoredCreditCards().find(cc => cc.token === this.getSelectedCardToken());
-                        creditCardData.creditCardCvv = $(".CcCvv").val();
+                        let creditCardData = this.getStoredCreditCards().find(cc => cc.token === this.getSelectedCardToken()); 
+                        creditCardData.creditCardCvv = $(".CcCvv:visible").val();
                         self.endOrder(self, creditCardData, paymentData, messageContainer);
                     } else if (this.isBoletoPayment()) {
                         self.endOrder(self, null, paymentData, messageContainer, true);
@@ -402,7 +424,6 @@ define(
                         $.ajax({
                             type: "POST",
                             url: "https://token.construcodeapp.com/api/Token/Generate",
-                            //url : "http://localhost:5234/api/Token/Generate",
                             data: JSON.stringify(data),
                             success: function (returnedData) {
                                 if (returnedData.code == 1) {
@@ -429,7 +450,7 @@ define(
                     }
                 } else {
                     let validationLabels = ["holderInvalidInfo", "cpfInvalidInfo", "cvvSavedInvalidInfo",
-                        "creditCardInvalidInfo", "validityDateInvalidInfo", "cvvInvalidInfo", "noCreditCardSelected"];
+                        "creditCardInvalidInfo", "validityDateInvalidInfo", "cvvInvalidInfo", "noCreditCardSelected" , "installmentsInvalidInfo"];
                     validationLabels.forEach(fieldID => {
                         $("#" + fieldID).hide();
                     });

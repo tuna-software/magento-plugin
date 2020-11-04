@@ -159,6 +159,7 @@ class TunaProvider implements ConfigProviderInterface
                     'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna/allow_boleto'),
+                    'installments' => $this->scopeConfig->getValue('payment/tuna/installments'),
                     'billingAddresses' => $billingAddresses,
                 ]
             ],
