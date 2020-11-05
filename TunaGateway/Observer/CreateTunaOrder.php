@@ -132,8 +132,8 @@ class CreateTunaOrder implements ObserverInterface
               ];
 
         }
-      #$url = 'http://host.docker.internal:45457/api/Payment/Init'; //pass dynamic url
-      $url  = 'http://tuna.construcodeapp.com/api/Payment/Init';
+    
+      $url  = 'https://engine.tunagateway.com/api/Payment/Init';
       $requstbody = [
         'AppToken' => $this->_scopeConfig->getValue('payment/tuna/appKey'),
         'Account' => $this->_scopeConfig->getValue('payment/tuna/partner_account'),

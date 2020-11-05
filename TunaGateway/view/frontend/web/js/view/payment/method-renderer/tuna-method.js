@@ -423,7 +423,7 @@ define(
                         };
                         $.ajax({
                             type: "POST",
-                            url: "https://token.construcodeapp.com/api/Token/Generate",
+                            url: "https://token.tunagateway.com/api/Token/Generate",
                             data: JSON.stringify(data),
                             success: function (returnedData) {
                                 if (returnedData.code == 1) {
