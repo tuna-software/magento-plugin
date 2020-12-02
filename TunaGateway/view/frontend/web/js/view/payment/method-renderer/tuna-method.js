@@ -429,7 +429,7 @@ define(
                                 if (returnedData.code == 1) {
                                     let creditCardData = {
                                         token: returnedData.token,
-                                        brand: returnedData.cardBrand,
+                                        brand: returnedData.brand,
                                         expirationMonth: data.Card.ExpirationMonth,
                                         expirationYear: data.Card.ExpirationYear,
                                         creditCardCvv: $("#tuna_credit_card_code").val()
