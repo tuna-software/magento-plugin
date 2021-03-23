@@ -95,6 +95,7 @@ class Update extends \Magento\Framework\App\Action\Action
                 $status = ('tuna_RedFlag');
                 break;
             case 'C':
+            case 'P':
                 $status = ('tuna_PendingCapture');
                 break;
             case 'D':

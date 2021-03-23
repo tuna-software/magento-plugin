@@ -98,7 +98,7 @@ define(
        
 
         $("#tuna_billing_address_country").live("change", _ => {
-            // I swear I'll make it better. Sorry =( 
+            // Fix unknow info
             if ($("#control").length == 1) {
                 $("#control").remove();
                 $("#tuna_billing_address_country").val("BR");

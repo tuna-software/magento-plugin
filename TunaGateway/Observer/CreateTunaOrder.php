@@ -245,6 +245,7 @@ class CreateTunaOrder implements ObserverInterface
                 $order->setStatus('tuna_RedFlag');
               break;
           case 'C':
+          case 'P':
                 $order->setStatus('tuna_PendingCapture');
               break;
           case 'D':
@@ -307,10 +308,7 @@ class CreateTunaOrder implements ObserverInterface
           break;
           case 'Amazonas':
             $code = "AM";
-          break;
-          case 'Bahia':
-            $code = "BA";
-          break;
+          break; 
           case 'Ceará':
             $code = "CE";
           break;
