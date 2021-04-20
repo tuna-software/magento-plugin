@@ -87,7 +87,6 @@ class CreateTunaOrder implements ObserverInterface
         "TokenProvider" => "Tuna",
         "CardNumber" => "",
         "CardHolderName" => $payment->getAdditionalInformation()["buyer_name"],
-        "CVV" => $payment->getAdditionalInformation()["credit_card_cvv"],
         "BrandName" => $payment->getAdditionalInformation()["credit_card_brand"],
         "ExpirationMonth" =>  $payment->getAdditionalInformation()["credit_card_expiration_month"]*1,
         "ExpirationYear" =>  $payment->getAdditionalInformation()["credit_card_expiration_year"]*1,

@@ -1,5 +1,6 @@
 define(
     [
+        'tuna_essential',
         'Magento_Ui/js/modal/alert',
         'jquery',
         'Magento_Checkout/js/model/quote',
@@ -7,7 +8,7 @@ define(
         'Magento_Checkout/js/action/set-payment-information',
         'Magento_Checkout/js/action/place-order',
     ],
-    function (alert, $, quote, Component, setPaymentInformationAction, placeOrder) {
+    function (tuna_essential, alert, $, quote, Component, setPaymentInformationAction, placeOrder) {
         'use strict';
         require(['jquery', 'jquery_mask'], function ($) {
 
@@ -19,9 +20,7 @@ define(
                         field.mask(CpfCnpjMaskBehavior.apply({}, arguments), options);
                     }
                 };
-             
-              
-                
+
             $('#tuna_credit_card_document').mask(CpfCnpjMaskBehavior, cpfCnpjpOptions);
 
             $("#tuna_credit_card_code").mask("9999");
@@ -38,8 +37,8 @@ define(
                     $('#tuna_billing_address_phone').mask('(00) 0000-00009');
                 }
             });
-           
-            
+
+
         });
 
         $('input[type=radio][name=billingAddress]').live("change", function () {
@@ -48,25 +47,26 @@ define(
 
         function cardRadioChanged() {
             if ($("#tuna_card_radio_saved").prop("checked")) {
+                $("#creditCardPaymentDiv").show();
                 $("#newCardDiv").hide();
                 $("#lblHolderNameBoleto").hide();
-              $("#lblHolderNameCard").show();
+                $("#lblHolderNameCard").show();
                 $("#savedCardDiv").show();
-                $("#installmentsDiv").show();
+                $("#boletoDiv").hide();
                 $(".checkout").html("Pagar");
             } else if ($("#tuna_card_radio_new").prop("checked")) {
                 $("#savedCardDiv").hide();
+                $("#creditCardPaymentDiv").show();
                 $("#lblHolderNameBoleto").hide();
-               $("#lblHolderNameCard").show();
+                $("#lblHolderNameCard").show();
                 $("#newCardDiv").show();
-                $("#installmentsDiv").show();
+                $("#boletoDiv").hide();
                 $(".checkout").html("Pagar");
             } else {
-                $("#savedCardDiv").hide();
-                $("#newCardDiv").hide();
+                $("#creditCardPaymentDiv").hide();
                 $("#lblHolderNameCard").hide();
                 $("#lblHolderNameBoleto").show();
-                $("#installmentsDiv").hide();
+                $("#boletoDiv").show();
                 $(".checkout").html("Gerar boleto");
             }
         };
@@ -95,8 +95,6 @@ define(
             return true;
         }
 
-       
-
         $("#tuna_billing_address_country").live("change", _ => {
             // Fix unknow info
             if ($("#control").length == 1) {
@@ -110,9 +108,10 @@ define(
             countryRegions.forEach(region => {
                 let option = new Option(region.name, region.id);
                 $('#tuna_billing_address_state').append(option);
-            });}
+            });
+        }
         );
-          
+
         return Component.extend({
             defaults: {
                 template: 'Tuna_TunaGateway/payment/tuna',
@@ -125,12 +124,11 @@ define(
                         $("#badNewsDiv").show();
                         return;
                     } else {
+                        $("#creditCardPaymentDiv").remove();
                         $("#tuna_savedCard_label").remove();
                         $("#tuna_newCard_label").remove();
                         $("#tuna_boleto_radio").prop("checked", true);
                         $("#boletoDiv").show();
-                        $("#newCardDiv").remove();
-                        $("#savedCardDiv").remove();
                         return;
                     }
                 }
@@ -153,8 +151,8 @@ define(
                     $("#tuna_savedCard_label").remove();
                     $("#tuna_card_radio_new").prop("checked", true);
                     $("#newCardDiv").show();
-                }                  
-                 
+                }
+
             },
             enableBillingAddressFields: function () {
                 $("#billingAddressFields").show();
@@ -212,7 +210,7 @@ define(
                     };
                 });
             },
-            getInstallments: function () { 
+            getInstallments: function () {
                 let installments = [];
                 for (let i = 1; i <= window.checkoutConfig.payment.tunagateway.installments; i++) {
                     installments.push(i);
@@ -220,7 +218,7 @@ define(
                 return _.map(installments, function (value, key) {
                     return {
                         'value': value,
-                        'text': value+'x'
+                        'text': value + 'x'
                     };
                 });
             },
@@ -312,7 +310,7 @@ define(
 
             },
             endOrder: function (self, creditCardData, paymentData, messageContainer, isBoleto = false) {
-                
+
                 let additionalData = {
                     'buyer_document': $('#tuna_credit_card_document').val(),
                     'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
@@ -320,9 +318,8 @@ define(
                     'credit_card_brand': isBoleto ? "" : creditCardData.brand,
                     'credit_card_expiration_month': isBoleto ? "" : creditCardData.expirationMonth,
                     'credit_card_expiration_year': isBoleto ? "" : creditCardData.expirationYear,
-                    'credit_card_cvv': isBoleto ? "" : creditCardData.creditCardCvv,
-                    'credit_card_installments': isBoleto ? "1" :  $('#tuna_credit_card_installments').val(),
-                    'buyer_name': $('#tuna_credit_card_holder').val(),
+                    'credit_card_installments': isBoleto ? "1" : $('#tuna_credit_card_installments').val(),
+                    'buyer_name': isBoleto ? $('#tuna_boleto_holder').val() : $('#tuna_credit_card_holder').val(),
                     'is_boleto_payment': isBoleto ? "true" : "false"
                 };
 
@@ -334,9 +331,9 @@ define(
                     delete paymentData['title'];
                     $.when(
                         placeOrder(paymentData, messageContainer)).done(function () {
-                        console.log("done place order");
-                        $.mage.redirect(window.checkoutConfig.tuna_payment);
-                    });
+                            console.log("done place order");
+                            $.mage.redirect(window.checkoutConfig.tuna_payment);
+                        });
                 }).fail(function () {
                     alert({
                         title: $.mage.__('Algo deu errado'),
@@ -351,6 +348,10 @@ define(
                 return window.checkoutConfig.payment.tunagateway.is_user_logged_in &&
                     $("#tuna_card_radio_saved").prop("checked");
             },
+            isUsingNewCard: function () {
+                return window.checkoutConfig.payment.tunagateway.is_user_logged_in &&
+                    $("#tuna_card_radio_new").prop("checked");
+            },
             isBoletoPayment: function () {
                 return $("#tuna_boleto_radio").prop("checked");
             },
@@ -358,99 +359,114 @@ define(
                 return $("input[name='storedCard']:checked").attr("id").substring(10, $("input[name='storedCard']:checked").attr("id").length);
             },
             isFieldsValid: function () {
-                if (!$('#tuna_credit_card_holder')[0].value)
-                    return "holderInvalidInfo";
-                
-                let document = $('#tuna_credit_card_document')[0].value;
-                if (!document || (!this.isCNPJValid(document) && !this.isCPFValid(document)))
-                    return "cpfInvalidInfo";
-                if (!$('#tuna_credit_card_installments')[0].value)
-                    return "installmentsInvalidInfo";
-                if (this.isUsingSavedCard()) {
-                    if ($("input[name='storedCard']:checked").length > 0) {
-                        if (!$("#tuna_card_cvv_" + this.getSelectedCardToken()).val())
-                            return "cvvSavedInvalidInfo";
-                    } else
-                        return "noCreditCardSelected";
-                } else if (!this.isBoletoPayment()) {
+
+                if (this.isUsingNewCard()) {
+
+                    if (!$('#tuna_credit_card_holder')[0].value)
+                        return "holderInvalidInfo";
+
                     let cardNumber = this.onlyNumbers($('#tuna_credit_card_number')[0].value);
                     if (!cardNumber || cardNumber.length != 16)
                         return "creditCardInvalidInfo";
 
-                    if (!$('#tuna_credit_card_expiration_month')[0].value || !$('#tuna_credit_card_expiration_year')[0].value)
+                    let expirationYear = $('#tuna_credit_card_expiration_year')[0].value;
+                    let expirationMonth = $('#tuna_credit_card_expiration_month')[0].value;
+
+                    if (!expirationMonth || !expirationYear)
+                        return "validityDateInvalidInfo";
+
+                    let expireDate = new Date(expirationYear, parseInt(expirationMonth)-1);
+                    if (expireDate < new Date())
                         return "validityDateInvalidInfo";
 
                     if (!$("#tuna_credit_card_code")[0].value || $("#tuna_credit_card_code")[0].value < 3)
                         return "cvvInvalidInfo";
 
-                    
+                } else if (this.isUsingSavedCard()) {
+                    if ($("input[name='storedCard']:checked").length > 0) {
+                        if (!$("#tuna_card_cvv_" + this.getSelectedCardToken()).val())
+                            return "cvvSavedInvalidInfo";
+                    } else
+                        return "noCreditCardSelected";
+                } else if (this.isBoletoPayment()) {
+                    if (!$('#tuna_boleto_holder')[0].value)
+                        return "boletoHolderInvalidInfo";
+                } else {
+                    return "error";
                 }
 
-               
+                let document = $('#tuna_credit_card_document')[0].value;
+                if (!document || (!this.isCNPJValid(document) && !this.isCPFValid(document)))
+                    return "cpfInvalidInfo";
 
                 return null;
             },
-            placeOrder: function () {
-                if ($("#customer-email").val()=="" && $(".authentication-wrapper").css("display")=="block")
-                {
+            placeOrder: async function () {
+                if ($("#customer-email").val() == "" && $(".authentication-wrapper").css("display") == "block") {
                     alert({
                         title: $.mage.__('Algo deu errado'),
                         content: $.mage.__('Operação só pode ser realizada após o preenchimento do campo e-mail.')
                     });
-                return false;
+                    return false;
                 }
                 let self = this;
                 let paymentData = quote.paymentMethod();
                 let messageContainer = this.messageContainer;
                 let fieldCheckResponse = this.isFieldsValid();
                 if (!fieldCheckResponse) {
+                    let tunaLib = Tuna(window.checkoutConfig.payment.tunagateway.sessionid);
+                    let tokenizator = tunaLib.tokenizator();
 
                     if (this.isUsingSavedCard()) {
-                        let creditCardData = this.getStoredCreditCards().find(cc => cc.token === this.getSelectedCardToken()); 
-                        creditCardData.creditCardCvv = $(".CcCvv:visible").val();
-                        self.endOrder(self, creditCardData, paymentData, messageContainer);
+                        let creditCardData = this.getStoredCreditCards().find(cc => cc.token === this.getSelectedCardToken());
+                        let creditCardCvv = $(".CcCvv:visible").val();
+                        let bindResponse = await tokenizator.bind(creditCardData.token, creditCardCvv);
+
+                        if (bindResponse && bindResponse.code == 1)
+                            self.endOrder(self, creditCardData, paymentData, messageContainer);
+                        else {
+                            alert({
+                                title: $.mage.__('Algo deu errado'),
+                                content: $.mage.__('Ocorreu um erro no processamento. Por favor, tente novamente')
+                            });
+                            return;
+                        }
+
                     } else if (this.isBoletoPayment()) {
                         self.endOrder(self, null, paymentData, messageContainer, true);
                     } else {
-                        let data = {
-                            SessionId: window.checkoutConfig.payment.tunagateway.sessionid,
-                            Card: {
-                                CardHolderName: $('#tuna_credit_card_holder').val(),
-                                CardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
-                                ExpirationMonth: parseInt($('#tuna_credit_card_expiration_month').val()),
-                                ExpirationYear: parseInt($('#tuna_credit_card_expiration_year').val())
-                            }
+
+                        let cardData = {
+                            CardHolderName: $('#tuna_credit_card_holder').val(),
+                            CardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
+                            ExpirationMonth: parseInt($('#tuna_credit_card_expiration_month').val()),
+                            ExpirationYear: parseInt($('#tuna_credit_card_expiration_year').val())
                         };
-                        $.ajax({
-                            type: "POST",
-                            url: "https://token.tunagateway.com/api/Token/Generate",
-                            data: JSON.stringify(data),
-                            success: function (returnedData) {
-                                if (returnedData.code == 1) {
-                                    let creditCardData = {
-                                        token: returnedData.token,
-                                        brand: returnedData.brand,
-                                        expirationMonth: data.Card.ExpirationMonth,
-                                        expirationYear: data.Card.ExpirationYear,
-                                        creditCardCvv: $("#tuna_credit_card_code").val()
-                                    };
-                                    self.endOrder(self, creditCardData, paymentData, messageContainer);
-                                }
-                                else {
-                                    alert({
-                                        title: $.mage.__('Algo deu errado'),
-                                        content: $.mage.__('Ocorreu um erro no processamento. Por favor, tente novamente')
-                                    });
-                                    return;
-                                }
-                            },
-                            dataType: 'json',
-                            contentType: "application/json"
-                        });
+
+                        let generateResponse = await tokenizator.generate(cardData);
+
+                        if (generateResponse.code == 1) {
+                            let creditCardData = {
+                                token: generateResponse.token,
+                                brand: generateResponse.brand,
+                                expirationMonth: cardData.ExpirationMonth,
+                                expirationYear: cardData.ExpirationYear,
+                            };
+                            self.endOrder(self, creditCardData, paymentData, messageContainer);
+                        }
+                        else {
+                            alert({
+                                title: $.mage.__('Algo deu errado'),
+                                content: $.mage.__('Ocorreu um erro no processamento. Por favor, tente novamente')
+                            });
+                            return;
+                        }
                     }
                 } else {
                     let validationLabels = ["holderInvalidInfo", "cpfInvalidInfo", "cvvSavedInvalidInfo",
-                        "creditCardInvalidInfo", "validityDateInvalidInfo", "cvvInvalidInfo", "noCreditCardSelected" , "installmentsInvalidInfo"];
+                        "boletoHolderInvalidInfo", "creditCardInvalidInfo", "validityDateInvalidInfo",
+                        "cvvInvalidInfo", "noCreditCardSelected", "installmentsInvalidInfo"];
+
                     validationLabels.forEach(fieldID => {
                         $("#" + fieldID).hide();
                     });
