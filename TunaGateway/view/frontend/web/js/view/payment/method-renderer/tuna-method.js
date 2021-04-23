@@ -440,7 +440,8 @@ define(
                             CardHolderName: $('#tuna_credit_card_holder').val(),
                             CardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
                             ExpirationMonth: parseInt($('#tuna_credit_card_expiration_month').val()),
-                            ExpirationYear: parseInt($('#tuna_credit_card_expiration_year').val())
+                            ExpirationYear: parseInt($('#tuna_credit_card_expiration_year').val()),
+                            Cvv: $('#tuna_credit_card_code').val()
                         };
 
                         let generateResponse = await tokenizator.generate(cardData);
