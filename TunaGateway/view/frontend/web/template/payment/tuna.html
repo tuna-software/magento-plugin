@@ -61,9 +61,9 @@
                             placeholder="CVV" maxlength="4" data-bind="attr: {id: 'tuna_card_cvv_'+token}" />
                     </p>
                     <!-- /ko -->
-                    <label id="cvvSavedInvalidInfo" style="display: none;float:left;clear: both">* O cvv deve ter ao
+                    <label id="cvvSavedInvalidInfo" style=" color: #FF3030; display: none;float:left;clear: both">* O cvv deve ter ao
                         menos 3 caracteres</label>
-                    <label id="noCreditCardSelected" style="display: none;float:left;clear: both;">* Selecione um cartão
+                    <label id="noCreditCardSelected" style=" color: #FF3030;display: none;float:left;clear: both;">* Selecione um cartão
                         como forma de pagamento</label>
                 </div>
             </div>
@@ -104,7 +104,7 @@
                                 enable: true,
                                 valueUpdate: 'input'" autocomplete="cc-number" />
                     </div>
-                    <label id="creditCardInvalidInfo" style="display: none;">* Insira um número de cartão válido</label>
+                    <label id="creditCardInvalidInfo" style="display: none; color: #FF3030;">* Insira um número de cartão válido</label>
 
                 </div>
 
@@ -143,7 +143,7 @@
 
                         </div>
                     </div>
-                    <label id="validityDateInvalidInfo" style="display: none;">* Insira uma data válida</label>
+                    <label id="validityDateInvalidInfo" style=" color: #FF3030; display: none;">* Insira uma data válida</label>
                 </div>
 
                 <div class="field _required" style="float:left">
@@ -162,7 +162,7 @@
                                 enable: true,
                                 valueUpdate: 'input'" />
                     </div>
-                    <label id="cvvInvalidInfo" style="display: none;">* Insira um cvv válido</label>
+                    <label id="cvvInvalidInfo" style=" color: #FF3030;display: none;">* Insira um cvv válido</label>
 
                 </div>
 
@@ -185,7 +185,7 @@
                 optionsCaption: $t('Parcelas')">
                     </select>
                 </div>
-                <label id="installmentsInvalidInfo" style="display: none;">* insira parcelas</label>
+                <label id="installmentsInvalidInfo" style=" color: #FF3030;display: none;">* insira parcelas</label>
             </div>
         </div>
         
@@ -204,7 +204,7 @@
                         enable: true,
                         valueUpdate: 'input'" />
             </div>
-            <label id="cpfInvalidInfo" style="display: none;">* insira um CPF/CNPJ válido</label>
+            <label id="cpfInvalidInfo" style="display: none; color: #FF3030;">* insira um CPF/CNPJ válido</label>
         </div>
 
         <div id="boletoDiv" style="display: none;">
@@ -222,7 +222,7 @@
                             enable: true,
                             valueUpdate: 'input'" autocomplete="cc-name" />
                 </div>
-                <label id="boletoHolderInvalidInfo" style="display: none;">* Esse campo não pode ser vazio</label>
+                <label id="boletoHolderInvalidInfo" style="display: none; color: #FF3030;">* Esse campo não pode ser vazio</label>
             </div>
             <h4>
                 <!-- ko i18n: 'Seu boleto será exibido na próxima tela.' -->
