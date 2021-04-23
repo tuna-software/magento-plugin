@@ -133,21 +133,15 @@ define(
                     }
                 }
 
-                if (window.checkoutConfig.payment.tunagateway.is_user_logged_in) {
-                    $("#tuna_card_radio_saved").prop("checked", true);
-                } else {
-                    $("#tuna_card_radio_new").prop("checked", true);
-                    $("#tuna_card_radio_saved").prop("disabled", true);
-                    $("#newCardDiv").show();
-                    $("#savedCardDiv").hide();
-                }
-
                 if (!this.allowBoleto()) {
                     $("#tuna_boleto_label").remove();
                     $("#boletoDiv").remove();
                 }
 
-                if (!this.getStoredCreditCards() || this.getStoredCreditCards().length == 0) {
+                if (this.getStoredCreditCards() && this.getStoredCreditCards().length > 0) {
+                    $("#tuna_card_radio_saved").prop("checked", true);
+                    $("#savedCardDiv").show();
+                } else {
                     $("#tuna_savedCard_label").remove();
                     $("#tuna_card_radio_new").prop("checked", true);
                     $("#newCardDiv").show();
@@ -346,12 +340,10 @@ define(
                 });
             },
             isUsingSavedCard: function () {
-                return window.checkoutConfig.payment.tunagateway.is_user_logged_in &&
-                    $("#tuna_card_radio_saved").prop("checked");
+                return $("#tuna_card_radio_saved").prop("checked");
             },
             isUsingNewCard: function () {
-                return window.checkoutConfig.payment.tunagateway.is_user_logged_in &&
-                    $("#tuna_card_radio_new").prop("checked");
+                return $("#tuna_card_radio_new").prop("checked");
             },
             isBoletoPayment: function () {
                 return $("#tuna_boleto_radio").prop("checked");
@@ -376,7 +368,7 @@ define(
                     if (!expirationMonth || !expirationYear)
                         return "validityDateInvalidInfo";
 
-                    let expireDate = new Date(expirationYear, parseInt(expirationMonth)-1);
+                    let expireDate = new Date(expirationYear, parseInt(expirationMonth) - 1);
                     if (expireDate < new Date())
                         return "validityDateInvalidInfo";
 
