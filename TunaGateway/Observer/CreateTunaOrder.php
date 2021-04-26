@@ -8,6 +8,7 @@ use Magento\Framework\Event\ObserverInterface;
 class CreateTunaOrder implements ObserverInterface
 {
   protected $_scopeConfig;
+  protected $_tunaEndpointDomain;
   protected $_code = "tuna";
   public function __construct(
     \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
@@ -19,6 +20,11 @@ class CreateTunaOrder implements ObserverInterface
     $this->_session = $sessionManager;
     $this->curlFactory = $curlFactory;
     $this->jsonHelper = $jsonHelper;
+    if ($this->_scopeConfig->getValue('payment/tuna/endpoint_config') == 'production'){
+      $this->_tunaEndpointDomain = 'engine.tunagateway.com';
+    }else{
+      $this->_tunaEndpointDomain = 'sandbox.tuna-demo.uy';
+    }    
   }
   public function execute(\Magento\Framework\Event\Observer $observer)
   {
@@ -149,7 +155,7 @@ class CreateTunaOrder implements ObserverInterface
 
         }
     
-      $url  = 'https://engine.tunagateway.com/api/Payment/Init';
+      $url  = 'https://engine.' + $this->_tunaEndpointDomain + '/api/Payment/Init';
       $requstbody = [
         'AppToken' => $this->_scopeConfig->getValue('payment/tuna/appKey'),
         'Account' => $this->_scopeConfig->getValue('payment/tuna/partner_account'),
