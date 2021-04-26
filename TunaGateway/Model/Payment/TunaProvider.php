@@ -143,7 +143,7 @@ class TunaProvider implements ConfigProviderInterface
 
         $response = null;
         if ($tunaSessionID <> null && $customerSession->isLoggedIn()) {
-            $url = 'https://token.' + $this->_tunaEndpointDomain + '/api/Token/List'; 
+            $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/List'; 
             $cItem = [
                 "SessionId" => $tunaSessionID
             ];
