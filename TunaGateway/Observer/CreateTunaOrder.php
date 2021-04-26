@@ -155,7 +155,7 @@ class CreateTunaOrder implements ObserverInterface
 
         }
     
-      $url  = 'https://engine.' + $this->_tunaEndpointDomain + '/api/Payment/Init';
+      $url  = 'https://engine.' . $this->_tunaEndpointDomain . '/api/Payment/Init';
       $requstbody = [
         'AppToken' => $this->_scopeConfig->getValue('payment/tuna/appKey'),
         'Account' => $this->_scopeConfig->getValue('payment/tuna/partner_account'),

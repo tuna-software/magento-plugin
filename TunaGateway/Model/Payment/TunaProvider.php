@@ -37,7 +37,7 @@ class TunaProvider implements ConfigProviderInterface
         $this->jsonHelper = $jsonHelper;
         $this->tunaPaymentMethod = $helper->getMethodInstance(self::PAYMENT_METHOD_CODE);
         $this->countryInformationAcquirer = $countryInformationAcquirer;
-        if ($this->_scopeConfig->getValue('payment/tuna/endpoint_config') == 'production'){
+        if ($this->scopeConfig->getValue('payment/tuna/endpoint_config') == 'production'){
             $this->_tunaEndpointDomain = 'tunagateway.com';
           }else{
             $this->_tunaEndpointDomain = 'tuna-demo.uy';
@@ -48,7 +48,7 @@ class TunaProvider implements ConfigProviderInterface
      */
     public function getConfig()
     {
-        $url = 'https://token.' + $this->_tunaEndpointDomain + '/api/Token/NewSession';
+        $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/NewSession';
         $countriesInfo = $this->countryInformationAcquirer->getCountriesInfo();
         $countries = [];
         foreach ($countriesInfo as $country) {
