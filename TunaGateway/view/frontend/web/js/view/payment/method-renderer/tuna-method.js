@@ -322,7 +322,7 @@ define(
                     'additional_data': additionalData
                 })).done(function () {
                     console.log("done set payment information");
-                    paymentData.__disableTmpl = "";
+                    paymentData.disableTmpl = "";
                     delete paymentData['title'];
                     $.when(
                         placeOrder(paymentData, messageContainer)).done(function () {

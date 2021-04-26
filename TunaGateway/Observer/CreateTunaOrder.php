@@ -55,15 +55,29 @@ class CreateTunaOrder implements ObserverInterface
         ]];
         $itens = array_merge($itens, $cItem);
       }
-      $address  = preg_split("/(\r\n|\n|\r)/", $shipping["street"]);
-      $number = "";
-      if (sizeof($address) > 1) {
-        $number = $address[1];
-      }
-      $complement = "";
-      if (sizeof($address) > 2) {
-        $complement = $address[2];
-      }
+      $deliveryAddress = [];
+      if (!empty($shipping) && isset($shipping["street"]) && isset($shipping["city"]) && isset($shipping["region"]) && isset($shipping["postcode"]) && isset($shipping["telephone"])) {
+        $address = preg_split("/(\r\n|\n|\r)/", $shipping["street"]);
+        $number = "";
+        if (sizeof($address) > 1) {
+          $number = $address[1];
+        }
+        $complement = "";
+        if (sizeof($address) > 2) {
+          $complement = $address[2];
+        }
+        $deliveryAddress = [
+          "Street" => $address[0],
+          "Number" => $number,
+          "Complement" => $complement,
+          "Neighborhood" => "",
+          "City" => $shipping["city"],
+          "State" => $this->getStateCode($shipping["region"]),
+          "Country" => $shipping["country_id"]!=null?$shipping["country_id"]:"BR",
+          "PostalCode" => $shipping["postcode"],
+          "Phone" => $shipping["telephone"]
+        ];
+      }      
       $addressB  = preg_split("/(\r\n|\n|\r)/", $billing["street"]);
       $numberB = "1";
       if (sizeof($addressB) > 1) {
@@ -149,17 +163,7 @@ class CreateTunaOrder implements ObserverInterface
         "AntiFraud" => [
           "DeliveryAddressee" => $fullName
         ],
-        "DeliveryAddress" => [
-          "Street" => $address[0],
-          "Number" => $number,
-          "Complement" => $complement,
-          "Neighborhood" => "",
-          "City" => $shipping["city"],
-          "State" => $this->getStateCode($shipping["region"]),
-          "Country" => $shipping["country_id"]!=null?$shipping["country_id"]:"BR",
-          "PostalCode" => $shipping["postcode"],
-          "Phone" => $shipping["telephone"]
-        ],
+        "DeliveryAddress" => $deliveryAddress,
         "FrontData" => [
           "SessionID" => $this->_session->getSessionId(),
           "Origin" => "WEBSITE",
