@@ -8,7 +8,7 @@
 					<label>Enabled</label>
 					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 				</field>
-				<field id="endpoint_config" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="label" type="text">
+				<field id="endpoint_config" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="11" translate="label" type="select">
 					<label>Endpoint Configuration</label>
 					<source_model>Tuna\TunaGateway\Model\Config\Source\EndpointConfiguration</source_model>
 				</field>
