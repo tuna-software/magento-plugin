@@ -8,6 +8,7 @@ use Magento\Framework\Event\ObserverInterface;
 class CreateTunaOrder implements ObserverInterface
 {
   protected $_scopeConfig;
+  protected $_tunaEndpointDomain;
   protected $_code = "tuna";
   public function __construct(
     \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
@@ -19,6 +20,11 @@ class CreateTunaOrder implements ObserverInterface
     $this->_session = $sessionManager;
     $this->curlFactory = $curlFactory;
     $this->jsonHelper = $jsonHelper;
+    if ($this->_scopeConfig->getValue('payment/tuna/endpoint_config') == 'production'){
+      $this->_tunaEndpointDomain = 'engine.tunagateway.com';
+    }else{
+      $this->_tunaEndpointDomain = 'sandbox.tuna-demo.uy';
+    }    
   }
   public function execute(\Magento\Framework\Event\Observer $observer)
   {
@@ -55,26 +61,43 @@ class CreateTunaOrder implements ObserverInterface
         ]];
         $itens = array_merge($itens, $cItem);
       }
-      $address  = preg_split("/(\r\n|\n|\r)/", $shipping["street"]);
-      $number = "";
-      if (sizeof($address) > 1) {
-        $number = $address[1];
-      }
-      $complement = "";
-      if (sizeof($address) > 2) {
-        $complement = $address[2];
-      }
-      $addressB  = preg_split("/(\r\n|\n|\r)/", $billing["street"]);
+      $deliveryAddress = [];
+      if (!empty($shipping) && isset($shipping["street"]) && isset($shipping["city"]) && isset($shipping["region"]) && isset($shipping["postcode"]) && isset($shipping["telephone"])) {
+        $address = preg_split("/(\r\n|\n|\r)/", $shipping["street"]);
+        $number = "";
+        if (sizeof($address) > 1) {
+          $number = $address[1];
+        }
+        $complement = "";
+        if (sizeof($address) > 2) {
+          $complement = $address[2];
+        }
+        $deliveryAddress = [
+          "Street" => $address[0],
+          "Number" => $number,
+          "Complement" => $complement,
+          "Neighborhood" => "",
+          "City" => $shipping["city"],
+          "State" => $this->getStateCode($shipping["region"]),
+          "Country" => $shipping["country_id"]!=null?$shipping["country_id"]:"BR",
+          "PostalCode" => $shipping["postcode"],
+          "Phone" => $shipping["telephone"]
+        ];
+      }   
       $numberB = "1";
-      if (sizeof($addressB) > 1) {
-        $numberB = $addressB[1];
-      }
       $complementB = "";
-      if (sizeof($addressB) > 2) {
-        $complementB = $addressB[2];
-      }
-
-
+      $billingAddress = "";
+      if (!empty($billing) && isset($billing["street"]))
+      {
+        $addressB  = preg_split("/(\r\n|\n|\r)/", $billing["street"]);
+        $billingAddress = $addressB[0];
+        if (sizeof($addressB) > 1) {
+          $numberB = $addressB[1];
+        }
+        if (sizeof($addressB) > 2) {
+          $complementB = $addressB[2];
+        }
+      }   
       $documentType = "CPF";
       if (strlen($payment->getAdditionalInformation()["buyer_document"]) > 17) {
         $documentType = "CNPJ";
@@ -87,7 +110,6 @@ class CreateTunaOrder implements ObserverInterface
         "TokenProvider" => "Tuna",
         "CardNumber" => "",
         "CardHolderName" => $payment->getAdditionalInformation()["buyer_name"],
-        "CVV" => $payment->getAdditionalInformation()["credit_card_cvv"],
         "BrandName" => $payment->getAdditionalInformation()["credit_card_brand"],
         "ExpirationMonth" =>  $payment->getAdditionalInformation()["credit_card_expiration_month"]*1,
         "ExpirationYear" =>  $payment->getAdditionalInformation()["credit_card_expiration_year"]*1,
@@ -98,7 +120,7 @@ class CreateTunaOrder implements ObserverInterface
           "Document" => $payment->getAdditionalInformation()["buyer_document"],
           "DocumentType" => $documentType,
           "Address" => [
-            "Street" => $addressB[0],
+            "Street" => $billingAddress,
             "Number" => $numberB,
             "Complement" => $complementB,
             "Neighborhood" => "Centro",
@@ -118,7 +140,7 @@ class CreateTunaOrder implements ObserverInterface
               "Document" => $payment->getAdditionalInformation()["buyer_document"],
               "DocumentType" => $documentType,
               "Address" => [
-                "Street" => $addressB[0],
+                "Street" => $billingAddress,
                 "Number" => $numberB,
                 "Complement" => $complementB,
                 "Neighborhood" => $complementB!=""?$complementB:"Centro",
@@ -133,7 +155,7 @@ class CreateTunaOrder implements ObserverInterface
 
         }
     
-      $url  = 'https://engine.tunagateway.com/api/Payment/Init';
+      $url  = 'https://engine.' . $this->_tunaEndpointDomain . '/api/Payment/Init';
       $requstbody = [
         'AppToken' => $this->_scopeConfig->getValue('payment/tuna/appKey'),
         'Account' => $this->_scopeConfig->getValue('payment/tuna/partner_account'),
@@ -150,17 +172,7 @@ class CreateTunaOrder implements ObserverInterface
         "AntiFraud" => [
           "DeliveryAddressee" => $fullName
         ],
-        "DeliveryAddress" => [
-          "Street" => $address[0],
-          "Number" => $number,
-          "Complement" => $complement,
-          "Neighborhood" => "",
-          "City" => $shipping["city"],
-          "State" => $this->getStateCode($shipping["region"]),
-          "Country" => $shipping["country_id"]!=null?$shipping["country_id"]:"BR",
-          "PostalCode" => $shipping["postcode"],
-          "Phone" => $shipping["telephone"]
-        ],
+        "DeliveryAddress" => $deliveryAddress,
         "FrontData" => [
           "SessionID" => $this->_session->getSessionId(),
           "Origin" => "WEBSITE",

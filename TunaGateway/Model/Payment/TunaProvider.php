@@ -13,6 +13,7 @@ class TunaProvider implements ConfigProviderInterface
      */
     protected $scopeConfig;
     protected $_session;
+    protected $_tunaEndpointDomain;
     protected $countryInformationAcquirer;
     /**
      * first config value config path
@@ -36,13 +37,18 @@ class TunaProvider implements ConfigProviderInterface
         $this->jsonHelper = $jsonHelper;
         $this->tunaPaymentMethod = $helper->getMethodInstance(self::PAYMENT_METHOD_CODE);
         $this->countryInformationAcquirer = $countryInformationAcquirer;
+        if ($this->scopeConfig->getValue('payment/tuna/endpoint_config') == 'production'){
+            $this->_tunaEndpointDomain = 'tunagateway.com';
+          }else{
+            $this->_tunaEndpointDomain = 'tuna-demo.uy';
+        }   
     }
     /**
      * {@inheritdoc}
      */
     public function getConfig()
     {
-        $url = 'https://token.tunagateway.com/api/Token/NewSession';
+        $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/NewSession';
         $countriesInfo = $this->countryInformationAcquirer->getCountriesInfo();
         $countries = [];
         foreach ($countriesInfo as $country) {
@@ -137,7 +143,7 @@ class TunaProvider implements ConfigProviderInterface
 
         $response = null;
         if ($tunaSessionID <> null && $customerSession->isLoggedIn()) {
-            $url = 'https://token.tunagateway.com/api/Token/List'; 
+            $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/List'; 
             $cItem = [
                 "SessionId" => $tunaSessionID
             ];
@@ -154,6 +160,7 @@ class TunaProvider implements ConfigProviderInterface
             'payment' => [
                 'tunagateway' => [
                     'sessionid' =>  $tunaSessionID,
+                    'useSandboxBundle' => $this->scopeConfig->getValue('payment/tuna/endpoint_config') != 'production',
                     'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna/allow_boleto'),
