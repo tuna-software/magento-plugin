@@ -160,6 +160,7 @@ class TunaProvider implements ConfigProviderInterface
             'payment' => [
                 'tunagateway' => [
                     'sessionid' =>  $tunaSessionID,
+                    'useSandboxBundle' => $this->scopeConfig->getValue('payment/tuna/endpoint_config') != 'production',
                     'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna/allow_boleto'),

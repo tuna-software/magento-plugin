@@ -1,6 +1,12 @@
+let tunaLib;
+if (window.checkoutConfig.payment.tunagateway.useSandboxBundle)
+    tunaLib = "tuna_essential_sandbox";
+else
+    tunaLib = "tuna_essential";
+
 define(
     [
-        'tuna_essential',
+        tunaLib,
         'Magento_Ui/js/modal/alert',
         'jquery',
         'Magento_Checkout/js/model/quote',
@@ -321,7 +327,7 @@ define(
                     'method': this.getCode(),
                     'additional_data': additionalData
                 })).done(function () {
-                    console.log("done set payment information");                    
+                    console.log("done set payment information");
                     delete paymentData['title'];
                     $.when(
                         placeOrder(paymentData, messageContainer)).done(function () {
