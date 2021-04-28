@@ -318,7 +318,7 @@ define(
                     'credit_card_brand': isBoleto ? "" : creditCardData.brand,
                     'credit_card_expiration_month': isBoleto ? "" : creditCardData.expirationMonth,
                     'credit_card_expiration_year': isBoleto ? "" : creditCardData.expirationYear,
-                    'credit_card_installments': isBoleto ? "1" : $('#tuna_credit_card_installments').val(),
+                    'credit_card_installments': isBoleto ? "1" : ($('#tuna_credit_card_installments').val() || "1" ),
                     'buyer_name': isBoleto ? $('#tuna_boleto_holder').val() : $('#tuna_credit_card_holder').val(),
                     'is_boleto_payment': isBoleto ? "true" : "false"
                 };
