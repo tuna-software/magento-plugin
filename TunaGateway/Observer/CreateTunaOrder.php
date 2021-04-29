@@ -161,7 +161,6 @@ class CreateTunaOrder implements ObserverInterface
         'Account' => $this->_scopeConfig->getValue('payment/tuna/partner_account'),
         'PartnerUniqueID' => $orderId,
         'TokenSession' =>  $tokenSessionParam,
-        'PartnerID' => $this->_scopeConfig->getValue('payment/tuna/partnerid')*1,
         'Customer' => [
           'Email' => $billing["email"],
           'Name' =>$fullName,

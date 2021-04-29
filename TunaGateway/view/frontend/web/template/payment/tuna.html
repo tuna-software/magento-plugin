@@ -57,6 +57,7 @@
                         <img data-bind="attr: {src: $parent.getCreditCardFlag(brand), height: '', width: '50' }"
                             class="payment-icon" style="float:left" />
                         <span data-bind="text: maskedNumber" style="float:left;margin-top:6px;padding:0px 10px"></span>
+                        <span data-bind="text: cardHolderName" style="float:left;margin-top:6px;padding:0px 10px"></span>
                         <input class="CcCvv" style="width: 90px; display: none;float:left;" type="text"
                             placeholder="CVV" maxlength="4" data-bind="attr: {id: 'tuna_card_cvv_'+token}" />
                     </p>

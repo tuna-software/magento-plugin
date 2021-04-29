@@ -22,21 +22,21 @@ class InstallData implements InstallDataInterface
         $installer->startSetup();
 
         $statuses = [
-            'tuna_Started'  => __('Tuna Started'),
-            'tuna_Authorized'  => __('Tuna Authorized'),
-            'tuna_Captured'  => __('Tuna Captured'),
-            'tuna_Refunded'  => __('Tuna Refunded'),
-            'tuna_Denied'  => __('Tuna Denied'),
-            'tuna_Cancelled'  => __('Tuna Cancelled'),
-            'tuna_Expired'  => __('Tuna Expired'),
-            'tuna_Chargeback'  => __('Tuna Chargeback'),
-            'tuna_MoneyReceived'  => __('Tuna MoneyReceived'),
-            'tuna_PartialCancel'  => __('Tuna PartialCancel'),
-            'tuna_Error'  => __('Tuna Error'),
-            'tuna_RedFlag'  => __('Tuna RedFlag'),
-            'tuna_PendingCapture'  => __('Tuna PendingCapture'),
-            'tuna_PendingAntiFraud'  => __('Tuna PendingAntiFraud'),
-            'tuna_DeniedAntiFraud'  => __('Tuna DeniedAntiFraud')
+            'tuna_Started'  => __('Iniciada'),
+            'tuna_Authorized'  => __('Sucesso'),
+            'tuna_Captured'  => __('Finalizada com sucesso'),
+            'tuna_Refunded'  => __('Reembolsada'),
+            'tuna_Denied'  => __('Negada'),
+            'tuna_Cancelled'  => __('Cancelada'),
+            'tuna_Expired'  => __('Expirada'),
+            'tuna_Chargeback'  => __('Chargeback'),
+            'tuna_MoneyReceived'  => __('Finalizada com sucesso'),
+            'tuna_PartialCancel'  => __('Parcialmente cancelada'),
+            'tuna_Error'  => __('Erro'),
+            'tuna_RedFlag'  => __('Erro'),
+            'tuna_PendingCapture'  => __('Pendente'),
+            'tuna_PendingAntiFraud'  => __('Em análise'),
+            'tuna_DeniedAntiFraud'  => __('Negada*')
         ];
 
         foreach ($statuses as $code => $info) {
