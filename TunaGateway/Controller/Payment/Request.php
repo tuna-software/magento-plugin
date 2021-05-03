@@ -40,7 +40,8 @@ class Request extends \Magento\Framework\App\Action\Action
 
         if ($paymentData['method'] === 'tuna') {
             $this->orderId = $lastRealOrder->getId();
-            $orderStatus = $lastRealOrder->getStatus();
+            $orderStatusText = '';
+            $orderStatus = $lastRealOrder->getStatus();            
             $itemsCollection = $lastRealOrder->getAllVisibleItems();
             $orderProducts = [];
             foreach ($itemsCollection as $item) {
@@ -78,12 +79,33 @@ class Request extends \Magento\Framework\App\Action\Action
                 );
                 return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
             } else {
+                switch ($orderStatus) {
+                    case 'tuna_Denied':
+                          $orderStatusText = 'Pagamento negado pelo banco emissor.';
+                        break;
+                    case 'tuna_Cancelled':
+                          $orderStatusText = 'Pagamento cancelado.'; 
+                        break;              
+                    case 'tuna_Expired':
+                          $orderStatusText = 'Pagamento expirado.'; 
+                        break;               
+                    case 'tuna_Error':
+                    case 'tuna_RedFlag':
+                           $orderStatusText = 'Erro no pagamento.'; 
+                        break;               
+                    case 'tuna_PendingAntiFraud':
+                          $orderStatusText = 'Pagamento em análise. Aguarde.'; 
+                        break;
+                    case 'tuna_DeniedAntiFraud':
+                          $orderStatusText = 'Pagamento negado.'; 
+                        break;
+                  }
                 $this->session()->setData(
                     'tuna_payment', [
                         'payment_type'  => $paymentData['method'],
                         'order_id'      => $this->orderId,
                         'order_products' => $orderProducts,
-                        'order_status' => $orderStatus
+                        'order_status' => $orderStatusText
                     ]
                 );
                 return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));

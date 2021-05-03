@@ -319,7 +319,7 @@ define(
                     'credit_card_expiration_month': isBoleto ? "" : creditCardData.expirationMonth,
                     'credit_card_expiration_year': isBoleto ? "" : creditCardData.expirationYear,
                     'credit_card_installments': isBoleto ? "1" : ($('#tuna_credit_card_installments').val() || "1" ),
-                    'buyer_name': isBoleto ? $('#tuna_boleto_holder').val() : $('#tuna_credit_card_holder').val(),
+                    'buyer_name': isBoleto ? $('#tuna_boleto_holder').val() : creditCardData.cardHolderName,
                     'is_boleto_payment': isBoleto ? "true" : "false"
                 };
 
@@ -450,6 +450,7 @@ define(
                                 brand: generateResponse.brand,
                                 expirationMonth: cardData.ExpirationMonth,
                                 expirationYear: cardData.ExpirationYear,
+                                cardHolderName: cardData.CardHolderName
                             };
                             self.endOrder(self, creditCardData, paymentData, messageContainer);
                         }
