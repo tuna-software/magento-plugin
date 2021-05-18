@@ -1,16 +1,8 @@
-# Mage2 Module Tuna TunaGateway
+# Magento 2 Tuna Module
 
     ``tuna/module-tunagateway``
 
- - [Main Functionalities](#markdown-header-main-functionalities)
  - [Installation](#markdown-header-installation)
- - [Configuration](#markdown-header-configuration)
- - [Specifications](#markdown-header-specifications)
- - [Attributes](#markdown-header-attributes)
-
-
-## Main Functionalities
-
 
 ## Installation
 \* = in production please use the `--keep-generated` option
@@ -24,29 +16,10 @@
 
 ### Type 2: Composer
 
- - Make the module available in a composer repository for example:
-    - private repository `repo.magento.com`
-    - public repository `packagist.org`
-    - public github repository as vcs
- - Add the composer repository to the configuration by running `composer config repositories.repo.magento.com composer https://repo.magento.com/`
+ - Add the composer repository to the configuration by running `composer config repositories.repo.magento.com composer https://github.com/tuna-software/magento-plugin`
  - Install the module composer by running `composer require tuna/module-tunagateway`
  - enable the module by running `php bin/magento module:enable Tuna_TunaGateway`
  - apply database updates by running `php bin/magento setup:upgrade`\*
  - Flush the cache by running `php bin/magento cache:flush`
-
-
-## Configuration
-
- - Tuna - payment/tuna/*
-
-
-## Specifications
-
- - Payment Method
-	- Tuna
-
-
-## Attributes
-
 
 
