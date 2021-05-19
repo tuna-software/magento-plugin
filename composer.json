@@ -1,0 +1,22 @@
+{
+    "name": "tuna/module-tunagateway",
+    "description": "",
+    "type": "magento2-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "email": "tuna@tuna.uy",
+            "name": "Tuna"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Tuna\\TunaGateway\\": ""
+        }
+    }
+}
