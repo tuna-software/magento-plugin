@@ -63,7 +63,7 @@ class Request extends \Magento\Framework\App\Action\Action
                
                 $isBoletoPayment = $payment->getAdditionalInformation()["is_boleto_payment"];
 
-                if ($isBoletoPayment == "true" && $this->scopeConfig->getValue('payment/tuna/allow_boleto') === "0") {
+                if ($isBoletoPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto') === "0") {
                     return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
                 }
 
