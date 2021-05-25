@@ -45,7 +45,7 @@ class Update extends \Magento\Framework\App\Action\Action
             echo print_r("ERROR");
             exit;
         }
-        if ($this->scopeConfig->getValue('payment/tuna/appKey')!= $appkey )
+        if ($this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey')!= $appkey )
         {
             echo print_r("ERROR");
             exit; 
