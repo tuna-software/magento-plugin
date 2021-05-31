@@ -20,7 +20,7 @@ class CreateTunaOrder implements ObserverInterface
     $this->_session = $sessionManager;
     $this->curlFactory = $curlFactory;
     $this->jsonHelper = $jsonHelper;
-    if ($this->_scopeConfig->getValue('payment/tuna/endpoint_config') == 'production'){
+    if ($this->_scopeConfig->getValue('payment/tuna_payment/options/endpoint_config') == 'production'){
       $this->_tunaEndpointDomain = 'engine.tunagateway.com';
     }else{
       $this->_tunaEndpointDomain = 'sandbox.tuna-demo.uy';
@@ -157,8 +157,8 @@ class CreateTunaOrder implements ObserverInterface
     
       $url  = 'https://' . $this->_tunaEndpointDomain . '/api/Payment/Init';
       $requstbody = [
-        'AppToken' => $this->_scopeConfig->getValue('payment/tuna/appKey'),
-        'Account' => $this->_scopeConfig->getValue('payment/tuna/partner_account'),
+        'AppToken' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
+        'Account' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'),
         'PartnerUniqueID' => $orderId,
         'TokenSession' =>  $tokenSessionParam,
         'Customer' => [
