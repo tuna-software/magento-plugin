@@ -322,12 +322,14 @@ define(
                     'buyer_name': isBoleto ? $('#tuna_boleto_holder').val() : creditCardData.cardHolderName,
                     'is_boleto_payment': isBoleto ? "true" : "false"
                 };
-
+                if (Object.prototype.hasOwnProperty.call(paymentData, '__disableTmpl')) { delete paymentData.__disableTmpl; }
+                if (Object.prototype.hasOwnProperty.call(paymentData, 'disableTmpl')) { delete paymentData.disableTmpl; }
+                if (Object.prototype.hasOwnProperty.call(paymentData, 'title')) { delete paymentData.title; }
                 $.when(setPaymentInformationAction(messageContainer, {
                     'method': this.getCode(),
                     'additional_data': additionalData
                 })).done(function () {
-                    console.log("done set payment information");
+                    console.log("done set payment information");					                    
                     delete paymentData['title'];
                     $.when(
                         placeOrder(paymentData, messageContainer)).done(function () {
