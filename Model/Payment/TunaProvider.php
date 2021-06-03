@@ -165,6 +165,7 @@ class TunaProvider implements ConfigProviderInterface
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto'),
                     'installments' => $this->scopeConfig->getValue('payment/tuna_payment/options/installments'),
                     'billingAddresses' => $billingAddresses,
+                    'title' => $this->scopeConfig->getValue('payment/tuna_payment/options/title')
                 ]
             ],
             'tuna_payment' => $this->tunaPaymentMethod->getStandardCheckoutPaymentUrl(),

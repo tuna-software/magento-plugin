@@ -42,9 +42,7 @@ define(
                 } else {
                     $('#tuna_billing_address_phone').mask('(00) 0000-00009');
                 }
-            });
-
-
+            }); 
         });
 
         $('input[type=radio][name=billingAddress]').live("change", function () {
@@ -124,6 +122,7 @@ define(
             },
 
             afterRender: function () {
+                $("#lblTunaPaymentTitle").html(window.checkoutConfig.payment.tunagateway.title);
                 if (!window.checkoutConfig.payment.tunagateway.sessionid) {
                     if (!this.allowBoleto()) {
                         $("#tuna_payment_method_content").remove();
