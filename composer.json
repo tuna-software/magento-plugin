@@ -1,6 +1,6 @@
 {
     "name": "tuna/module-tunagateway",
-    "description": "",
+    "description": "Tuna's Magento 2 payment payment module.",
     "type": "magento2-module",
     "license": "MIT",
     "authors": [
