@@ -3,6 +3,7 @@
     "description": "Tuna's Magento 2 payment payment module.",
     "type": "magento2-module",
     "license": "MIT",
+    "version": "1.2.4",
     "authors": [
         {
             "email": "tuna@tuna.uy",
