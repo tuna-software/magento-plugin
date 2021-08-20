@@ -9,7 +9,7 @@
             "name": "Tuna"
         }
     ],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "require": {},
     "autoload": {
         "files": [
