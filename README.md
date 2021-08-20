@@ -16,7 +16,6 @@
 
 ### Type 2: Composer
 
- - Add the composer repository to the configuration by running `composer config repositories.repo.magento.com composer https://github.com/tuna-software/magento-plugin`
  - Install the module composer by running `composer require tuna/module-tunagateway`
  - enable the module by running `php bin/magento module:enable Tuna_TunaGateway`
  - apply database updates by running `php bin/magento setup:upgrade`\*
