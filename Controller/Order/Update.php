@@ -26,10 +26,10 @@ class Update extends \Magento\Framework\App\Action\Action
     }
 
     public function execute()
-    {     
-        $appkey = $this->getRequest()->getParam('appkey');
-        $orderID = $this->getRequest()->getParam('orderid');
-        $status = $this->getRequest()->getParam('status');        
+    {      
+        $appkey = $this->getRequest()->getHeader('appkey');
+        $orderID = $this->getRequest()->getParam('partnerUniqueId');
+        $status = $this->getRequest()->getParam('statusId');        
         if ($orderID==null)
         {
             echo print_r("ERROR");
