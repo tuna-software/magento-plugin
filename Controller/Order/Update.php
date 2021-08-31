@@ -26,10 +26,10 @@ class Update extends \Magento\Framework\App\Action\Action
     }
 
     public function execute()
-    {     
-        $appkey = $this->getRequest()->getParam('appkey');
-        $orderID = $this->getRequest()->getParam('orderid');
-        $status = $this->getRequest()->getParam('status');        
+    {      
+        $appkey = $this->getRequest()->getHeader('Authorization');
+        $orderID = $this->getRequest()->getParam('partnerUniqueId');
+        $status = $this->getRequest()->getParam('statusId');        
         if ($orderID==null)
         {
             echo print_r("ERROR");
@@ -45,7 +45,7 @@ class Update extends \Magento\Framework\App\Action\Action
             echo print_r("ERROR");
             exit;
         }
-        if ($this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey')!= $appkey )
+        if ($this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey')!= 'Bearer '.$appkey )
         {
             echo print_r("ERROR");
             exit; 

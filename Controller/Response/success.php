@@ -41,7 +41,7 @@ class Success extends \Magento\Framework\App\Action\Action
         $resultPage->getLayout()->getBlock('tuna.response.success')->setBoletoURL($this->boletoURL());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setIsBoleto($this->isBoleto());
 
-        $this->clearSession();
+        //$this->clearSession();
         return $resultPage;
     }
 

@@ -48,6 +48,7 @@ class TunaProvider implements ConfigProviderInterface
      */
     public function getConfig()
     {        
+        $tunaSessionID = null;
         $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/NewSession';
         $countriesInfo = $this->countryInformationAcquirer->getCountriesInfo();
         $countries = [];
@@ -121,6 +122,7 @@ class TunaProvider implements ConfigProviderInterface
                 ]);
             }
         }
+<<<<<<< HEAD
         $cItem = [
             "AppToken" => $this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
             "Customer" => [
@@ -139,7 +141,30 @@ class TunaProvider implements ConfigProviderInterface
         /* convert JSON to Array */
         $response = $this->jsonHelper->jsonDecode($body);
         $tunaSessionID = $response["sessionId"];
+=======
+        try{
+            $cItem = [
+                "AppToken" => $this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
+                "Customer" => [
+                    "Email" => $customerSessionEmail,
+                    "ID" => $customerSessionID,
+                ]
+            ];
+            $bodyJsonRequest = json_encode($cItem);
+>>>>>>> c4eeb492463b7b8fc838ff2f90f64760e86c03f9
 
+            /* Create curl factory */
+            $httpAdapter = $this->curlFactory->create();
+            /* Forth parameter is POST body */
+            $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
+            $result = $httpAdapter->read();
+            $body = \Zend_Http_Response::extractBody($result);
+            /* convert JSON to Array */
+            $response = $this->jsonHelper->jsonDecode($body);
+            $tunaSessionID = $response["sessionId"];
+        }catch(\Exception $e)
+        { 
+        }
         $response = null;
         if ($tunaSessionID <> null && $customerSession->isLoggedIn()) {
             $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/List'; 
@@ -147,12 +172,14 @@ class TunaProvider implements ConfigProviderInterface
                 "SessionId" => $tunaSessionID
             ];
             $bodyJsonRequest = json_encode($cItem);
-
+            
             $httpAdapter = $this->curlFactory->create();
             $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1',  ["Content-Type:application/json"], $bodyJsonRequest);
             $result = $httpAdapter->read();
+            
             $body = \Zend_Http_Response::extractBody($result);
             $response = $this->jsonHelper->jsonDecode($body);
+            
         }
 
         $config = [
@@ -165,6 +192,7 @@ class TunaProvider implements ConfigProviderInterface
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto'),
                     'installments' => $this->scopeConfig->getValue('payment/tuna_payment/options/installments'),
                     'billingAddresses' => $billingAddresses,
+                    'title' => $this->scopeConfig->getValue('payment/tuna_payment/options/title')
                 ]
             ],
             'tuna_payment' => $this->tunaPaymentMethod->getStandardCheckoutPaymentUrl(),
