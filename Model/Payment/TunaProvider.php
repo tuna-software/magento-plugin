@@ -122,26 +122,6 @@ class TunaProvider implements ConfigProviderInterface
                 ]);
             }
         }
-<<<<<<< HEAD
-        $cItem = [
-            "AppToken" => $this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
-            "Customer" => [
-                "Email" => $customerSessionEmail,
-                "ID" => $customerSessionID,
-            ]
-        ];
-        $bodyJsonRequest = json_encode($cItem);
-
-        /* Create curl factory */
-        $httpAdapter = $this->curlFactory->create();
-        /* Forth parameter is POST body */
-        $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
-        $result = $httpAdapter->read();
-        $body = \Zend_Http_Response::extractBody($result);
-        /* convert JSON to Array */
-        $response = $this->jsonHelper->jsonDecode($body);
-        $tunaSessionID = $response["sessionId"];
-=======
         try{
             $cItem = [
                 "AppToken" => $this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
@@ -151,7 +131,6 @@ class TunaProvider implements ConfigProviderInterface
                 ]
             ];
             $bodyJsonRequest = json_encode($cItem);
->>>>>>> c4eeb492463b7b8fc838ff2f90f64760e86c03f9
 
             /* Create curl factory */
             $httpAdapter = $this->curlFactory->create();
