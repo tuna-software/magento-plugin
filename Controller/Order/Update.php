@@ -32,28 +32,28 @@ class Update extends \Magento\Framework\App\Action\Action
         $status = $this->getRequest()->getParam('statusId');        
         if ($orderID==null)
         {
-            echo print_r("ERROR");
+            echo print_r("ERROR - partneruniqueid parameter not found.");
             exit;
         }
         if ($status==null)
         {
-            echo print_r("ERROR");
+            echo print_r("ERROR - status parameter not found.");
             exit;
         }
         if ($appkey==null)
         {
-            echo print_r("ERROR");
+            echo print_r("ERROR - authorization header not found.");
             exit;
         }
         if ($this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey')!= 'Bearer '.$appkey )
         {
-            echo print_r("ERROR");
+            echo print_r("ERROR - invalid header.");
             exit; 
         }
         $order = $this->_objectManager->create('Magento\Sales\Model\Order')->load($orderID );
         if ($order==null)
         {
-            echo print_r("ERROR");
+            echo print_r("ERROR - order not found.");
             exit;
         }
         $payment = $order->getPayment();    
