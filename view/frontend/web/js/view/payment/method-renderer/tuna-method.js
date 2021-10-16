@@ -210,14 +210,13 @@ define(
                 });
             },
             getInstallments: function () {
-                let installments = [];
-                for (let i = 1; i <= window.checkoutConfig.payment.tunagateway.installments; i++) {
-                    installments.push(i);
-                }
+                let installments = window.checkoutConfig.payment.tunagateway.installments;
+                let installmentIndex = 0;                
                 return _.map(installments, function (value, key) {
+                    installmentIndex++;
                     return {
-                        'value': value,
-                        'text': value + 'x'
+                        'value': installmentIndex,
+                        'text': value
                     };
                 });
             },
