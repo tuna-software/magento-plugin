@@ -286,8 +286,9 @@ class CreateTunaOrder implements ObserverInterface
       }catch(\Exception $e){
         $order->setStatus('tuna_Cancelled');
       }
-      if ($valorTotal != $order->getGrandTotal()){
+      if ($valorTotal != $order->getGrandTotal()){        
         $order->addStatusHistoryComment( 'Acréscimo de R$ '.number_format($valorTotal - $order->getGrandTotal(), 2, ",", ".").' em juros');
+        $order->setGrandTotal($valorTotal);
       }
       $order->save();
     }
