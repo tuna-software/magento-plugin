@@ -40,6 +40,7 @@
 		<referenceContainer name="after.body.start">
         	<block class="Tuna\TunaGateway\Block\TunaImages" name="tunaImages" template="Tuna_TunaGateway::payment_image.phtml"/>
 			<block class="Tuna\TunaGateway\Block\AntifraudResolver" name="antifraudResolver" template="Tuna_TunaGateway::antifraud_checkout_injector.phtml"/>
+			<block class="Tuna\TunaGateway\Block\AntifraudResolver" name="antifraudResolver2" template="Tuna_TunaGateway::antifraud_injector.phtml"/>
     	</referenceContainer>
 	</body>
 </page>

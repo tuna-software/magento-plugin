@@ -5,6 +5,8 @@ namespace Tuna\TunaGateway\Model\Payment;
 use \Magento\Checkout\Model\ConfigProviderInterface;
 use \Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
 use Magento\Payment\Helper\Data as PaymentHelper;
+use Magento\Framework\Session\SessionManagerInterface as CoreSession;
+
 
 class TunaProvider implements ConfigProviderInterface
 {
@@ -15,6 +17,8 @@ class TunaProvider implements ConfigProviderInterface
     protected $_session;
     protected $_tunaEndpointDomain;
     protected $countryInformationAcquirer;
+    protected $_coreSession;
+
     /**
      * first config value config path
      */
@@ -30,7 +34,8 @@ class TunaProvider implements ConfigProviderInterface
         \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
         \Magento\Framework\Json\Helper\Data $jsonHelper,
         PaymentHelper $helper,
-        \Magento\Directory\Api\CountryInformationAcquirerInterface $countryInformationAcquirer
+        \Magento\Directory\Api\CountryInformationAcquirerInterface $countryInformationAcquirer,
+        CoreSession $coreSession
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->_session = $sessionManager;
@@ -43,7 +48,8 @@ class TunaProvider implements ConfigProviderInterface
             $this->_tunaEndpointDomain = 'tunagateway.com';
           }else{
             $this->_tunaEndpointDomain = 'tuna-demo.uy';
-        }   
+        }
+        $this->_coreSession = $coreSession;
     }
     
     public function getInstallment($valor_total,$totalInstallments)
@@ -119,7 +125,10 @@ class TunaProvider implements ConfigProviderInterface
 
         $om = \Magento\Framework\App\ObjectManager::getInstance();
         $customerSession = $om->get('Magento\Customer\Model\Session');
-        $customerSessionID = "0";
+
+        $this->_coreSession->start();
+        $customerSessionID = $this->_coreSession->getCostumerID();
+
         $customerSessionEmail = "";
         $billingAddresses = [];
         if ($customerSession->isLoggedIn()) {
