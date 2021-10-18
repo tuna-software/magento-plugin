@@ -26,6 +26,7 @@ class TunaProvider implements ConfigProviderInterface
     public function __construct(
         ScopeConfig $scopeConfig,
         \Magento\Framework\Session\SessionManager $sessionManager,
+        \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
         \Magento\Framework\Json\Helper\Data $jsonHelper,
         PaymentHelper $helper,
@@ -35,6 +36,7 @@ class TunaProvider implements ConfigProviderInterface
         $this->_session = $sessionManager;
         $this->curlFactory = $curlFactory;
         $this->jsonHelper = $jsonHelper;
+        $this->checkoutSession = $checkoutSession;
         $this->tunaPaymentMethod = $helper->getMethodInstance(self::PAYMENT_METHOD_CODE);
         $this->countryInformationAcquirer = $countryInformationAcquirer;
         if ($this->scopeConfig->getValue('payment/tuna_payment/options/endpoint_config') == 'production'){
@@ -43,6 +45,40 @@ class TunaProvider implements ConfigProviderInterface
             $this->_tunaEndpointDomain = 'tuna-demo.uy';
         }   
     }
+    
+    public function getInstallment($valor_total,$totalInstallments)
+    {
+        $parcelas = array();
+        for($i=1;$i<=$totalInstallments;$i++){
+            $tmpJuros = $this->scopeConfig->getValue('payment/tuna_payment/credit_card/p'.$i);
+            $juros = 0;
+            if ($tmpJuros!='')
+            {
+                $juros = (float)$tmpJuros;
+            }
+            $option = '';
+            if($juros==0){                        
+                $option = $i.'x R$ '.number_format($valor_total/$i, 2, ",", ".").' (s/ juros) - R$ '.number_format($valor_total, 2, ",", ".");
+            }else{                                
+                $I =$juros/100.00;                
+                $valor_parcela = $this->GetValorParcela( $this->scopeConfig->getValue('payment/tuna_payment/credit_card/fee_config'),$valor_total,$i,$I);
+                $option = $i.'x R$ '.number_format($valor_parcela, 2, ",", ".").' (c/ juros) - R$ '.number_format($valor_parcela*$i, 2, ",", ".");                
+            }
+            $parcelas[$i-1] = $option;
+        }
+        return $parcelas;
+    }
+    public function GetValorParcela($tipo, $valorTotal,$parcela,$juros)
+    {
+        if ($tipo == 'S')
+        {
+            return ($valorTotal * (1 +$juros))/$parcela;
+        }else
+        {
+            return ($valorTotal*pow((1+$juros),$parcela))/$parcela;
+        }
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -160,7 +196,9 @@ class TunaProvider implements ConfigProviderInterface
             $response = $this->jsonHelper->jsonDecode($body);
             
         }
-
+        $quote = $this->checkoutSession->getQuote();
+        $total = $quote->getGrandTotal();
+        $installmentOptions = $this->getInstallment($total,$this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments'));
         $config = [
             'payment' => [
                 'tunagateway' => [
@@ -169,7 +207,7 @@ class TunaProvider implements ConfigProviderInterface
                     'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto'),
-                    'installments' => $this->scopeConfig->getValue('payment/tuna_payment/options/installments'),
+                    'installments' =>  $installmentOptions,
                     'billingAddresses' => $billingAddresses,
                     'title' => $this->scopeConfig->getValue('payment/tuna_payment/options/title')
                 ]

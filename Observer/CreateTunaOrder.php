@@ -28,8 +28,9 @@ class CreateTunaOrder implements ObserverInterface
   }
   public function execute(\Magento\Framework\Event\Observer $observer)
   {
+    
     $order = $observer->getEvent()->getOrder();
-     
+    
     //verify transaction
     if ($order->getStatus() == 'tuna_Started') {
       $orderId = $order->getId();
@@ -47,11 +48,15 @@ class CreateTunaOrder implements ObserverInterface
         $custormerID = $order->getCustomerId();
       }
       $itens = [];
-      $itemsCollection = $order->getAllVisibleItems();
+      
+      $valorTotal = $this->getValorFinal($order->getGrandTotal(),$payment->getAdditionalInformation()["credit_card_installments"]*1);      
+      $itemsCollection = $order->getAllVisibleItems();      
+      $tmpvalorTotalPendente = $valorTotal-$order->getBaseShippingAmount();    
       foreach ($itemsCollection as $item) {
-
+        $valorItem = $this->getValorFinal($item->getPrice(),$payment->getAdditionalInformation()["credit_card_installments"]*1);
+        $tmpvalorTotalPendente = $tmpvalorTotalPendente - ($valorItem*$item->getQtyToInvoice());        
         $cItem = [[
-          "Amount" => $item->getPrice(),
+          "Amount" =>  $valorItem,
           "ProductDescription" => $item->getProduct()->getName(),
           "ItemQuantity" => $item->getQtyToInvoice(),
           "CategoryName" => $item->getProductType(),
@@ -60,7 +65,7 @@ class CreateTunaOrder implements ObserverInterface
           ]
         ]];
         $itens = array_merge($itens, $cItem);
-      }
+      }      
       $deliveryAddress = [];
       if (!empty($shipping) && isset($shipping["street"]) && isset($shipping["city"]) && isset($shipping["region"]) && isset($shipping["postcode"]) && isset($shipping["telephone"])) {
         $address = preg_split("/(\r\n|\n|\r)/", $shipping["street"]);
@@ -114,7 +119,7 @@ class CreateTunaOrder implements ObserverInterface
         "ExpirationMonth" =>  $payment->getAdditionalInformation()["credit_card_expiration_month"]*1,
         "ExpirationYear" =>  $payment->getAdditionalInformation()["credit_card_expiration_year"]*1,
         "Token" => $payment->getAdditionalInformation()["credit_card_token"],
-        "TokenSingleUse" => 0,
+        "TokenSingleUse" => $isNewCustomer?1:0,
         "SaveCard" => false,
         "BillingInfo" => [
           "Document" => $payment->getAdditionalInformation()["buyer_document"],
@@ -181,7 +186,7 @@ class CreateTunaOrder implements ObserverInterface
         "ShippingItems" => [
           "Items" => [[
             "Type" => $order->getShippingDescription(),
-            "Amount" => $order->getBaseShippingAmount(),
+            "Amount" => $order->getBaseShippingAmount()+$tmpvalorTotalPendente,
             "Code" =>  ""
           ]]
         ],
@@ -194,7 +199,7 @@ class CreateTunaOrder implements ObserverInterface
           "PaymentMethods" => [
             [
               "PaymentMethodType" => $PaymentMethodType,
-              "Amount" => $order->getGrandTotal(),
+              "Amount" => $valorTotal,
               "Installments" =>$payment->getAdditionalInformation()["credit_card_installments"]*1,
               "CardInfo" => $cardInfo,
               "BoletoInfo" => $boletoInfo
@@ -206,13 +211,13 @@ class CreateTunaOrder implements ObserverInterface
       /* Create curl factory */
       $httpAdapter = $this->curlFactory->create();
       $bodyJsonRequest = json_encode($requstbody);
-      #$this->saveLog($bodyJsonRequest);
+      //$this->saveLog($bodyJsonRequest);
       $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
       $result = $httpAdapter->read();
       
       $body = \Zend_Http_Response::extractBody($result);
-      
+      //$this->saveLog($body);
       try{
         $response = $this->jsonHelper->jsonDecode($body);
         switch (strval($response["status"])) {
@@ -281,16 +286,42 @@ class CreateTunaOrder implements ObserverInterface
       }catch(\Exception $e){
         $order->setStatus('tuna_Cancelled');
       }
-      
+      if ($valorTotal != $order->getGrandTotal()){
+        $order->addStatusHistoryComment( 'Acréscimo de R$ '.number_format($valorTotal - $order->getGrandTotal(), 2, ",", ".").' em juros');
+      }
       $order->save();
     }
 
     #return $this;
   }
 
+    public function getValorFinal($valorTotal,$parcela)
+    {      
+      $tipo = $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/fee_config');
+      $tmpJuros = $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/p'.$parcela);
+      $juros = 0;
+      if ($tmpJuros!='')
+      {
+        $juros = (float)$tmpJuros;
+      }
+      
+      if($juros==0){                        
+        return $valorTotal;
+      }else{                                
+        $juros =$juros/100.00;
+        if ($tipo == 'S')
+        {
+            return $valorTotal * (1 +$juros);
+        }else
+        {
+            return $valorTotal*pow((1+$juros),$parcela);
+        }
+      }
+    }
+
   public function saveLog($txt)
   {
-    $filename = "/var/www/html/app/code/Tuna/newfile.txt";
+    $filename = "/var/www/html/app/code/Tuna/TunaGateway/newfile.txt";
     $file = fopen($filename, "a");
 
     if ($file == false) {
