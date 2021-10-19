@@ -41,7 +41,10 @@
 					<field id="endpoint_config" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="12" translate="label" type="select">
 						<label>Environment</label>
 						<source_model>Tuna\TunaGateway\Model\Config\Source\EndpointConfiguration</source_model>
-					</field>									
+					</field>
+					<field id="antifraudConfig" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label" type="text">
+						<label>Antifraud configuration</label>
+					</field>								
 					<field id="allow_boleto" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="13" translate="label" type="select">
 						<label>Allow Offline Payment (Boleto)</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
