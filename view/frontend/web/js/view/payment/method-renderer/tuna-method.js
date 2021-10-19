@@ -78,8 +78,16 @@ define(
         $("#tuna_card_radio_new").live("change", cardRadioChanged);
         $("#tuna_card_radio_saved").live("change", cardRadioChanged);
         $("#tuna_boleto_radio").live("change", cardRadioChanged);
-
-
+        $("#tuna_credit_card_installments").live("change", resetTotalOrder);
+        function resetTotalOrder()
+        { 
+            if ($("#tuna_credit_card_installments option:selected").text()!="" && $("#tuna_credit_card_installments option:selected").text()!="Parcelas")
+            {
+                var newTotal = $("#tuna_credit_card_installments option:selected").text();
+                newTotal = newTotal.substring(newTotal.indexOf("-")+2);
+                $(".grand .amount .price").html(newTotal);
+            }
+        }
         function isEquivalent(a, b) {
             var aProps = Object.getOwnPropertyNames(a);
             var bProps = Object.getOwnPropertyNames(b);
