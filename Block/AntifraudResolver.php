@@ -103,6 +103,10 @@ class AntifraudResolver extends \Magento\Framework\View\Element\Template
         return $costumerID;
     }
 
+    function IsNullOrEmptyString($str){
+        return (!isset($str) || trim($str) === '');
+    }
+
     public function getCheckoutAntifraudScripts()
     {
         $om = \Magento\Framework\App\ObjectManager::getInstance();
@@ -110,7 +114,10 @@ class AntifraudResolver extends \Magento\Framework\View\Element\Template
         $userID = $this->getCustomerID();
         $resultingScript = "";
 
-        $antifraudConfig = json_decode($this->_scopeConfig->getValue('payment/tuna_payment/options/antifraudConfig'));
+        $antifraudConfigText = $this->_scopeConfig->getValue('payment/tuna_payment/options/antifraudConfig');
+        if($this->IsNullOrEmptyString($antifraudConfigText))
+            return '';
+        $antifraudConfig = json_decode($antifraudConfigText);
         if ($antifraudConfig->UseKonduto) {
             $resultingScript = str_replace(["{KondutoCostumerID}"], [$userID], self::kondutoCheckoutScript);
         }
@@ -119,7 +126,10 @@ class AntifraudResolver extends \Magento\Framework\View\Element\Template
 
     public function getAntifraudScripts()
     {
-        $antifraudConfig = json_decode($this->_scopeConfig->getValue('payment/tuna_payment/options/antifraudConfig'));
+        $antifraudConfigText = $this->_scopeConfig->getValue('payment/tuna_payment/options/antifraudConfig');
+        if($this->IsNullOrEmptyString($antifraudConfigText))
+            return '';
+        $antifraudConfig = json_decode($antifraudConfigText);
         $resultingScript = "";
         if ($antifraudConfig->UseKonduto) {
             $resultingScript = str_replace(["{KondutoPublicKey}"], [$antifraudConfig->KondutoPublicKey], self::kondutoBaseScript);
