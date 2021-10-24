@@ -13,8 +13,9 @@ define(
         'Magento_Checkout/js/view/payment/default',
         'Magento_Checkout/js/action/set-payment-information',
         'Magento_Checkout/js/action/place-order',
+        'Magento_Catalog/js/price-utils'
     ],
-    function (tuna_essential, alert, $, quote, Component, setPaymentInformationAction, placeOrder) {
+    function (tuna_essential, alert, $, quote, Component, setPaymentInformationAction, placeOrder, priceUtils) {
         'use strict';
         require(['jquery', 'jquery_mask'], function ($) {
 
@@ -43,6 +44,10 @@ define(
                     $('#tuna_billing_address_phone').mask('(00) 0000-00009');
                 }
             }); 
+            $(document).on('change', 'input[name$="[qty]"]', function(){
+                var deferred = $.Deferred();
+                getTotalsAction([], deferred);
+            });           
         });
 
         $('input[type=radio][name=billingAddress]').live("change", function () {
@@ -106,7 +111,16 @@ define(
 
             return true;
         }
-
+        function getValorParcela(valorTotal,parcela,juros)
+        {
+            if (window.checkoutConfig.payment.tunagateway.feeType == 'S')
+            {
+                return (valorTotal * (1 +juros))/parcela;
+            }else
+            {
+                return (valorTotal*Math.pow((1+juros),parcela))/parcela;
+            }
+        }
         $("#tuna_billing_address_country").live("change", _ => {
             // Fix unknow info
             if ($("#control").length == 1) {
@@ -127,8 +141,7 @@ define(
         return Component.extend({
             defaults: {
                 template: 'Tuna_TunaGateway/payment/tuna',
-            },
-
+            }, 
             afterRender: function () {
                 $("#lblTunaPaymentTitle").html(window.checkoutConfig.payment.tunagateway.title);
                 if (!window.checkoutConfig.payment.tunagateway.sessionid) {
@@ -217,17 +230,26 @@ define(
                     };
                 });
             },
-            getInstallments: function () {
-                let installments = window.checkoutConfig.payment.tunagateway.installments;
+            getInstallments: function () {                
+                let feeList = window.checkoutConfig.payment.tunagateway.feeList;
                 let installmentIndex = 0;                
-                return _.map(installments, function (value, key) {
+                return _.map(feeList, function (value, key) {
                     installmentIndex++;
+                    let finalText = '';
+                    if (value*1==0){
+                        finalText = installmentIndex +'x '+priceUtils.formatPrice(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length-1].value)/installmentIndex)+' (s/ juros) - '+priceUtils.formatPrice(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length-1].value));
+                    }else
+                    {
+                        let fee =(value*1)/100.00;                
+                        let valor_parcela = getValorParcela(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length-1].value),value,fee);
+                        finalText = installmentIndex +'x '+priceUtils.formatPrice(valor_parcela)+' (c/ juros) - '+priceUtils.formatPrice(valor_parcela*value);
+                    }
                     return {
                         'value': installmentIndex,
-                        'text': value
+                        'text': finalText
                     };
                 });
-            },
+            },            
             onlyNumbers: function (value) {
                 return value.replace(/\D/g, '');
             },
@@ -335,11 +357,11 @@ define(
                     'method': this.getCode(),
                     'additional_data': additionalData
                 })).done(function () {
-                    console.log("done set payment information");					                    
+                    
                     delete paymentData['title'];
                     $.when(
                         placeOrder(paymentData, messageContainer)).done(function () {
-                            console.log("done place order");
+                            
                             $.mage.redirect(window.checkoutConfig.tuna_payment);
                         });
                 }).fail(function () {
@@ -348,7 +370,7 @@ define(
                         content: $.mage.__('Ocorreu um erro no processamento. Por favor, tente novamente')
                     });
                 }).always(function () {
-                    console.log("always");
+                    
                     // fullScreenLoader.stopLoader();
                 });
             },

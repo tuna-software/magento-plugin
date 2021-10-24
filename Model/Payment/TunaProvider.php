@@ -51,40 +51,20 @@ class TunaProvider implements ConfigProviderInterface
         }
         $this->_coreSession = $coreSession;
     }
-    
-    public function getInstallment($valor_total,$totalInstallments)
+    public function getFee($totalInstallments)
     {
-        $parcelas = array();
+        $feeList = array();
         for($i=1;$i<=$totalInstallments;$i++){
-            $tmpJuros = $this->scopeConfig->getValue('payment/tuna_payment/credit_card/p'.$i);
-            $juros = 0;
-            if ($tmpJuros!='')
+            $tmpFee = $this->scopeConfig->getValue('payment/tuna_payment/credit_card/p'.$i);
+            $fee = 0;
+            if ($tmpFee!='')
             {
-                $juros = (float)$tmpJuros;
-            }
-            $option = '';
-            if($juros==0){                        
-                $option = $i.'x R$ '.number_format($valor_total/$i, 2, ",", ".").' (s/ juros) - R$ '.number_format($valor_total, 2, ",", ".");
-            }else{                                
-                $I =$juros/100.00;                
-                $valor_parcela = $this->GetValorParcela( $this->scopeConfig->getValue('payment/tuna_payment/credit_card/fee_config'),$valor_total,$i,$I);
-                $option = $i.'x R$ '.number_format($valor_parcela, 2, ",", ".").' (c/ juros) - R$ '.number_format($valor_parcela*$i, 2, ",", ".");                
-            }
-            $parcelas[$i-1] = $option;
+                $fee = (float)$tmpFee;
+            }            
+            $feeList[$i-1] = $fee;
         }
-        return $parcelas;
+        return $feeList;
     }
-    public function GetValorParcela($tipo, $valorTotal,$parcela,$juros)
-    {
-        if ($tipo == 'S')
-        {
-            return ($valorTotal * (1 +$juros))/$parcela;
-        }else
-        {
-            return ($valorTotal*pow((1+$juros),$parcela))/$parcela;
-        }
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -205,9 +185,6 @@ class TunaProvider implements ConfigProviderInterface
             $response = $this->jsonHelper->jsonDecode($body);
             
         }
-        $quote = $this->checkoutSession->getQuote();
-        $total = $quote->getGrandTotal();
-        $installmentOptions = $this->getInstallment($total,$this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments'));
         $config = [
             'payment' => [
                 'tunagateway' => [
@@ -216,7 +193,9 @@ class TunaProvider implements ConfigProviderInterface
                     'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto'),
-                    'installments' =>  $installmentOptions,
+                    'installments' =>  $this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments'),
+                    'feeList'=>$this->getFee($this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments')),
+                    'feeType' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/fee_config'),
                     'billingAddresses' => $billingAddresses,
                     'title' => $this->scopeConfig->getValue('payment/tuna_payment/options/title')
                 ]
