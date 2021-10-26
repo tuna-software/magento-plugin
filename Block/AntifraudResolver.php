@@ -9,7 +9,6 @@ class AntifraudResolver extends \Magento\Framework\View\Element\Template
     protected $_scopeConfig;
     const kondutoBaseScript = "var __kdt = __kdt || [];
         __kdt.push({'public_key': '{KondutoPublicKey}'});
-    __kdt.push({'post_on_load': false});
     (function() {
     var kdt = document.createElement('script');
     kdt.id = 'kdtjs'; kdt.type = 'text/javascript';
@@ -131,8 +130,9 @@ class AntifraudResolver extends \Magento\Framework\View\Element\Template
             return '';
         $antifraudConfig = json_decode($antifraudConfigText);
         $resultingScript = "";
+        $userID = $this->getCustomerID();
         if ($antifraudConfig->UseKonduto) {
-            $resultingScript = str_replace(["{KondutoPublicKey}"], [$antifraudConfig->KondutoPublicKey], self::kondutoBaseScript);
+            $resultingScript = str_replace(["{KondutoPublicKey}","{userid}"], [$antifraudConfig->KondutoPublicKey, $userID], self::kondutoBaseScript);
         }
         return $resultingScript;
     }
