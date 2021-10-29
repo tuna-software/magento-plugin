@@ -118,7 +118,10 @@ class CreateTunaOrder implements ObserverInterface
       $PaymentMethodType = "1";
       $cardInfo = null;
       $boletoInfo = null;
+      $installments = 1;
       if ($payment->getAdditionalInformation()["is_boleto_payment"] == "false") {
+        if ($payment->getAdditionalInformation()["is_pix_payment"] == "false") {
+          $installments = $payment->getAdditionalInformation()["credit_card_installments"] * 1;
         $cardInfo = [
           "TokenProvider" => "Tuna",
           "CardNumber" => "",
@@ -145,6 +148,10 @@ class CreateTunaOrder implements ObserverInterface
             ]
           ]
         ];
+      }else
+      {
+        $PaymentMethodType = "D";				
+      }
       } else {
         $PaymentMethodType = "3";
         $boletoInfo = [
@@ -206,7 +213,7 @@ class CreateTunaOrder implements ObserverInterface
             [
               "PaymentMethodType" => $PaymentMethodType,
               "Amount" => $valorTotal,
-              "Installments" => $payment->getAdditionalInformation()["credit_card_installments"] * 1,
+              "Installments" => $installments,
               "CardInfo" => $cardInfo,
               "BoletoInfo" => $boletoInfo
             ]
@@ -277,7 +284,7 @@ class CreateTunaOrder implements ObserverInterface
             $order->setStatus('tuna_DeniedAntiFraud');
             break;
         }
-        if (strval($response["code"]) == "1" && $response["status"] == "C") {
+        if (strval($response["code"]) == "1" && ($response["status"] == "C" || $response["status"] == "P" )) {
           if ($payment->getAdditionalInformation()["is_boleto_payment"] == "true") {
             if ($response["methods"] != null && $response["methods"][0]["redirectInfo"] != null) {
               $additionalData = $payment->getAdditionalInformation();
@@ -286,6 +293,15 @@ class CreateTunaOrder implements ObserverInterface
               $payment->save();
             }
           }
+          if ($payment->getAdditionalInformation()["is_pix_payment"] == "true") {
+            if ($response["methods"] != null && $response["methods"][0]["pixInfo"] != null) {
+              $additionalData = $payment->getAdditionalInformation();
+              $additionalData["pix_image"] = $response["methods"][0]["pixInfo"]["qrImage"];
+              $additionalData["pix_key"] = $response["methods"][0]["pixInfo"]["qrContent"];
+              $payment->setData('additional_information', $additionalData);
+              $payment->save();
+            }
+          } 
         }
       } catch (\Exception $e) {
         $order->setStatus('tuna_Cancelled');

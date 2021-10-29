@@ -5,6 +5,57 @@
         <?php if ($block->getIsBoleto() == "true") { ?>
             <h2><?php echo __('Clique <a href="%1" target="_blank"> aqui</a> e imprima seu boleto para realizar o pagamento', $block->escapeHtml($block->getBoletoURL())) ?></h3>
             <?php } ?>
+            <?php if ($block->getIsPix() == "true" && $block->getStatus()=="tuna_PendingCapture") { ?>
+                <h2><?php echo __('Pagamento via PIX') ?></h3>
+                <div style="height: 451px;">	
+                    <div style="width:300px; float:left">					
+                            <img src="<?php echo __( $block->getPixImage() ); ?>" width="250px" />
+                            <input style="width:250px;margin-top:5px" id="tuna-qr-code" value="<?php echo __( $block->getPixKey()); ?>"></input> 
+                            <button style="width:250px;margin-top:5px"  onclick="copy_qr_code()" onclick="true"><?php echo __( 'Pix Copia e Cola' ); ?></button>
+                            <script>
+                                function copy_qr_code() {
+                                    var copyText = document.getElementById("tuna-qr-code");
+                                    copyText.select();
+                                    copyText.setSelectionRange(0, 99999)
+                                    document.execCommand("copy");
+                                }
+                            </script>		   
+                    </div>
+                    <div style="float:left">			
+                        <p>1 - <?php echo __( 'Abra o app do seu banco ou instituição financeira e entre no ambiente Pix'); ?></p>
+                        <p>2 - <?php echo __( 'Escolha a opção pagar com qr code e escaneie ou copie e cole o código'); ?></p>
+                        <p>3 - <?php echo __('Confirme as informações e finalize o pagamento' ); ?></p>		
+                        <p style="color:#999999;border-top:1px solid #CCCCCC"><?php echo __('verificando pagamento...' ); ?></p>
+                    </div>
+                            
+                </div>
+                <script>
+                    function doPoll(purchaseid) {countPoll++;
+                        jQuery.ajax({
+                            type: "POST",
+                                        data: {partnerUniqueId: purchaseid, fetch: false},
+                                cache: false,
+                                    url: "/tunagateway/order/pixvalidation",
+                                    success: function (data) {
+                                if (data == "OK1" || countPoll>200){
+                                    clearTimeout(timeout);
+                                window.location.reload();
+                            }
+                            timeout = setTimeout(function () {
+                                    doPoll(purchaseid);
+                                    }, 6000);			
+                        },
+                        error: function (data) { 
+                            clearTimeout(timeout);
+                        }
+                        });
+                    } 
+                    var countPoll=0;
+                    var timeout = setTimeout(function () {
+                                    doPoll(<?php echo __($block->escapeHtml($block->getOrderId())) ?>);
+                                    }, 6000);			
+                </script>
+            <?php } ?>
         <?php } else { ?>
             <h2><?php echo __('Sua compra esta sendo processada. Número do pedido # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
         <?php } ?>

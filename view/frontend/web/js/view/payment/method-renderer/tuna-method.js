@@ -62,6 +62,9 @@ define(
                 $("#lblHolderNameCard").show();
                 $("#savedCardDiv").show();
                 $("#boletoDiv").hide();
+                $('#tuna_credit_card_document').show();
+                $('#cpfCnpjDiv').show();
+                $("#pixDiv").hide();
                 $(".checkout").html("Pagar");
             } else if ($("#tuna_card_radio_new").prop("checked")) {
                 $("#savedCardDiv").hide();
@@ -70,11 +73,28 @@ define(
                 $("#lblHolderNameCard").show();
                 $("#newCardDiv").show();
                 $("#boletoDiv").hide();
+                $('#tuna_credit_card_document').show();
+                $('#cpfCnpjDiv').show();
+                $("#pixDiv").hide();
+                $(".checkout").html("Pagar");
+            } else  if ($("#tuna_pix_radio").prop("checked")) {
+                $("#savedCardDiv").hide();
+                $("#creditCardPaymentDiv").hide();
+                $("#lblHolderNameBoleto").hide();
+                $("#lblHolderNameCard").hide();
+                $('#tuna_credit_card_document').hide();
+                $('#cpfCnpjDiv').hide();
+                $("#newCardDiv").hide();
+                $("#pixDiv").show();
+                $("#boletoDiv").hide();
                 $(".checkout").html("Pagar");
             } else {
                 $("#creditCardPaymentDiv").hide();
                 $("#lblHolderNameCard").hide();
+                $('#cpfCnpjDiv').show();
                 $("#lblHolderNameBoleto").show();
+                $('#tuna_credit_card_document').show();
+                $("#pixDiv").hide();
                 $("#boletoDiv").show();
                 $(".checkout").html("Gerar boleto");
             }
@@ -83,6 +103,7 @@ define(
         $("#tuna_card_radio_new").live("change", cardRadioChanged);
         $("#tuna_card_radio_saved").live("change", cardRadioChanged);
         $("#tuna_boleto_radio").live("change", cardRadioChanged);
+        $("#tuna_pix_radio").live("change", cardRadioChanged);
         $("#tuna_credit_card_installments").live("change", resetTotalOrder);
         function resetTotalOrder()
         { 
@@ -110,6 +131,16 @@ define(
             }
 
             return true;
+        }
+        function getValorTotal(valorTotal,parcela,juros)
+        {
+            if (window.checkoutConfig.payment.tunagateway.feeType == 'S')
+            {
+                return (valorTotal * (1 +juros));
+            }else
+            {
+                return (valorTotal*Math.pow((1+juros),parcela));
+            }
         }
         function getValorParcela(valorTotal,parcela,juros)
         {
@@ -153,6 +184,7 @@ define(
                         $("#creditCardPaymentDiv").remove();
                         $("#tuna_savedCard_label").remove();
                         $("#tuna_newCard_label").remove();
+                        $("#pixDiv").remove();
                         $("#tuna_boleto_radio").prop("checked", true);
                         $("#boletoDiv").show();
                         return;
@@ -163,7 +195,10 @@ define(
                     $("#tuna_boleto_label").remove();
                     $("#boletoDiv").remove();
                 }
-
+                if (!this.allowPix()) {
+                    $("#tuna_pix_label").remove();
+                    $("#pixDiv").remove();
+                }
                 if (this.getStoredCreditCards() && this.getStoredCreditCards().length > 0) {
                     $("#tuna_card_radio_saved").prop("checked", true);
                     $("#savedCardDiv").show();
@@ -184,6 +219,10 @@ define(
             allowBoleto: function () {
                 return window.checkoutConfig.payment.tunagateway.allow_boleto &&
                     window.checkoutConfig.payment.tunagateway.allow_boleto === "1";
+            },
+            allowPix: function () {
+                return window.checkoutConfig.payment.tunagateway.allow_pix &&
+                    window.checkoutConfig.payment.tunagateway.allow_pix === "1";
             },
             getStoredCreditCards: function () {
                 return window.checkoutConfig.payment.tunagateway.savedCreditCards;
@@ -241,8 +280,8 @@ define(
                     }else
                     {
                         let fee =(value*1)/100.00;                
-                        let valor_parcela = getValorParcela(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length-1].value),value,fee);
-                        finalText = installmentIndex +'x '+priceUtils.formatPrice(valor_parcela)+' (c/ juros) - '+priceUtils.formatPrice(valor_parcela*value);
+                        let valor_parcela = getValorParcela(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length-1].value),installmentIndex,fee);
+                        finalText = installmentIndex +'x '+priceUtils.formatPrice(valor_parcela)+' (c/ juros) - '+priceUtils.formatPrice(getValorTotal(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length-1].value),installmentIndex,fee));
                     }
                     return {
                         'value': installmentIndex,
@@ -337,18 +376,20 @@ define(
                 return true;
 
             },
-            endOrder: function (self, creditCardData, paymentData, messageContainer, isBoleto = false) {
+            endOrder: function (self, creditCardData, paymentData, messageContainer, isBoleto = false, isPix = false) {
 
                 let additionalData = {
                     'buyer_document': $('#tuna_credit_card_document').val(),
                     'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
-                    'credit_card_token': isBoleto ? "" : creditCardData.token,
-                    'credit_card_brand': isBoleto ? "" : creditCardData.brand,
-                    'credit_card_expiration_month': isBoleto ? "" : creditCardData.expirationMonth,
-                    'credit_card_expiration_year': isBoleto ? "" : creditCardData.expirationYear,
-                    'credit_card_installments': isBoleto ? "1" : ($('#tuna_credit_card_installments').val() || "1" ),
-                    'buyer_name': isBoleto ? $('#tuna_boleto_holder').val() : creditCardData.cardHolderName,
-                    'is_boleto_payment': isBoleto ? "true" : "false"
+                    'credit_card_token': isBoleto || isPix ? "" : creditCardData.token,
+                    'credit_card_brand':  isBoleto || isPix ? "" : creditCardData.brand,
+                    'credit_card_expiration_month':  isBoleto || isPix ? "" : creditCardData.expirationMonth,
+                    'credit_card_expiration_year':  isBoleto || isPix ? "" : creditCardData.expirationYear,
+                    'credit_card_installments':  isBoleto || isPix ? "1" : ($('#tuna_credit_card_installments').val() || "1" ),
+                    'buyer_name': isBoleto ? $('#tuna_boleto_holder').val() : isPix ? "" : creditCardData.cardHolderName,
+                    'is_boleto_payment': isBoleto ? "true" : "false",
+                    'is_pix_payment': isPix ? "true" : "false",
+                    'payment_type':isBoleto ? "TUNA_EBOL" : isPix ? "TUNA_EPIX" : "TUNA_ECAC"
                 };
                 if (Object.prototype.hasOwnProperty.call(paymentData, '__disableTmpl')) { delete paymentData.__disableTmpl; }
                 if (Object.prototype.hasOwnProperty.call(paymentData, 'disableTmpl')) { delete paymentData.disableTmpl; }
@@ -382,6 +423,9 @@ define(
             },
             isBoletoPayment: function () {
                 return $("#tuna_boleto_radio").prop("checked");
+            },
+            isPixPayment: function () {
+                return $("#tuna_pix_radio").prop("checked");
             },
             getSelectedCardToken: function () {
                 return $("input[name='storedCard']:checked").attr("id").substring(10, $("input[name='storedCard']:checked").attr("id").length);
@@ -419,12 +463,13 @@ define(
                 } else if (this.isBoletoPayment()) {
                     if (!$('#tuna_boleto_holder')[0].value)
                         return "boletoHolderInvalidInfo";
-                } else {
+                } else  if (this.isPixPayment()) {                    
+                }else{
                     return "error";
                 }
 
                 let document = $('#tuna_credit_card_document')[0].value;
-                if (!document || (!this.isCNPJValid(document) && !this.isCPFValid(document)))
+                if ((!document && !this.isPixPayment()) || (!this.isPixPayment()&& !this.isCNPJValid(document) && !this.isCPFValid(document)))
                     return "cpfInvalidInfo";
 
                 return null;
@@ -445,7 +490,7 @@ define(
                     let tunaLib = Tuna(window.checkoutConfig.payment.tunagateway.sessionid);
                     let tokenizator = tunaLib.tokenizator();
 
-                    if (this.isUsingSavedCard()) {
+                    if (this.isUsingSavedCard()) {                        
                         let creditCardData = this.getStoredCreditCards().find(cc => cc.token === this.getSelectedCardToken());
                         let creditCardCvv = $(".CcCvv:visible").val();
                         let bindResponse = await tokenizator.bind(creditCardData.token, creditCardCvv);
@@ -460,10 +505,11 @@ define(
                             return;
                         }
 
-                    } else if (this.isBoletoPayment()) {
-                        self.endOrder(self, null, paymentData, messageContainer, true);
-                    } else {
-
+                    } else if (this.isBoletoPayment()) {                        
+                        self.endOrder(self, null, paymentData, messageContainer, true, false);
+                    } else if (this.isPixPayment()) {                        
+                        self.endOrder(self, null, paymentData, messageContainer, false, true);
+                    } else {                        
                         let cardData = {
                             CardHolderName: $('#tuna_credit_card_holder').val(),
                             CardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
@@ -492,7 +538,7 @@ define(
                             return;
                         }
                     }
-                } else {
+                } else {                    
                     let validationLabels = ["holderInvalidInfo", "cpfInvalidInfo", "cvvSavedInvalidInfo",
                         "boletoHolderInvalidInfo", "creditCardInvalidInfo", "validityDateInvalidInfo",
                         "cvvInvalidInfo", "noCreditCardSelected", "installmentsInvalidInfo"];
