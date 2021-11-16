@@ -186,10 +186,6 @@ class CreateTunaOrder implements ObserverInterface
           'Document' => $payment->getAdditionalInformation()["buyer_document"],
           'DocumentType' => $documentType
         ],
-        "AntiFraud" => [
-          "DeliveryAddressee" => $fullName
-        ],
-        "DeliveryAddress" => $deliveryAddress,
         "FrontData" => [
           "SessionID" => $this->_session->getSessionId(),
           "Origin" => "WEBSITE",
@@ -207,7 +203,11 @@ class CreateTunaOrder implements ObserverInterface
           "Items" => $itens
         ],
         "PaymentData" => [
-          'Countrycode' => $billing["country_id"] != null ? $billing["country_id"] : "BR",
+          'Countrycode' => $billing["country_id"] != null ? $billing["country_id"] : "BR",          
+          "AntiFraud" => [
+            "DeliveryAddressee" => $fullName
+          ],
+          "DeliveryAddress" => $deliveryAddress,
           "SalesChannel" => "ECOMMERCE",
           "PaymentMethods" => [
             [
