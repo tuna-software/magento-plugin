@@ -198,6 +198,7 @@ class TunaProvider implements ConfigProviderInterface
                     'feeList'=>$this->getFee($this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments')),
                     'feeType' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/fee_config'),
                     'billingAddresses' => $billingAddresses,
+                    'internalSessionID' =>  $this->_session->getSessionId(),
                     'title' => $this->scopeConfig->getValue('payment/tuna_payment/options/title')
                 ]
             ],
