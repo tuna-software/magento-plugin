@@ -28,32 +28,36 @@ class Update extends \Magento\Framework\App\Action\Action
     public function execute()
     {      
         $appkey = $this->getRequest()->getHeader('Authorization');
-        $orderID = $this->getRequest()->getParam('partnerUniqueId');
-        $status = $this->getRequest()->getParam('statusId');        
+        $body = $this->jsonHelper->jsonDecode(file_get_contents('php://input'));
+        $orderID = $body['partnerUniqueId'];
+        $status = $body['statusId'];   
         if ($orderID==null)
         {
-            echo print_r("ERROR");
+            echo print_r("ERROR - partneruniqueid parameter not found.");
+            echo print_r(file_get_contents('php://input'));
             exit;
         }
         if ($status==null)
         {
-            echo print_r("ERROR");
+            echo print_r("ERROR - status parameter not found.");
+            echo print_r(file_get_contents('php://input'));
             exit;
         }
         if ($appkey==null)
         {
-            echo print_r("ERROR");
+            echo print_r("ERROR - authorization header not found.");
+            echo print_r($this->getRequest()->getHeader('Authorization'));
             exit;
         }
         if ($this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey')!= 'Bearer '.$appkey )
         {
-            echo print_r("ERROR");
+            echo print_r("ERROR - invalid header.");
             exit; 
         }
         $order = $this->_objectManager->create('Magento\Sales\Model\Order')->load($orderID );
         if ($order==null)
         {
-            echo print_r("ERROR");
+            echo print_r("ERROR - order not found.");
             exit;
         }
         $payment = $order->getPayment();    

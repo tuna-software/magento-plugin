@@ -5,6 +5,8 @@ namespace Tuna\TunaGateway\Model\Payment;
 use \Magento\Checkout\Model\ConfigProviderInterface;
 use \Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
 use Magento\Payment\Helper\Data as PaymentHelper;
+use Magento\Framework\Session\SessionManagerInterface as CoreSession;
+
 
 class TunaProvider implements ConfigProviderInterface
 {
@@ -15,6 +17,8 @@ class TunaProvider implements ConfigProviderInterface
     protected $_session;
     protected $_tunaEndpointDomain;
     protected $countryInformationAcquirer;
+    protected $_coreSession;
+
     /**
      * first config value config path
      */
@@ -26,22 +30,40 @@ class TunaProvider implements ConfigProviderInterface
     public function __construct(
         ScopeConfig $scopeConfig,
         \Magento\Framework\Session\SessionManager $sessionManager,
+        \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
         \Magento\Framework\Json\Helper\Data $jsonHelper,
         PaymentHelper $helper,
-        \Magento\Directory\Api\CountryInformationAcquirerInterface $countryInformationAcquirer
+        \Magento\Directory\Api\CountryInformationAcquirerInterface $countryInformationAcquirer,
+        CoreSession $coreSession
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->_session = $sessionManager;
         $this->curlFactory = $curlFactory;
         $this->jsonHelper = $jsonHelper;
+        $this->checkoutSession = $checkoutSession;
         $this->tunaPaymentMethod = $helper->getMethodInstance(self::PAYMENT_METHOD_CODE);
         $this->countryInformationAcquirer = $countryInformationAcquirer;
         if ($this->scopeConfig->getValue('payment/tuna_payment/options/endpoint_config') == 'production'){
             $this->_tunaEndpointDomain = 'tunagateway.com';
           }else{
             $this->_tunaEndpointDomain = 'tuna-demo.uy';
-        }   
+        }
+        $this->_coreSession = $coreSession;
+    }
+    public function getFee($totalInstallments)
+    {
+        $feeList = array();
+        for($i=1;$i<=$totalInstallments;$i++){
+            $tmpFee = $this->scopeConfig->getValue('payment/tuna_payment/credit_card/p'.$i);
+            $fee = 0;
+            if ($tmpFee!='')
+            {
+                $fee = (float)$tmpFee;
+            }            
+            $feeList[$i-1] = $fee;
+        }
+        return $feeList;
     }
     /**
      * {@inheritdoc}
@@ -83,7 +105,10 @@ class TunaProvider implements ConfigProviderInterface
 
         $om = \Magento\Framework\App\ObjectManager::getInstance();
         $customerSession = $om->get('Magento\Customer\Model\Session');
-        $customerSessionID = "0";
+
+        $this->_coreSession->start();
+        $customerSessionID = $this->_coreSession->getCostumerID();
+
         $customerSessionEmail = "";
         $billingAddresses = [];
         if ($customerSession->isLoggedIn()) {
@@ -160,7 +185,6 @@ class TunaProvider implements ConfigProviderInterface
             $response = $this->jsonHelper->jsonDecode($body);
             
         }
-
         $config = [
             'payment' => [
                 'tunagateway' => [
@@ -169,7 +193,10 @@ class TunaProvider implements ConfigProviderInterface
                     'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto'),
-                    'installments' => $this->scopeConfig->getValue('payment/tuna_payment/options/installments'),
+                    'allow_pix' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_pix'),
+                    'installments' =>  $this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments'),
+                    'feeList'=>$this->getFee($this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments')),
+                    'feeType' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/fee_config'),
                     'billingAddresses' => $billingAddresses,
                     'title' => $this->scopeConfig->getValue('payment/tuna_payment/options/title')
                 ]

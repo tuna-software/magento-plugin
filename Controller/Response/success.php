@@ -35,11 +35,14 @@ class Success extends \Magento\Framework\App\Action\Action
         /** @var \Magento\Framework\View\Result\PageFactory $resultPage */
         $resultPage = $this->_resultPageFactory->create();
         $blockInstance = $resultPage->getLayout()->getBlock('tuna.response.success');
-        $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderId($this->order()->getIncrementId());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderId($this->order()->getId());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderProducts($this->products());
-        $resultPage->getLayout()->getBlock('tuna.response.success')->setStatus($this->status());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setStatus($this->order()->getStatus());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setBoletoURL($this->boletoURL());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setIsBoleto($this->isBoleto());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setIsPix($this->isPix());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setPixImage($this->pixImage());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setPixKey($this->pixKey());
 
         //$this->clearSession();
         return $resultPage;
@@ -77,9 +80,21 @@ class Success extends \Magento\Framework\App\Action\Action
     {
         return $this->session()->boleto_url;
     }
+    private function pixKey()
+    {
+        return $this->session()->pix_key;
+    }
+    private function pixImage()
+    {
+        return $this->session()->pix_image;
+    }
     private function isBoleto()
     {
         return $this->session()->is_boleto;
+    }
+    private function isPix()
+    {
+        return $this->session()->is_pix;
     }
     /**
      * Get session

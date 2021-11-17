@@ -17,7 +17,9 @@
 			<group id="tuna_payment" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
 				<label><![CDATA[<div style="border-top-style: solid;border-bottom-style: solid;border-color: #31b34e;padding-top: 10px;padding-bottom: 10px;"><div style="display:inline-block; vertical-align: middle; margin: 0 20px 0 0px; width: 180px; height:60px; background-repeat: no-repeat, no-repeat, no-repeat; background-image: url('data:image/png;base64,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');"></div><div style="display:inline-block; vertical-align:middle; width:50%" valign="middle" width="50%"><b>Why Tuna?</b><br/><br/>Connect Tuna on your Magento website to accept online payments from multiple payment providers. We help companies to achieve higher conversion rates while enjoying lower processing fees and fraud costs.</div></div>]]></label>
 				<fieldset_css>complex amazon-payment-section</fieldset_css>
-				<frontend_model>Tuna\TunaGateway\Block\Adminhtml\System\Config\Fieldset\PaymentFieldSet</frontend_model>				
+				<field id="block_payment_fieldset">
+					<frontend_model>Tuna\TunaGateway\Block\Adminhtml\System\Config\Fieldset\PaymentFieldSet</frontend_model>				
+				</field>
 				<group id="credentials" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
 					<label>Tuna Keys</label>					
 					<field id="appKey" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="label" type="text">
@@ -33,23 +35,97 @@
 						<label>Enable Tuna</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 					</field>
-					<field id="endpoint_config" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="11" translate="label" type="select">
+					<field id="title" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="11" translate="label" type="text">
+						<label>Title</label>						
+					</field>
+					<field id="endpoint_config" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="12" translate="label" type="select">
 						<label>Environment</label>
 						<source_model>Tuna\TunaGateway\Model\Config\Source\EndpointConfiguration</source_model>
 					</field>
-					<field id="title" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="label" type="text">
-						<label>Title</label>						
-					</field>				
-					<field id="allow_boleto" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label" type="select">
+					<field id="antifraudConfig" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label" type="text">
+						<label>Antifraud configuration</label>
+					</field>								
+					<field id="allow_boleto" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="13" translate="label" type="select">
 						<label>Allow Offline Payment (Boleto)</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>	
+					<field id="allow_pix" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="14" translate="label" type="select">
+						<label>Allow Pix Payment (PIX)</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>				
+					<field id="sort_order" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="60" translate="label" type="text">
+						<label>Sort Order</label>
 					</field>
+				</group>
+				<group id="credit_card" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Credit card options</label>
 					<field id="installments" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label" type="select">
 						<label>Allowed number of installments</label>
 						<source_model>Tuna\TunaGateway\Model\Config\Source\InstallmentOption</source_model>
+					</field>		
+					<field id="fee_config" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="11" translate="label" type="select">
+						<label>Fee type</label>
+						<source_model>Tuna\TunaGateway\Model\Config\Source\FeeConfiguration</source_model>
+					</field>				
+					<field id="p1" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 1x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
 					</field>
-					<field id="sort_order" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="60" translate="label" type="text">
-						<label>Sort Order</label>
+					<field id="p2" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 2x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
+					</field>
+					<field id="p3" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 3x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
+					</field>
+					<field id="p4" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 4x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
+					</field>
+					<field id="p5" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 5x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
+					</field>
+					<field id="p6" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 6x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
+					</field>
+					<field id="p7" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 7x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
+					</field>
+					<field id="p8" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 8x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
+					</field>
+					<field id="p9" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 9x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
+					</field>
+					<field id="p10" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 10x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
+					</field>
+					<field id="p11" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 11x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
+					</field>
+					<field id="p12" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 12x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-currency-dollar</validate>
 					</field>
 				</group>
 			</group>
