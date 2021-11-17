@@ -438,7 +438,7 @@ define(
                         return "holderInvalidInfo";
 
                     let cardNumber = this.onlyNumbers($('#tuna_credit_card_number')[0].value);
-                    if (!cardNumber || (cardNumber.length > 19 && cardNumber.length < 13 ))
+                    if (!cardNumber || cardNumber.length > 19 || cardNumber.length < 13 )
                         return "creditCardInvalidInfo";
 
                     let expirationYear = $('#tuna_credit_card_expiration_year')[0].value;
