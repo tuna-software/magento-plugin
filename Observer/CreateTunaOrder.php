@@ -122,6 +122,8 @@ class CreateTunaOrder implements ObserverInterface
       if ($payment->getAdditionalInformation()["is_boleto_payment"] == "false") {
         if ($payment->getAdditionalInformation()["is_pix_payment"] == "false") {
           $installments = $payment->getAdditionalInformation()["credit_card_installments"] * 1;
+          $order->addStatusHistoryComment( 'Pagamento em Cartão de crédito');
+       
         $cardInfo = [
           "TokenProvider" => "Tuna",
           "CardNumber" => "",
@@ -150,10 +152,12 @@ class CreateTunaOrder implements ObserverInterface
         ];
       }else
       {
-        $PaymentMethodType = "D";				
+        $PaymentMethodType = "D";	
+        $order->addStatusHistoryComment( 'Pagamento em PIX');			
       }
       } else {
         $PaymentMethodType = "3";
+        $order->addStatusHistoryComment( 'Pagamento em Boleto');
         $boletoInfo = [
           "BillingInfo" => [
             "Document" => $payment->getAdditionalInformation()["buyer_document"],
