@@ -38,7 +38,10 @@ class Request extends \Magento\Framework\App\Action\Action
         $payment = $lastRealOrder->getPayment();
         $paymentData = $payment->getData();
 
-        if ($paymentData['method'] === 'tuna') {
+        if ($paymentData['method'] === 'tuna' ||
+        $paymentData['method'] === 'pix' ||
+        $paymentData['method'] === 'boleto' ||
+        $paymentData['method'] === 'credit') {
             $this->orderId = $lastRealOrder->getId();
             $orderStatusText = '';
             $orderStatus = $lastRealOrder->getStatus();            
