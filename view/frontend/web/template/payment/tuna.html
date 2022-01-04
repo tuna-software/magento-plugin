@@ -43,6 +43,9 @@
             <label class="radio-inline" id="tuna_boleto_label" style="margin-right: 15px;">
                 <input id="tuna_boleto_radio" type="radio" name="cardRadio">Boleto
             </label>
+            <label class="radio-inline" id="tuna_crypto_label">
+                <input id="tuna_crypto_radio" type="radio" name="cardRadio">Bitcoin
+            </label>
             <label class="radio-inline" id="tuna_pix_label">
                 <input id="tuna_pix_radio" type="radio" name="cardRadio">Pix
             </label>
@@ -230,6 +233,12 @@
             </div>
             <h4>
                 <!-- ko i18n: 'Seu boleto será exibido na próxima tela.' -->
+                <!-- /ko -->
+            </h4>
+        </div>
+        <div id="cryptoDiv" style="display: none;">            
+            <h4>
+                <!-- ko i18n: 'Sua cobrança em Bitcoin será exibida na próxima tela.' -->
                 <!-- /ko -->
             </h4>
         </div>
