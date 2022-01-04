@@ -193,6 +193,7 @@ class TunaProvider implements ConfigProviderInterface
                     'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto'),
+                    'allow_crypto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_crypto'),
                     'allow_pix' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_pix'),
                     'installments' =>  $this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments'),
                     'feeList'=>$this->getFee($this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments')),

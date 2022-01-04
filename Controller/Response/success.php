@@ -40,6 +40,12 @@ class Success extends \Magento\Framework\App\Action\Action
         $resultPage->getLayout()->getBlock('tuna.response.success')->setStatus($this->order()->getStatus());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setBoletoURL($this->boletoURL());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setIsBoleto($this->isBoleto());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setIsCrypto($this->isCrypto());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setCryptoCoinValue($this->cryptoCoinValue());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setCryptoCoinRateCurrency($this->cryptoCoinRateCurrency());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setCryptoCoinAddr($this->cryptoCoinAddr());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setCryptoCoinQRCodeURL($this->cryptoCoinQRCodeURL());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setCryptoCoin($this->cryptoCoin());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setIsPix($this->isPix());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setPixImage($this->pixImage());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setPixKey($this->pixKey());
@@ -80,6 +86,26 @@ class Success extends \Magento\Framework\App\Action\Action
     {
         return $this->session()->boleto_url;
     }
+    private function cryptoCoinValue()
+    {
+        return $this->session()->crypto_coin_value;
+    }
+    private function cryptoCoinRateCurrency()
+    {
+        return $this->session()->crypto_coin_rate_currency;
+    }
+    private function cryptoCoinAddr()
+    {
+        return $this->session()->crypto_coin_addr;
+    }
+    private function cryptoCoinQRCodeURL()
+    {
+        return $this->session()->crypto_coin_qrcode_url;
+    }
+    private function cryptoCoin()
+    {
+        return $this->session()->crypto_coin;
+    }
     private function pixKey()
     {
         return $this->session()->pix_key;
@@ -91,6 +117,10 @@ class Success extends \Magento\Framework\App\Action\Action
     private function isBoleto()
     {
         return $this->session()->is_boleto;
+    }
+    private function isCrypto()
+    {
+        return $this->session()->is_crypto;
     }
     private function isPix()
     {

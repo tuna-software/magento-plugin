@@ -48,7 +48,11 @@
 					<field id="allow_boleto" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="13" translate="label" type="select">
 						<label>Allow Offline Payment (Boleto)</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-					</field>	
+					</field>
+                    <field id="allow_crypto" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="14" translate="label" type="select">
+						<label>Allow Crypto Payment (Bitcoin)</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>
 					<field id="allow_pix" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="14" translate="label" type="select">
 						<label>Allow Pix Payment (PIX)</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
