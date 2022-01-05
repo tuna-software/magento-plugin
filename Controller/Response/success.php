@@ -35,7 +35,7 @@ class Success extends \Magento\Framework\App\Action\Action
         /** @var \Magento\Framework\View\Result\PageFactory $resultPage */
         $resultPage = $this->_resultPageFactory->create();
         $blockInstance = $resultPage->getLayout()->getBlock('tuna.response.success');
-        $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderId($this->order()->getId());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderId($this->order()->getIncrementId());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderProducts($this->products());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setStatus($this->order()->getStatus());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setBoletoURL($this->boletoURL());
