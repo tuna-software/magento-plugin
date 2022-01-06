@@ -37,17 +37,42 @@ class AntifraudResolver extends \Magento\Framework\View\Element\Template
     }, period);
      })(customerID);";
 
+    const siftScript = "
+    var _user_id = '{userID}' || ''; // Set to the user's ID, username, or email address, or '' if not yet known.
+    var _session_id = '{sessionID}'; // Set to a unique session ID for the visitor's current browsing session.
+  
+    var _sift = window._sift = window._sift || [];
+    _sift.push(['_setAccount', '{accountKey}']);
+    _sift.push(['_setUserId', _user_id]);
+    _sift.push(['_setSessionId', _session_id]);
+    _sift.push(['_trackPageview']);
+  
+   (function() {
+     function ls() {
+       var e = document.createElement('script');
+       e.src = 'https://cdn.sift.com/s.js';
+       document.body.appendChild(e);
+     }
+     if (window.attachEvent) {
+       window.attachEvent('onload', ls);
+     } else {
+       window.addEventListener('load', ls, false);
+     }
+   })();";
+
     protected $_coreSession;
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
         \Magento\Framework\View\Element\Template\Context $context,
         array $data = [],
-        CoreSession $coreSession
+        CoreSession $coreSession,
+        \Magento\Framework\Session\SessionManager $sessionManager
     ) {
         parent::__construct($context, $data);
         $this->_scopeConfig = $scopeConfigInterface;
         $this->_coreSession = $coreSession;
+        $this->_sessionManager = $sessionManager;
     }
 
     private function GUIDv4($trim = true)
@@ -102,7 +127,8 @@ class AntifraudResolver extends \Magento\Framework\View\Element\Template
         return $costumerID;
     }
 
-    function IsNullOrEmptyString($str){
+    function IsNullOrEmptyString($str)
+    {
         return (!isset($str) || trim($str) === '');
     }
 
@@ -114,7 +140,7 @@ class AntifraudResolver extends \Magento\Framework\View\Element\Template
         $resultingScript = "";
 
         $antifraudConfigText = $this->_scopeConfig->getValue('payment/tuna_payment/options/antifraudConfig');
-        if($this->IsNullOrEmptyString($antifraudConfigText))
+        if ($this->IsNullOrEmptyString($antifraudConfigText))
             return '';
         $antifraudConfig = json_decode($antifraudConfigText);
         if ($antifraudConfig->UseKonduto) {
@@ -126,13 +152,17 @@ class AntifraudResolver extends \Magento\Framework\View\Element\Template
     public function getAntifraudScripts()
     {
         $antifraudConfigText = $this->_scopeConfig->getValue('payment/tuna_payment/options/antifraudConfig');
-        if($this->IsNullOrEmptyString($antifraudConfigText))
+        if ($this->IsNullOrEmptyString($antifraudConfigText))
             return '';
         $antifraudConfig = json_decode($antifraudConfigText);
         $resultingScript = "";
-        $userID = $this->getCustomerID();
         if ($antifraudConfig->UseKonduto) {
-            $resultingScript = str_replace(["{KondutoPublicKey}","{userid}"], [$antifraudConfig->KondutoPublicKey, $userID], self::kondutoBaseScript);
+            $resultingScript .= str_replace(["{KondutoPublicKey}"], [$antifraudConfig->KondutoPublicKey], self::kondutoBaseScript);
+        }
+        if ($antifraudConfig->UseSift) {
+            $userID = $this->getCustomerID();
+            $sessionID = $this->_session->getSessionId();
+            $resultingScript .= str_replace(["{accountKey}", "{userID}", "{sessionID}"], [$antifraudConfig->SiftAccountKey, $userID, $sessionID], self::siftScript);
         }
         return $resultingScript;
     }
