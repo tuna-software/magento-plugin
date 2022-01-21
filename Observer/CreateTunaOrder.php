@@ -195,7 +195,7 @@ class CreateTunaOrder implements ObserverInterface
             }
 
             $url  = 'https://' . $this->_tunaEndpointDomain . '/api/Payment/Init';
-            $requstbody = [
+            $requestbody = [
                 'AppToken' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
                 'Account' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'),
                 'PartnerUniqueID' => $orderId,
@@ -244,7 +244,7 @@ class CreateTunaOrder implements ObserverInterface
 
             /* Create curl factory */
             $httpAdapter = $this->curlFactory->create();
-            $bodyJsonRequest = json_encode($requstbody);
+            $bodyJsonRequest = json_encode($requestbody);
             //$this->saveLog($bodyJsonRequest);
             $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
@@ -351,7 +351,6 @@ class CreateTunaOrder implements ObserverInterface
 
     public function getValorFinal($valorTotal, $parcela)
     {
-        $tipo = $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/fee_config');
         $tmpJuros = $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/p' . $parcela);
         $juros = 0;
         if ($tmpJuros != '') {
@@ -362,11 +361,7 @@ class CreateTunaOrder implements ObserverInterface
             return $valorTotal;
         } else {
             $juros = $juros / 100.00;
-            if ($tipo == 'S') {
-                return $valorTotal * (1 + $juros);
-            } else {
-                return $valorTotal * pow((1 + $juros), $parcela);
-            }
+            return $valorTotal * (1 + $juros);
         }
     }
 

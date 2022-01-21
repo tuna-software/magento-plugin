@@ -7,6 +7,7 @@ class Success extends \Magento\Framework\App\Action\Action
 
     /** @var  \Magento\Framework\View\Result\Page */
     protected $_resultPageFactory;
+    protected $_scopeConfig;
     protected $resultRedirect;
 
     /**
@@ -23,6 +24,7 @@ class Success extends \Magento\Framework\App\Action\Action
 
         /** @var  _resultPageFactory */
         $this->_resultPageFactory = $resultPageFactory;
+        $this->_scopeConfig = $this->_objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
         $this->resultRedirect = $result;
     }
 
@@ -34,8 +36,21 @@ class Success extends \Magento\Framework\App\Action\Action
     {
         /** @var \Magento\Framework\View\Result\PageFactory $resultPage */
         $resultPage = $this->_resultPageFactory->create();
+
+        $oldOrderTotal = $this->order()->getBaseGrandTotal();
+        $newOrderTotal = $this->order()->getGrandTotal();
+        $parcel = $this->order()->getPayment()->getAdditionalInformation()["credit_card_installments"];
+        $fee = $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/p' . $parcel);
+
         $blockInstance = $resultPage->getLayout()->getBlock('tuna.response.success');
+
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderId($this->order()->getIncrementId());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setDiscountExtra($this->order()->getDiscountAmount());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setShippingAmount($this->order()->getBaseShippingAmount());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setOldOrderTotal($oldOrderTotal);
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setNewOrderTotal($newOrderTotal);
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setInstallmentParcel($parcel);
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setInstallmentFee($fee);
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderProducts($this->products());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setStatus($this->order()->getStatus());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setBoletoURL($this->boletoURL());
