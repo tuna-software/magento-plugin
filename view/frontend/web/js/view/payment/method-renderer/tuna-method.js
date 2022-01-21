@@ -7,6 +7,7 @@ else
 define(
     [
         tunaLib,
+        'tuna_checkout_info',
         'Magento_Ui/js/modal/alert',
         'jquery',
         'Magento_Checkout/js/model/quote',
@@ -15,7 +16,7 @@ define(
         'Magento_Checkout/js/action/place-order',
         'Magento_Catalog/js/price-utils'
     ],
-    function (tuna_essential, alert, $, quote, Component, setPaymentInformationAction, placeOrder, priceUtils) {
+    function (tuna_essential, tuna_checkout_info, alert, $, quote, Component, setPaymentInformationAction, placeOrder, priceUtils) {
         'use strict';
         require(['jquery', 'jquery_mask'], function ($) {
 
@@ -30,8 +31,8 @@ define(
 
             $('#tuna_credit_card_document').mask(CpfCnpjMaskBehavior, cpfCnpjpOptions);
 
-            $("#tuna_credit_card_code").mask("9999");
-            $(".CcCvv").mask("9999");
+            $("#tuna_credit_card_code").mask("999");
+            $(".CcCvv").mask("999");
             $("#tuna_credit_card_number").mask("9999 9999 9999 9999");
             $("#tuna_billing_address_zip").mask("99.999-999");
 
@@ -67,6 +68,8 @@ define(
                 $("#cryptoDiv").hide();
                 $("#pixDiv").hide();
                 $(".checkout").html("Pagar");
+                $('#tuna_credit_card_installments').prop('selectedIndex', 1);
+                refreshOrderInfo();
             } else if ($("#tuna_card_radio_new").prop("checked")) {
                 $("#savedCardDiv").hide();
                 $("#creditCardPaymentDiv").show();
@@ -79,6 +82,8 @@ define(
                 $("#cryptoDiv").hide();
                 $("#pixDiv").hide();
                 $(".checkout").html("Pagar");
+                $('#tuna_credit_card_installments').prop('selectedIndex', 1);
+                refreshOrderInfo();
             } else if ($("#tuna_crypto_radio").prop("checked")) {
                 $("#savedCardDiv").hide();
                 $("#creditCardPaymentDiv").hide();
@@ -91,6 +96,7 @@ define(
                 $("#pixDiv").hide();
                 $("#boletoDiv").hide();
                 $(".checkout").html("Pagar");
+                resetOrderInfo();
             } else if ($("#tuna_pix_radio").prop("checked")) {
                 $("#savedCardDiv").hide();
                 $("#creditCardPaymentDiv").hide();
@@ -103,6 +109,7 @@ define(
                 $("#pixDiv").show();
                 $("#boletoDiv").hide();
                 $(".checkout").html("Pagar");
+                resetOrderInfo();
             } else {
                 $("#creditCardPaymentDiv").hide();
                 $("#lblHolderNameCard").hide();
@@ -113,6 +120,7 @@ define(
                 $("#pixDiv").hide();
                 $("#boletoDiv").show();
                 $(".checkout").html("Gerar boleto");
+                resetOrderInfo();
             }
         };
 
@@ -121,16 +129,19 @@ define(
         $("#tuna_boleto_radio").live("change", cardRadioChanged);
         $("#tuna_crypto_radio").live("change", cardRadioChanged);
         $("#tuna_pix_radio").live("change", cardRadioChanged);
-        $("#tuna_credit_card_installments").live("change", resetTotalOrder);
-        function resetTotalOrder()
-        { 
-            if ($("#tuna_credit_card_installments option:selected").text()!="" && $("#tuna_credit_card_installments option:selected").text()!="Parcelas")
-            {
-                var newTotal = $("#tuna_credit_card_installments option:selected").text();
-                newTotal = newTotal.substring(newTotal.indexOf("-")+2);
-                $(".grand .amount .price").html(newTotal);
-            }
-        }
+        $('#tuna').live("change", () => { 
+          $("#tuna_credit_card_installments").prop('selectedIndex', 1);
+          refreshOrderInfo();
+        });
+        $("#checkmo").live("click", resetOrderInfo);
+        $("#tuna_credit_card_installments").live("change", () => {
+          if ($("#tuna").prop("checked")) {
+              refreshOrderInfo();
+          } else {
+              resetOrderInfo();
+          }
+        });
+
         function valid_credit_card(value) {
             // Accept only digits, dashes or spaces
               if (/[^0-9-\s]+/.test(value)) return false;
@@ -150,7 +161,9 @@ define(
               }
           
               return (nCheck % 10) == 0;
-          }
+        }
+
+        // TODO: remove!?
         function isEquivalent(a, b) {
             var aProps = Object.getOwnPropertyNames(a);
             var bProps = Object.getOwnPropertyNames(b);
@@ -169,28 +182,19 @@ define(
 
             return true;
         }
-        function getValorTotal(valorTotal,parcela,juros)
+
+        function getValorTotal(valorTotal, juros)
         {
-            if (window.checkoutConfig.payment.tunagateway.feeType == 'S')
-            {
-                return (valorTotal * (1 +juros));
-            }else
-            {
-                return (valorTotal*Math.pow((1+juros),parcela));
-            }
+            return (valorTotal * (1 + juros));
         }
-        function getValorParcela(valorTotal,parcela,juros)
+
+        function getValorParcela(valorTotal, parcela, juros)
         {
-            if (window.checkoutConfig.payment.tunagateway.feeType == 'S')
-            {
-                return (valorTotal * (1 +juros))/parcela;
-            }else
-            {
-                return (valorTotal*Math.pow((1+juros),parcela))/parcela;
-            }
+            return (valorTotal * (1 + juros))/parcela;
         }
+
         $("#tuna_billing_address_country").live("change", _ => {
-            // Fix unknow info
+            // Fix unknown info
             if ($("#control").length == 1) {
                 $("#control").remove();
                 $("#tuna_billing_address_country").val("BR");
@@ -203,14 +207,14 @@ define(
                 let option = new Option(region.name, region.id);
                 $('#tuna_billing_address_state').append(option);
             });
-        }
-        );
+        });
 
         return Component.extend({
             defaults: {
                 template: 'Tuna_TunaGateway/payment/tuna',
             }, 
             afterRender: function () {
+                $('#tuna').prop('checked', true);
                 $("#lblTunaPaymentTitle").html(window.checkoutConfig.payment.tunagateway.title);
                 if (!window.checkoutConfig.payment.tunagateway.sessionid) {
                     if (!this.allowBoleto()) {
@@ -249,7 +253,6 @@ define(
                     $("#tuna_card_radio_new").prop("checked", true);
                     $("#newCardDiv").show();
                 }
-
             },
             enableBillingAddressFields: function () {
                 $("#billingAddressFields").show();
@@ -315,26 +318,31 @@ define(
                     };
                 });
             },
-            getInstallments: function () {                
+            getInstallments: function () {
                 let feeList = window.checkoutConfig.payment.tunagateway.feeList;
-                let installmentIndex = 0;                
+                let installmentIndex = 0;
                 return _.map(feeList, function (value, key) {
                     installmentIndex++;
                     let finalText = '';
-                    if (value*1==0){
-                        finalText = installmentIndex +'x '+priceUtils.formatPrice(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length-1].value)/installmentIndex)+' (s/ juros) - '+priceUtils.formatPrice(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length-1].value));
+                    if (value*1 === 0){
+                        let parcelValue = parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10)/installmentIndex;
+                        let orderTotal = parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10);
+                        finalText = installmentIndex + 'x ' + priceUtils.formatPrice(parcelValue) + ' (' + priceUtils.formatPrice(orderTotal) + ')';
                     } else
                     {
-                        let fee =(value*1)/100.00;                
-                        let valor_parcela = getValorParcela(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length-1].value),installmentIndex,fee);
-                        finalText = installmentIndex +'x '+priceUtils.formatPrice(valor_parcela)+' (c/ juros) - '+priceUtils.formatPrice(getValorTotal(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length-1].value),installmentIndex,fee));
+                        let fee =(value*1)/100.00;
+                        let parcelValue = getValorParcela(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10), installmentIndex, fee);
+                        let oldOrderTotal = parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10);
+                        let newOrderTotal = getValorTotal(oldOrderTotal, fee);
+                        finalText = installmentIndex + 'x ' + priceUtils.formatPrice(parcelValue) + ' (' + priceUtils.formatPrice(newOrderTotal) + ')';
                     }
+
                     return {
                         'value': installmentIndex,
                         'text': finalText
                     };
                 });
-            },            
+            },
             onlyNumbers: function (value) {
                 return value.replace(/\D/g, '');
             },

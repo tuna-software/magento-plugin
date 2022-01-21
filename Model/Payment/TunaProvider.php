@@ -53,16 +53,14 @@ class TunaProvider implements ConfigProviderInterface
     }
     public function getFee($totalInstallments)
     {
-        $feeList = array();
-        for($i=1;$i<=$totalInstallments;$i++){
-            $tmpFee = $this->scopeConfig->getValue('payment/tuna_payment/credit_card/p'.$i);
-            $fee = 0;
-            if ($tmpFee!='')
-            {
-                $fee = (float)$tmpFee;
-            }            
-            $feeList[$i-1] = $fee;
+        $feeList = [];
+
+        for($i = 1; $i <= $totalInstallments; $i++){
+            $feeInput = $this->scopeConfig->getValue('payment/tuna_payment/credit_card/p'.$i);
+            $fee = is_numeric($feeInput) ? (float) $feeInput : 0;           
+            $feeList[$i - 1] = $fee;
         }
+
         return $feeList;
     }
     /**
@@ -197,7 +195,6 @@ class TunaProvider implements ConfigProviderInterface
                     'allow_pix' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_pix'),
                     'installments' =>  $this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments'),
                     'feeList'=>$this->getFee($this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments')),
-                    'feeType' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/fee_config'),
                     'billingAddresses' => $billingAddresses,
                     'internalSessionID' =>  $this->_session->getSessionId(),
                     'title' => $this->scopeConfig->getValue('payment/tuna_payment/options/title')

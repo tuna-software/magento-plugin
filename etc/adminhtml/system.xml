@@ -67,69 +67,65 @@
 						<label>Allowed number of installments</label>
 						<source_model>Tuna\TunaGateway\Model\Config\Source\InstallmentOption</source_model>
 					</field>		
-					<field id="fee_config" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="11" translate="label" type="select">
-						<label>Fee type</label>
-						<source_model>Tuna\TunaGateway\Model\Config\Source\FeeConfiguration</source_model>
-					</field>				
 					<field id="p1" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 1x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p2" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 2x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p3" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 3x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p4" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 4x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p5" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 5x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p6" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 6x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p7" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 7x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p8" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 8x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p9" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 9x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p10" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 10x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p11" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 11x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 					<field id="p12" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
 						<label>Fee 12x</label>
 						<comment>Ex.: 1.5</comment>
-						<validate>validate-currency-dollar</validate>
+						<validate>validate-number</validate>
 					</field>
 				</group>
 			</group>

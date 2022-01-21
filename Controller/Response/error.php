@@ -7,6 +7,7 @@ class Error extends \Magento\Framework\App\Action\Action
 
     /** @var  \Magento\Framework\View\Result\Page */
     protected $_resultPageFactory;
+    protected $_scopeConfig;
     protected $resultRedirect;
 
     /**
@@ -23,6 +24,7 @@ class Error extends \Magento\Framework\App\Action\Action
 
         /** @var  _resultPageFactory */
         $this->_resultPageFactory = $resultPageFactory;
+        $this->_scopeConfig = $this->_objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
         $this->resultRedirect = $result;
     }
 
@@ -34,9 +36,21 @@ class Error extends \Magento\Framework\App\Action\Action
     {
         /** @var \Magento\Framework\View\Result\PageFactory $resultPage */
         $resultPage = $this->_resultPageFactory->create();
+
+        $oldOrderTotal = $this->order()->getBaseGrandTotal();
+        $newOrderTotal = $this->order()->getGrandTotal();
+        $parcel = $this->order()->getPayment()->getAdditionalInformation()["credit_card_installments"];
+        $fee = $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/p' . $parcel);
+
         $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderId($this->order()->getIncrementId());
         $resultPage->getLayout()->getBlock('tuna.response.error')->setStatus($this->status());
         $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderProducts($this->products());
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setDiscountExtra($this->order()->getDiscountAmount());
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setShippingAmount($this->order()->getBaseShippingAmount());
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setOldOrderTotal($oldOrderTotal);
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setNewOrderTotal($newOrderTotal);
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setInstallmentParcel($parcel);
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setInstallmentFee($fee);
         //$this->clearSession();
         return $resultPage;
     }

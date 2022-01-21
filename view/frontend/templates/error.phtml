@@ -3,11 +3,91 @@
 <?php /** @var $block \Magento\Checkout\Block\Onepage\Success */ ?>
 <div>
     <h2><?php echo __('Tivemos um problema ao processar esse pagamento #<span>%1</span>: <span>%2</span>', $block->escapeHtml($block->getOrderId()), $block->escapeHtml($block->getStatus())) ?></h2>
-   <table>
-    <?php foreach ($block->getOrderProducts() as $key => $product) : ?>
-        <tr>         
-            <td><?php echo $product["ProductDescription"] ?> - <a href="<?php echo $product["ProductUrl"] ?>"> Tente novamente</a> </td>         
-        </tr>
-    <?php endforeach; ?>
- </table>
+
+    <span style="display: none;" id="tunaOrderProducts">
+        <?php
+            $tunaOrderProducts = $block->getOrderProducts();
+            echo json_encode($tunaOrderProducts);
+        ?>
+    </span>
+
+
+    <span style="display: none;" id="tunaShippingAmount">
+        <?php
+            $tunaShippingAmount = (float) $block->getShippingAmount();
+            echo $tunaShippingAmount;
+        ?>
+    </span>
+
+    <span style="display: none;" id="tunaDiscountExtra">
+        <?php
+            $tunaDiscountExtra = (float) $block->getDiscountExtra();
+            echo $tunaDiscountExtra;
+        ?>
+    </span>
+
+    <span style="display: none;" id="tunaFeeAmount">
+        <?php
+            $tunaFeeAmount = ((float) $block->getNewOrderTotal()) - ((float) $block->getOldOrderTotal());
+            echo $tunaFeeAmount;
+        ?>
+    </span>
+
+    <span style="display: none;" id="tunaNewOrderTotal">
+        <?php
+            $tunaNewOrderTotal = (float) $block->getNewOrderTotal();
+            echo $tunaNewOrderTotal;
+        ?>
+    </span>
+
+    <div id="tuna-order-table"></div>
 </div>
+
+<script type="text/javascript">
+    var tunaOrderTableHtml;
+    var tunaProductsHtml = '';
+    var tunaShippingHtml = '';
+    var tunaDiscountHtml = ''
+    var tunaFeeHtml = '';
+    var horizontalLineHtml = `<tr style="border-bottom:1px solid gray"> <td colspan="100%"></td> </tr>`;
+    var tableHeaderHtml = `<tr><th>#</th><th>Produto</th><th>Quantidade</th><th>Preço Final</th></tr>`;
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('pt-BR', { currency: 'BRL', minimumFractionDigits: 2 }).format(value);
+    }
+
+    function productHtmlTemplate (product, index) {
+        var productAmount = formatCurrency(product.ItemQuantity * product.Amount);
+        return `<tr><td>${index + 1}</td><td>${product.ProductDescription} - <a href="${product.ProductUrl}">Tente novamente</td><td>${product.ItemQuantity}</td><td>${productAmount}</td></tr>`;
+    }
+
+    var tunaOrderProducts = JSON.parse(document.getElementById('tunaOrderProducts').textContent.slice(2).trim());
+    tunaOrderProducts.forEach(function (product, index) {
+      tunaProductsHtml += productHtmlTemplate(product, index);
+    });
+
+    var tunaShippingAmount =  parseFloat(document.getElementById('tunaShippingAmount').textContent.slice(2).trim(), 10);
+    var tunaDiscountExtra =  parseFloat(document.getElementById('tunaDiscountExtra').textContent.slice(2).trim(), 10);
+    var tunaFeeAmount =  parseFloat(document.getElementById('tunaFeeAmount').textContent.slice(2).trim(), 10);
+    var tunaNewOrderTotal =  parseFloat(document.getElementById('tunaNewOrderTotal').textContent.slice(2).trim(), 10);
+    
+    tunaOrderTableHtml = tableHeaderHtml + tunaProductsHtml;
+    
+    if (tunaDiscountExtra !== 0) {
+      tunaDiscountHtml = `<tr><td>+</td><td>Desconto em Produtos</td><td>1</td><td>${formatCurrency(tunaDiscountExtra)}</td></tr>`;
+    }
+
+    if (tunaShippingAmount !== 0) {
+      tunaShippingHtml = `<tr><td>+</td><td>Frete</td><td>1</td><td>${formatCurrency(tunaShippingAmount)}</td></tr>`;
+    }
+
+    if (tunaFeeAmount !== 0) {
+      var tunaFeeMessage = tunaFeeAmount > 0 ? 'Acréscimo de Juros' : 'Desconto';
+      tunaFeeHtml = `<tr><td>+</td><td>${tunaFeeMessage}</td><td>1</td><td>${formatCurrency(tunaFeeAmount)}</td></tr>`;
+    }
+
+    tunaOrderTableHtml += tunaDiscountHtml + tunaShippingHtml + tunaFeeHtml + horizontalLineHtml;
+    tunaOrderTableHtml += `<tr><th colspan="3">Total</th><th>${formatCurrency(tunaNewOrderTotal)}</th></tr>`
+
+    document.getElementById('tuna-order-table').innerHTML = `<table>${tunaOrderTableHtml}</table>`;
+</script>
