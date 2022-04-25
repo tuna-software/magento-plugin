@@ -5,8 +5,6 @@ namespace Tuna\TunaGateway\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Session\SessionManagerInterface as CoreSession;
 
-
-
 class CreateTunaOrder implements ObserverInterface
 {
     protected $_scopeConfig;
@@ -35,7 +33,6 @@ class CreateTunaOrder implements ObserverInterface
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-
         $order = $observer->getEvent()->getOrder();
 
         //verify transaction
@@ -44,10 +41,10 @@ class CreateTunaOrder implements ObserverInterface
             $shipping = $order->getShippingAddress();
             $billing = $order->getBillingAddress();
             $payment = $order->getPayment();
+
             $tokenSessionParam = $payment->getAdditionalInformation()["session_id"];
 
             $fullName =  $billing["firstname"] . " " . $billing["lastname"];
-            $payItens = $order->getPaymentsCollection()->getItems();
 
             $this->_coreSession->start();
             $customerID = $this->_coreSession->getCostumerID();
@@ -58,11 +55,31 @@ class CreateTunaOrder implements ObserverInterface
             }
             $itens = [];
 
-            $valorTotal = $this->getValorFinal($order->getGrandTotal(), $payment->getAdditionalInformation()["credit_card_installments"] * 1);
+            $creditCardData = json_decode($payment->getAdditionalInformation()["credit_card_data"]);
+
+            $valorTotal = $this->getValorFinal($order->getGrandTotal(), 1);
+            $juros = 1;
+
+            if ($creditCardData != null && count($creditCardData) > 0) {
+                $creditCardAmount = $creditCardData[0]->credit_card_amount + ($creditCardData[1]->credit_card_amount ?? 0);
+                if ($creditCardAmount != $valorTotal) {
+                    $order->setStatus('tuna_Cancelled');
+                    $order->addStatusHistoryComment('Os valores informados para cada cartão não totalizam o valor da compra.');
+                    $order->setGrandTotal($valorTotal);
+                    $order->save();
+                    return;
+                }
+                $valorTotalComJuros = $this->getValorFinal($creditCardData[0]->credit_card_amount, $creditCardData[0]->credit_card_installments) +
+                    $this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0, $creditCardData[1]->credit_card_installments ?? 1);
+
+                $juros = $valorTotalComJuros / $valorTotal;
+                $valorTotal = round($valorTotalComJuros, 2);
+            }
+
             $itemsCollection = $order->getAllVisibleItems();
             $tmpvalorTotalPendente = $valorTotal - $order->getBaseShippingAmount();
             foreach ($itemsCollection as $item) {
-                $valorItem = $this->getValorFinal($item->getPrice(), $payment->getAdditionalInformation()["credit_card_installments"] * 1);
+                $valorItem = round($item->getPrice() * $juros, 2);
                 $tmpvalorTotalPendente = $tmpvalorTotalPendente - ($valorItem * $item->getQtyToInvoice());
                 $cItem = [[
                     "Amount" =>  $valorItem,
@@ -115,85 +132,100 @@ class CreateTunaOrder implements ObserverInterface
             if (strlen($payment->getAdditionalInformation()["buyer_document"]) > 17) {
                 $documentType = "CNPJ";
             }
-            $PaymentMethodType = "1";
-            $cardInfo = null;
-            $boletoInfo = null;
-            $installments = 1;
+            $paymentMethods = [];
             if ($payment->getAdditionalInformation()["is_boleto_payment"] == "false") {
                 if (
                     $payment->getAdditionalInformation()["is_pix_payment"] == "false"
                     && $payment->getAdditionalInformation()["is_crypto_payment"] == "false"
                 ) {
-                    $installments = $payment->getAdditionalInformation()["credit_card_installments"] * 1;
                     $order->addStatusHistoryComment('Pagamento em Cartão de crédito');
                     $payment = $order->getPayment();
                     $payment->setMethod('credit');
                     $payment->save();
 
-                    $cardInfo = [
-                        "TokenProvider" => "Tuna",
-                        "CardNumber" => "",
-                        "CardHolderName" => $payment->getAdditionalInformation()["buyer_name"],
-                        "BrandName" => $payment->getAdditionalInformation()["credit_card_brand"],
-                        "ExpirationMonth" =>  $payment->getAdditionalInformation()["credit_card_expiration_month"] * 1,
-                        "ExpirationYear" =>  $payment->getAdditionalInformation()["credit_card_expiration_year"] * 1,
-                        "Token" => $payment->getAdditionalInformation()["credit_card_token"],
-                        "TokenSingleUse" => $isNewCustomer ? 1 : 0,
-                        "SaveCard" => false,
-                        "BillingInfo" => [
-                            "Document" => $payment->getAdditionalInformation()["buyer_document"],
-                            "DocumentType" => $documentType,
-                            "Address" => [
-                                "Street" => $billingAddress,
-                                "Number" => $numberB,
-                                "Complement" => $complementB,
-                                "Neighborhood" => "Centro",
-                                "City" => $billing["city"],
-                                "State" => $this->getStateCode($billing["region"]),
-                                "Country" => $billing["country_id"] != null ? $billing["country_id"] : "BR",
-                                "PostalCode" => $billing["postcode"],
-                                "Phone" => $billing["telephone"]
+                    foreach ($creditCardData as $creditCard) {
+                        $paymentMethod = [
+                            "PaymentMethodType" => "1",
+                            "amount" => round($creditCard->credit_card_amount * $juros, 2),
+                            "Installments" => $creditCard->credit_card_installments,
+                            "CardInfo" => [
+                                "TokenProvider" => "Tuna",
+                                "CardNumber" => "",
+                                "CardHolderName" => $creditCard->card_holder_name,
+                                "BrandName" => $creditCard->credit_card_brand,
+                                "ExpirationMonth" =>  $creditCard->credit_card_expiration_month * 1,
+                                "ExpirationYear" =>  $creditCard->credit_card_expiration_year * 1,
+                                "Token" => $creditCard->credit_card_token,
+                                "TokenSingleUse" => $isNewCustomer ? 1 : 0,
+                                "SaveCard" => false,
+                                "BillingInfo" => [
+                                    "Document" => $payment->getAdditionalInformation()["buyer_document"],
+                                    "DocumentType" => $documentType,
+                                    "Address" => [
+                                        "Street" => $billingAddress,
+                                        "Number" => $numberB,
+                                        "Complement" => $complementB,
+                                        "Neighborhood" => "Centro",
+                                        "City" => $billing["city"],
+                                        "State" => $this->getStateCode($billing["region"]),
+                                        "Country" => $billing["country_id"] != null ? $billing["country_id"] : "BR",
+                                        "PostalCode" => $billing["postcode"],
+                                        "Phone" => $billing["telephone"]
+                                    ]
+                                ]
                             ]
-                        ]
-                    ];
+                        ];
+                        array_push($paymentMethods, $paymentMethod);
+                    }
                 } elseif ($payment->getAdditionalInformation()["is_crypto_payment"] == "true") {
-                    $PaymentMethodType = "E";
                     $payment = $order->getPayment();
                     $payment->setMethod('crypto');
                     $payment->save();
                     $order->addStatusHistoryComment('Pagamento em Bitcoin');
+                    $paymentMethods = [
+                        [
+                            "PaymentMethodType" => "E"
+                        ]
+                    ];
                 } else {
-                    $PaymentMethodType = "D";
                     $payment = $order->getPayment();
                     $payment->setMethod('pix');
                     $payment->save();
                     $order->addStatusHistoryComment('Pagamento em PIX');
+                    $paymentMethods = [
+                        [
+                            "PaymentMethodType" => "D"
+                        ]
+                    ];
                 }
             } else {
-                $PaymentMethodType = "3";
                 $payment = $order->getPayment();
                 $payment->setMethod('boleto');
                 $payment->save();
                 $order->addStatusHistoryComment('Pagamento em Boleto');
-                $boletoInfo = [
-                    "BillingInfo" => [
-                        "Document" => $payment->getAdditionalInformation()["buyer_document"],
-                        "DocumentType" => $documentType,
-                        "Address" => [
-                            "Street" => $billingAddress,
-                            "Number" => $numberB,
-                            "Complement" => $complementB,
-                            "Neighborhood" => $complementB != "" ? $complementB : "Centro",
-                            "City" => $billing["city"],
-                            "State" =>  $this->getStateCode($billing["region"]),
-                            "Country" => $billing["country_id"] != null ? $billing["country_id"] : "BR",
-                            "PostalCode" => $billing["postcode"],
-                            "Phone" => $billing["telephone"]
+                $paymentMethods = [
+                    [
+                        "PaymentMethodType" => "3",
+                        "BoletoInfo" => [
+                            "BillingInfo" => [
+                                "Document" => $payment->getAdditionalInformation()["buyer_document"],
+                                "DocumentType" => $documentType,
+                                "Address" => [
+                                    "Street" => $billingAddress,
+                                    "Number" => $numberB,
+                                    "Complement" => $complementB,
+                                    "Neighborhood" => $complementB != "" ? $complementB : "Centro",
+                                    "City" => $billing["city"],
+                                    "State" =>  $this->getStateCode($billing["region"]),
+                                    "Country" => $billing["country_id"] != null ? $billing["country_id"] : "BR",
+                                    "PostalCode" => $billing["postcode"],
+                                    "Phone" => $billing["telephone"]
+                                ]
+                            ]
                         ]
                     ]
                 ];
             }
-
             $url  = 'https://' . $this->_tunaEndpointDomain . '/api/Payment/Init';
             $requestbody = [
                 'AppToken' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
@@ -230,28 +262,21 @@ class CreateTunaOrder implements ObserverInterface
                     ],
                     "DeliveryAddress" => $deliveryAddress,
                     "SalesChannel" => "ECOMMERCE",
-                    "PaymentMethods" => [
-                        [
-                            "PaymentMethodType" => $PaymentMethodType,
-                            "Amount" => $valorTotal,
-                            "Installments" => $installments,
-                            "CardInfo" => $cardInfo,
-                            "BoletoInfo" => $boletoInfo
-                        ]
-                    ]
+                    "Amount" => $valorTotal,
+                    "PaymentMethods" => $paymentMethods
                 ]
             ];
 
             /* Create curl factory */
             $httpAdapter = $this->curlFactory->create();
             $bodyJsonRequest = json_encode($requestbody);
-            //$this->saveLog($bodyJsonRequest);
+            //  $this->saveLog($bodyJsonRequest);
             $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
             $result = $httpAdapter->read();
 
             $body = \Zend_Http_Response::extractBody($result);
-            //$this->saveLog($body);
+            // $this->saveLog($body);
             try {
                 $response = $this->jsonHelper->jsonDecode($body);
                 switch (strval($response["status"])) {

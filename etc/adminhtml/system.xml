@@ -63,7 +63,16 @@
 				</group>
 				<group id="credit_card" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
 					<label>Credit card options</label>
-					<field id="installments" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label" type="select">
+					<field id="allow_pay_with_two_cards" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="1" translate="label" type="select">
+						<label>Allow payment with two cards</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>
+					<field id="minimum_installment_value" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="2" translate="label" type="text">
+						<label>Minimum installment value</label>
+						<comment>Ex.: 20</comment>
+						<validate>validate-number</validate>
+					</field>
+					<field id="installments" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="3" translate="label" type="select">
 						<label>Allowed number of installments</label>
 						<source_model>Tuna\TunaGateway\Model\Config\Source\InstallmentOption</source_model>
 					</field>		

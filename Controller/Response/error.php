@@ -39,8 +39,6 @@ class Error extends \Magento\Framework\App\Action\Action
 
         $oldOrderTotal = $this->order()->getBaseGrandTotal();
         $newOrderTotal = $this->order()->getGrandTotal();
-        $parcel = $this->order()->getPayment()->getAdditionalInformation()["credit_card_installments"];
-        $fee = $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/p' . $parcel);
 
         $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderId($this->order()->getIncrementId());
         $resultPage->getLayout()->getBlock('tuna.response.error')->setStatus($this->status());
@@ -49,8 +47,6 @@ class Error extends \Magento\Framework\App\Action\Action
         $resultPage->getLayout()->getBlock('tuna.response.error')->setShippingAmount($this->order()->getBaseShippingAmount());
         $resultPage->getLayout()->getBlock('tuna.response.error')->setOldOrderTotal($oldOrderTotal);
         $resultPage->getLayout()->getBlock('tuna.response.error')->setNewOrderTotal($newOrderTotal);
-        $resultPage->getLayout()->getBlock('tuna.response.error')->setInstallmentParcel($parcel);
-        $resultPage->getLayout()->getBlock('tuna.response.error')->setInstallmentFee($fee);
         //$this->clearSession();
         return $resultPage;
     }

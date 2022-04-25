@@ -20,17 +20,18 @@ define(
         'use strict';
         require(['jquery', 'jquery_mask'], function ($) {
 
-            var CpfCnpjMaskBehavior = function (val) {
+            const CpfCnpjMaskBehavior = function (val) {
                 return val.replace(/\D/g, '').length <= 11 ? '000.000.000-009' : '00.000.000/0000-00';
-            },
-                cpfCnpjpOptions = {
-                    onKeyPress: function (val, e, field, options) {
-                        field.mask(CpfCnpjMaskBehavior.apply({}, arguments), options);
-                    }
-                };
+            };
+            const cpfCnpjpOptions = {
+                onKeyPress: function (val, e, field, options) {
+                    field.mask(CpfCnpjMaskBehavior.apply({}, arguments), options);
+                }
+            };
 
             $('#tuna_credit_card_document').mask(CpfCnpjMaskBehavior, cpfCnpjpOptions);
-
+            $("#tuna_first_credit_card_value").mask("9999999999,99");
+            $("#tuna_second_credit_card_value").mask("999999999,99");
             $("#tuna_credit_card_code").mask("999");
             $(".CcCvv").mask("999");
             $("#tuna_credit_card_number").mask("9999 9999 9999 9999");
@@ -44,16 +45,120 @@ define(
                 } else {
                     $('#tuna_billing_address_phone').mask('(00) 0000-00009');
                 }
-            }); 
-            $(document).on('change', 'input[name$="[qty]"]', function(){
+            });
+            $(document).on('change', 'input[name$="[qty]"]', function () {
                 var deferred = $.Deferred();
                 getTotalsAction([], deferred);
-            });           
+            });
         });
 
         $('input[type=radio][name=billingAddress]').live("change", function () {
             $("#billingAddressFields").hide();
         });
+
+        function fillInstallmentsSelector() {
+            const firstCreditCardValue = parseFloat($("#tuna_first_credit_card_value").val().replace(',', '.')).toFixed(2);
+            const secondCreditCardValue = parseFloat($("#tuna_second_credit_card_value").val().replace(',', '.')).toFixed(2);
+
+            $('#tuna_first_credit_card_installments').empty();
+            $.each(getInstallments(firstCreditCardValue), function (i, item) {
+                $('#tuna_first_credit_card_installments').append($('<option>', {
+                    value: item.value,
+                    text: item.text
+                }));
+            });
+            $('#tuna_second_credit_card_installments').empty();
+            $.each(getInstallments(secondCreditCardValue), function (i, item) {
+                $('#tuna_second_credit_card_installments').append($('<option>', {
+                    value: item.value,
+                    text: item.text
+                }));
+            });
+            refreshOrderInfo();
+        }
+
+        function onPayWithTwoCardsValuesChanges(cardValueIndex) {
+            resetOrderInfo();
+            const cartTotal = getOrderTotal();
+            let changedFieldID, otherFieldID;
+
+            if (cardValueIndex == 1) {
+                changedFieldID = "#tuna_first_credit_card_value";
+                otherFieldID = "#tuna_second_credit_card_value";
+            } else {
+                changedFieldID = "#tuna_second_credit_card_value";
+                otherFieldID = "#tuna_first_credit_card_value";
+            }
+
+            if (parseFloat($(changedFieldID).val()) >= cartTotal) {
+                const valuePerCard = (cartTotal / 2).toFixed(2);
+                $(otherFieldID).val(valuePerCard.toString().replace('.', ','));
+                $(changedFieldID).val((valuePerCard * 2 == cartTotal ? valuePerCard : valuePerCard + 0.01).toString().replace('.', ','));
+            } else {
+                const valueDiff = parseFloat($(changedFieldID).val().replace(',', '.'));
+                $(otherFieldID).val((cartTotal - valueDiff).toFixed(2).toString().replace('.', ','));
+                $(changedFieldID).val(parseFloat($(changedFieldID).val().replace(',', '.')).toFixed(2).toString().replace('.', ','));
+            }
+            fillInstallmentsSelector();
+        }
+
+        function getInstallments(value) {
+            let feeList = window.checkoutConfig.payment.tunagateway.feeList;
+            const referenceValue = value || getOrderTotal();
+
+            const getValorTotal = (valorTotal, juros) => {
+                return (valorTotal * (1 + juros));
+            };
+
+            const getValorParcela = (valorTotal, parcela, juros) => {
+                return (valorTotal * (1 + juros)) / parcela;
+            };
+
+            let installmentIndex = 0;
+            let result = [];
+            feeList.forEach(value => {
+                installmentIndex++;
+                let finalText = '';
+                let installmentValue, totalValue;
+                if (value * 1 === 0) {
+                    installmentValue = referenceValue / installmentIndex;
+                    totalValue = referenceValue;
+                } else {
+                    let fee = (value * 1) / 100.00;
+                    installmentValue = getValorParcela(referenceValue, installmentIndex, fee);
+                    totalValue = getValorTotal(referenceValue, fee);
+                }
+
+                const minimumInstallmentValue = parseFloat(window.checkoutConfig.payment.tunagateway.minimum_installment_value ?? -1);
+
+                if (minimumInstallmentValue > 0 && installmentIndex !== 1 && installmentValue < minimumInstallmentValue)
+                    return;
+
+                finalText = installmentIndex + 'x ' + priceUtils.formatPrice(installmentValue) + ' (' + priceUtils.formatPrice(totalValue) + ')';
+                result.push({
+                    'value': installmentIndex,
+                    'text': finalText
+                });
+            });
+
+            return result;
+        }
+
+        $('#tuna_first_credit_card_value').live("blur", _ => onPayWithTwoCardsValuesChanges(1));
+        $('#tuna_second_credit_card_value').live("blur", _ => onPayWithTwoCardsValuesChanges(2));
+
+        $('#tuna_first_credit_card_installments').live("change", _ => refreshOrderInfo());
+        $('#tuna_second_credit_card_installments').live("change", _ => refreshOrderInfo());
+
+        function secondCardRadioChanged() {
+            if ($("#tuna_second_card_radio_saved").prop("checked")) {
+                $("#secondNewCardDiv").hide();
+                $("#secondSavedCardDiv").show();
+            } else {
+                $("#secondSavedCardDiv").hide();
+                $("#secondNewCardDiv").show();
+            }
+        };
 
         function cardRadioChanged() {
             if ($("#tuna_card_radio_saved").prop("checked")) {
@@ -124,73 +229,78 @@ define(
             }
         };
 
+        function payUsingTwoCardsClicked() {
+            if ($("#payingWithTwoCards").val() === "0") {
+                // Pay with two cards
+                $("#payingWithTwoCards").val("1");
+                $("#secondCardSelectorDiv").show();
+                $("#payUsingTwoCardsLink").text("Pagar usando um cartão");
+                $("#tuna_second_card_radio_saved").prop("checked", true);
+                $("#installmentsDiv").hide();
+
+                const valuePerCard = (getOrderTotal() / 2).toFixed(2);
+                $("#tuna_second_credit_card_value").val(valuePerCard.toString().replace('.', ','));
+                $("#firstCardValueDiv").show();
+                $("#first_card_installments_div").show();
+                $("#tuna_first_credit_card_value").val((valuePerCard * 2 == getOrderTotal() ? valuePerCard : valuePerCard + 0.01).toString().replace('.', ','));
+
+                fillInstallmentsSelector();
+            } else {
+                // Pay with one card
+                $("#payingWithTwoCards").val("0");
+                $("#installmentsDiv").show();
+                $("#first_card_installments_div").hide();
+                $("#secondCardSelectorDiv").hide();
+                $("#firstCardValueDiv").hide();
+                $("#payUsingTwoCardsLink").text("Pagar usando dois cartões");
+                resetOrderInfo();
+            }
+        };
+
         $("#tuna_card_radio_new").live("change", cardRadioChanged);
         $("#tuna_card_radio_saved").live("change", cardRadioChanged);
         $("#tuna_boleto_radio").live("change", cardRadioChanged);
         $("#tuna_crypto_radio").live("change", cardRadioChanged);
         $("#tuna_pix_radio").live("change", cardRadioChanged);
-        $('#tuna').live("change", () => { 
-          $("#tuna_credit_card_installments").prop('selectedIndex', 1);
-          refreshOrderInfo();
+        $("#tuna_second_card_radio_saved").live("change", secondCardRadioChanged);
+        $("#tuna_second_new_card_radio").live("change", secondCardRadioChanged);
+        $("#payUsingTwoCardsLink").live("click", payUsingTwoCardsClicked);
+        $('#tuna').live("change", () => {
+            $("#tuna_credit_card_installments").prop('selectedIndex', 1);
+            refreshOrderInfo();
         });
         $("#checkmo").live("click", resetOrderInfo);
         $("#tuna_credit_card_installments").live("change", () => {
-          if ($("#tuna").prop("checked")) {
-              refreshOrderInfo();
-          } else {
-              resetOrderInfo();
-          }
+            if ($("#tuna").prop("checked")) {
+                refreshOrderInfo();
+            } else {
+                resetOrderInfo();
+            }
         });
 
         function valid_credit_card(value) {
             // Accept only digits, dashes or spaces
-              if (/[^0-9-\s]+/.test(value)) return false;
-          
-              // The Luhn Algorithm. It's so pretty.
-              let nCheck = 0, bEven = false;
-              value = value.replace(/\D/g, "");
-          
-              for (var n = value.length - 1; n >= 0; n--) {
-                  var cDigit = value.charAt(n),
-                        nDigit = parseInt(cDigit, 10);
-          
-                  if (bEven && (nDigit *= 2) > 9) nDigit -= 9;
-          
-                  nCheck += nDigit;
-                  bEven = !bEven;
-              }
-          
-              return (nCheck % 10) == 0;
-        }
+            if (/[^0-9-\s]+/.test(value)) return false;
 
-        // TODO: remove!?
-        function isEquivalent(a, b) {
-            var aProps = Object.getOwnPropertyNames(a);
-            var bProps = Object.getOwnPropertyNames(b);
+            // The Luhn Algorithm. It's so pretty.
+            let nCheck = 0, bEven = false;
+            value = value.replace(/\D/g, "");
 
-            if (aProps.length != bProps.length) {
-                return false;
+            for (var n = value.length - 1; n >= 0; n--) {
+                var cDigit = value.charAt(n),
+                    nDigit = parseInt(cDigit, 10);
+
+                if (bEven && (nDigit *= 2) > 9) nDigit -= 9;
+
+                nCheck += nDigit;
+                bEven = !bEven;
             }
 
-            for (var i = 0; i < aProps.length; i++) {
-                var propName = aProps[i];
-
-                if (a[propName] !== b[propName]) {
-                    return false;
-                }
-            }
-
-            return true;
+            return (nCheck % 10) == 0;
         }
 
-        function getValorTotal(valorTotal, juros)
-        {
-            return (valorTotal * (1 + juros));
-        }
-
-        function getValorParcela(valorTotal, parcela, juros)
-        {
-            return (valorTotal * (1 + juros))/parcela;
+        function getOrderTotal() {
+            return parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10);
         }
 
         $("#tuna_billing_address_country").live("change", _ => {
@@ -212,7 +322,7 @@ define(
         return Component.extend({
             defaults: {
                 template: 'Tuna_TunaGateway/payment/tuna',
-            }, 
+            },
             afterRender: function () {
                 $('#tuna').prop('checked', true);
                 $("#lblTunaPaymentTitle").html(window.checkoutConfig.payment.tunagateway.title);
@@ -245,6 +355,9 @@ define(
                     $("#tuna_pix_label").remove();
                     $("#pixDiv").remove();
                 }
+                if (!this.allowPaymentWithTwoCards()) {
+                    $("#payUsingTwoCardsLink").remove();
+                }
                 if (this.getStoredCreditCards() && this.getStoredCreditCards().length > 0) {
                     $("#tuna_card_radio_saved").prop("checked", true);
                     $("#savedCardDiv").show();
@@ -273,6 +386,10 @@ define(
                 return window.checkoutConfig.payment.tunagateway.allow_pix &&
                     window.checkoutConfig.payment.tunagateway.allow_pix === "1";
             },
+            allowPaymentWithTwoCards: function () {
+                return window.checkoutConfig.payment.tunagateway.allow_pay_with_two_cards &&
+                    window.checkoutConfig.payment.tunagateway.allow_pay_with_two_cards === "1";
+            },
             getStoredCreditCards: function () {
                 return window.checkoutConfig.payment.tunagateway.savedCreditCards;
             },
@@ -291,9 +408,15 @@ define(
             getInstructions: function () {
                 return window.checkoutConfig.payment.instructions[this.item.method];
             },
-            selectStoredCard: function (cc) {
-                $(".CcCvv").hide();
-                $("#tuna_card_cvv_" + cc.token).show();
+            selectStoredCard: function (paymentCardIndex, cc) {
+                if (paymentCardIndex === 1) {
+                    $("input[id^='tuna_card_cvv_']").hide();
+                    $("#tuna_card_cvv_" + cc.token).show();
+                }
+                else {
+                    $("input[id^='tuna_second_card_cvv_']").hide();
+                    $("#tuna_second_card_cvv_" + cc.token).show();
+                }
             },
             getMonthsValues: function () {
                 return _.map(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'], function (value, key) {
@@ -318,30 +441,8 @@ define(
                     };
                 });
             },
-            getInstallments: function () {
-                let feeList = window.checkoutConfig.payment.tunagateway.feeList;
-                let installmentIndex = 0;
-                return _.map(feeList, function (value, key) {
-                    installmentIndex++;
-                    let finalText = '';
-                    if (value*1 === 0){
-                        let parcelValue = parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10)/installmentIndex;
-                        let orderTotal = parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10);
-                        finalText = installmentIndex + 'x ' + priceUtils.formatPrice(parcelValue) + ' (' + priceUtils.formatPrice(orderTotal) + ')';
-                    } else
-                    {
-                        let fee =(value*1)/100.00;
-                        let parcelValue = getValorParcela(parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10), installmentIndex, fee);
-                        let oldOrderTotal = parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10);
-                        let newOrderTotal = getValorTotal(oldOrderTotal, fee);
-                        finalText = installmentIndex + 'x ' + priceUtils.formatPrice(parcelValue) + ' (' + priceUtils.formatPrice(newOrderTotal) + ')';
-                    }
-
-                    return {
-                        'value': installmentIndex,
-                        'text': finalText
-                    };
-                });
+            getInstallments: function (value) {
+                return getInstallments(value);
             },
             onlyNumbers: function (value) {
                 return value.replace(/\D/g, '');
@@ -430,22 +531,36 @@ define(
                 return true;
 
             },
-            endOrder: function (self, creditCardData, paymentData, messageContainer, isBoleto = false, isPix = false, isCrypto = false) {
+            endOrder: function (self, creditCardData, secondCreditCardData, paymentData, messageContainer, isBoleto = false, isPix = false, isCrypto = false) {
 
-                let additionalData = {
+                const pushCreditCard = (array, creditCardData) => {
+                    array.push({
+                        'card_holder_name': creditCardData.cardHolderName,
+                        'credit_card_token': creditCardData.token,
+                        'credit_card_brand': creditCardData.brand,
+                        'credit_card_expiration_month': creditCardData.expirationMonth,
+                        'credit_card_expiration_year': creditCardData.expirationYear,
+                        'credit_card_installments': creditCardData.installments,
+                        'credit_card_amount': creditCardData.amount
+                    });
+                }
+                let creditCards = [];
+                if (creditCardData)
+                    pushCreditCard(creditCards, creditCardData);
+                if (secondCreditCardData)
+                    pushCreditCard(creditCards, secondCreditCardData);
+
+                const additionalData = {
                     'buyer_document': $('#tuna_credit_card_document').val(),
                     'session_id': window.checkoutConfig.payment.tunagateway.sessionid,
-                    'credit_card_token': isBoleto || isPix || isCrypto ? "" : creditCardData.token,
-                    'credit_card_brand':  isBoleto || isPix || isCrypto ? "" : creditCardData.brand,
-                    'credit_card_expiration_month':  isBoleto || isPix || isCrypto ? "" : creditCardData.expirationMonth,
-                    'credit_card_expiration_year':  isBoleto || isPix || isCrypto ? "" : creditCardData.expirationYear,
-                    'credit_card_installments':  isBoleto || isPix || isCrypto ? "1" : ($('#tuna_credit_card_installments').val() || "1" ),
-                    'buyer_name': isBoleto ? $('#tuna_boleto_holder').val() : isPix || isCrypto ? "" : creditCardData.cardHolderName,
+                    'credit_card_data': JSON.stringify(creditCards),
+                    'buyer_name': isBoleto ? $('#tuna_boleto_holder').val() : "",
                     'is_boleto_payment': isBoleto ? "true" : "false",
                     'is_crypto_payment': isCrypto ? "true" : "false",
                     'is_pix_payment': isPix ? "true" : "false",
-                    'payment_type': isBoleto ? "TUNA_EBOL" : isPix ? "TUNA_EPIX" : isCrypto ? "TUNA_ECRYPTO" : "TUNA_ECAC"
+                    'payment_type': isBoleto ? "TUNA_EBOL" : isPix ? "TUNA_EPIX" : isCrypto ? "TUNA_ECRYPTO" : "TUNA_ECAC",
                 };
+
                 if (Object.prototype.hasOwnProperty.call(paymentData, '__disableTmpl')) { delete paymentData.__disableTmpl; }
                 if (Object.prototype.hasOwnProperty.call(paymentData, 'disableTmpl')) { delete paymentData.disableTmpl; }
                 if (Object.prototype.hasOwnProperty.call(paymentData, 'title')) { delete paymentData.title; }
@@ -464,15 +579,24 @@ define(
                         content: $.mage.__('Ocorreu um erro no processamento. Por favor, tente novamente')
                     });
                 }).always(function () {
-                    
+
                     // fullScreenLoader.stopLoader();
                 });
             },
-            isUsingSavedCard: function () {
+            isUsingFirstSavedCard: function () {
                 return $("#tuna_card_radio_saved").prop("checked");
             },
-            isUsingNewCard: function () {
+            isUsingSecondSavedCard: function () {
+                return $("#tuna_second_card_radio_saved").prop("checked");
+            },
+            isUsingNewFirstCard: function () {
                 return $("#tuna_card_radio_new").prop("checked");
+            },
+            isUsingNewSecondCard: function () {
+                return $("#tuna_second_new_card_radio").prop("checked");
+            },
+            isUsingTwoCards: function () {
+                return $("#payingWithTwoCards").val() === "1";
             },
             isBoletoPayment: function () {
                 return $("#tuna_boleto_radio").prop("checked");
@@ -483,44 +607,99 @@ define(
             isPixPayment: function () {
                 return $("#tuna_pix_radio").prop("checked");
             },
-            getSelectedCardToken: function () {
-                return $("input[name='storedCard']:checked").attr("id").substring(10, $("input[name='storedCard']:checked").attr("id").length);
+            getSelectedCardToken: function (cardIndex) {
+                const fieldname = cardIndex === 1 ? "firstStoredCard" : "secondStoredCard";
+                return $(`input[name='${fieldname}']:checked`).attr("id").substring(cardIndex === 1 ? 16 : 17, $(`input[name='${fieldname}']:checked`).attr("id").length);
+            },
+            validateFirstNewCardData: function () {
+                if (!$('#tuna_credit_card_holder')[0].value)
+                    return "holderInvalidInfo";
+
+                let cardNumber = this.onlyNumbers($('#tuna_credit_card_number')[0].value);
+                if (!cardNumber || !valid_credit_card(cardNumber))
+                    return "creditCardInvalidInfo";
+
+                let expirationYear = $('#tuna_credit_card_expiration_year')[0].value;
+                let expirationMonth = $('#tuna_credit_card_expiration_month')[0].value;
+
+                if (!expirationMonth || !expirationYear)
+                    return "validityDateInvalidInfo";
+
+                let expireDate = new Date(expirationYear, parseInt(expirationMonth) - 1);
+                if (expireDate < new Date())
+                    return "validityDateInvalidInfo";
+
+                if (!$("#tuna_credit_card_code")[0].value || $("#tuna_credit_card_code")[0].value < 3)
+                    return "cvvInvalidInfo";
+            },
+            validateSecondNewCardData: function () {
+                if (!$('#tuna_second_credit_card_holder')[0].value)
+                    return "secondHolderInvalidInfo";
+
+                let cardNumber = this.onlyNumbers($('#tuna_second_credit_card_number')[0].value);
+                if (!cardNumber || !valid_credit_card(cardNumber))
+                    return "secondCreditCardInvalidInfo";
+
+                let expirationYear = $('#tuna_second_credit_card_expiration_year')[0].value;
+                let expirationMonth = $('#tuna_second_credit_card_expiration_month')[0].value;
+
+                if (!expirationMonth || !expirationYear)
+                    return "secondValidityDateInvalidInfo";
+
+                let expireDate = new Date(expirationYear, parseInt(expirationMonth) - 1);
+                if (expireDate < new Date())
+                    return "secondValidityDateInvalidInfo";
+
+                if (!$("#tuna_second_credit_card_code")[0].value || $("#tuna_second_credit_card_code")[0].value < 3)
+                    return "secondCvvInvalidInfo";
+            },
+            validateFirstSavedCardData: function () {
+                if ($("input[name='firstStoredCard']:checked").length > 0) {
+                    if (!$("#tuna_card_cvv_" + this.getSelectedCardToken(1)).val())
+                        return "cvvSavedInvalidInfo";
+                } else
+                    return "noCreditCardSelected";
+            },
+            validateSecondSavedCardData: function () {
+                if ($("input[name='secondStoredCard']:checked").length > 0) {
+                    if (!$(`#tuna_second_card_cvv_${this.getSelectedCardToken(2)}`).val())
+                        return "secondCvvSavedInvalidInfo";
+                } else
+                    return "secondNoCreditCardSelected";
             },
             isFieldsValid: function () {
-
-                if (this.isUsingNewCard()) {
-
-                    if (!$('#tuna_credit_card_holder')[0].value)
-                        return "holderInvalidInfo";
-
-                    let cardNumber = this.onlyNumbers($('#tuna_credit_card_number')[0].value);
-                    if (!cardNumber || !valid_credit_card(cardNumber) )
-                        return "creditCardInvalidInfo";
-
-                    let expirationYear = $('#tuna_credit_card_expiration_year')[0].value;
-                    let expirationMonth = $('#tuna_credit_card_expiration_month')[0].value;
-
-                    if (!expirationMonth || !expirationYear)
-                        return "validityDateInvalidInfo";
-
-                    let expireDate = new Date(expirationYear, parseInt(expirationMonth) - 1);
-                    if (expireDate < new Date())
-                        return "validityDateInvalidInfo";
-
-                    if (!$("#tuna_credit_card_code")[0].value || $("#tuna_credit_card_code")[0].value < 3)
-                        return "cvvInvalidInfo";
-
-                } else if (this.isUsingSavedCard()) {
-                    if ($("input[name='storedCard']:checked").length > 0) {
-                        if (!$("#tuna_card_cvv_" + this.getSelectedCardToken()).val())
-                            return "cvvSavedInvalidInfo";
-                    } else
-                        return "noCreditCardSelected";
+                if (this.isUsingTwoCards()) {
+                    if (this.isUsingNewFirstCard()) {
+                        const response = this.validateFirstNewCardData();
+                        if (response)
+                            return response;
+                    } else if (this.isUsingFirstSavedCard()) {
+                        const response = this.validateFirstSavedCardData();
+                        if (response)
+                            return response;
+                    }
+                    if (this.isUsingNewSecondCard()) {
+                        const response = this.validateSecondNewCardData();
+                        if (response)
+                            return response;
+                    } else if (this.isUsingSecondSavedCard()) {
+                        const response = this.validateSecondSavedCardData();
+                        if (response)
+                            return response;
+                    }
+                } else if (this.isUsingNewFirstCard()) {
+                    const response = this.validateFirstNewCardData();
+                    if (response)
+                        return response;
+                } else if (this.isUsingFirstSavedCard()) {
+                    const response = this.validateFirstSavedCardData();
+                    if (response)
+                        return response;
                 } else if (this.isBoletoPayment()) {
                     if (!$('#tuna_boleto_holder')[0].value)
                         return "boletoHolderInvalidInfo";
-                } else if (this.isCryptoPayment()) {                    
-                } else if (this.isPixPayment()) {                    
+                } else if (this.isCryptoPayment()) {
+                } else if (this.isPixPayment()) {
                 } else {
                     return "error";
                 }
@@ -533,6 +712,30 @@ define(
                     return "cpfInvalidInfo";
                 }
 
+                return null;
+            },
+            getSavedCardDataByIndex: async function (cardIndex) {
+                const tokenizator = Tuna(window.checkoutConfig.payment.tunagateway.sessionid).tokenizator();
+                const creditCardData = this.getStoredCreditCards().find(cc => cc.token === this.getSelectedCardToken(cardIndex));
+                const creditCardCvv = $(`#tuna_${cardIndex == 1 ? 'first' : 'second'}_card_cvv_${creditCardData.token}:visible`).val();
+                const bindResponse = await tokenizator.bind(creditCardData.token, creditCardCvv);
+
+                if (bindResponse && bindResponse.code == 1)
+                    return creditCardData;
+                return null;
+            },
+            tokenizeCardData: async function (cardData) {
+                const tokenizator = Tuna(window.checkoutConfig.payment.tunagateway.sessionid).tokenizator();
+                let generateResponse = await tokenizator.generate(cardData);
+
+                if (generateResponse.code == 1)
+                    return {
+                        token: generateResponse.token,
+                        brand: generateResponse.brand,
+                        expirationMonth: cardData.ExpirationMonth,
+                        expirationYear: cardData.ExpirationYear,
+                        cardHolderName: cardData.CardHolderName
+                    };
                 return null;
             },
             placeOrder: async function () {
@@ -548,16 +751,68 @@ define(
                 let messageContainer = this.messageContainer;
                 let fieldCheckResponse = this.isFieldsValid();
                 if (!fieldCheckResponse) {
-                    let tunaLib = Tuna(window.checkoutConfig.payment.tunagateway.sessionid);
-                    let tokenizator = tunaLib.tokenizator();
+                    if (this.isUsingTwoCards()) {
 
-                    if (this.isUsingSavedCard()) {                        
-                        let creditCardData = this.getStoredCreditCards().find(cc => cc.token === this.getSelectedCardToken());
-                        let creditCardCvv = $(".CcCvv:visible").val();
-                        let bindResponse = await tokenizator.bind(creditCardData.token, creditCardCvv);
+                        let firstCreditCardData, secondCreditCarData;
 
-                        if (bindResponse && bindResponse.code == 1)
-                            self.endOrder(self, creditCardData, paymentData, messageContainer);
+                        if (this.isUsingFirstSavedCard()) {
+                            firstCreditCardData = await this.getSavedCardDataByIndex(1);
+                        } else if (this.isUsingNewFirstCard()) {
+                            const cardData = {
+                                CardHolderName: $('#tuna_credit_card_holder').val(),
+                                CardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
+                                ExpirationMonth: parseInt($('#tuna_credit_card_expiration_month').val()),
+                                ExpirationYear: parseInt($('#tuna_credit_card_expiration_year').val()),
+                                Cvv: $('#tuna_credit_card_code').val()
+                            };
+                            firstCreditCardData = await this.tokenizeCardData(cardData);
+                        }
+
+                        if (!firstCreditCardData) {
+                            alert({
+                                title: $.mage.__('Algo deu errado'),
+                                content: $.mage.__('Ocorreu um erro no processamento. Por favor, tente novamente')
+                            });
+                            return;
+                        }
+
+                        if (this.isUsingSecondSavedCard()) {
+                            secondCreditCarData = await this.getSavedCardDataByIndex(2);
+                        } else if (this.isUsingNewSecondCard()) {
+                            const cardData = {
+                                CardHolderName: $('#tuna_second_credit_card_holder').val(),
+                                CardNumber: this.onlyNumbers($('#tuna_second_credit_card_number').val()),
+                                ExpirationMonth: parseInt($('#tuna_second_credit_card_expiration_month').val()),
+                                ExpirationYear: parseInt($('#tuna_second_credit_card_expiration_year').val()),
+                                Cvv: $('#tuna_second_credit_card_code').val()
+                            };
+                            secondCreditCarData = await this.tokenizeCardData(cardData);
+                        }
+
+                        if (!secondCreditCarData) {
+                            alert({
+                                title: $.mage.__('Algo deu errado'),
+                                content: $.mage.__('Ocorreu um erro no processamento. Por favor, tente novamente')
+                            });
+                            return;
+                        }
+
+                        firstCreditCardData.amount = parseFloat($("#tuna_first_credit_card_value").val().replace(',', '.')).toFixed(2);
+                        firstCreditCardData.installments = parseInt($('#tuna_first_credit_card_installments option:selected').val());
+
+                        secondCreditCarData.amount = parseFloat($("#tuna_second_credit_card_value").val().replace(',', '.')).toFixed(2);
+                        secondCreditCarData.installments = parseInt($('#tuna_second_credit_card_installments option:selected').val());
+
+                        self.endOrder(self, firstCreditCardData, secondCreditCarData, paymentData, messageContainer);
+                    }
+                    else if (this.isUsingFirstSavedCard()) {
+                        let creditCardData = await this.getSavedCardDataByIndex(1);
+
+                        if (creditCardData) {
+                            creditCardData.amount = getOrderTotal();
+                            creditCardData.installments = parseInt($('#tuna_credit_card_installments').val() || "1");
+                            self.endOrder(self, creditCardData, null, paymentData, messageContainer);
+                        }
                         else {
                             alert({
                                 title: $.mage.__('Algo deu errado'),
@@ -566,13 +821,13 @@ define(
                             return;
                         }
 
-                    } else if (this.isBoletoPayment()) {                        
-                        self.endOrder(self, null, paymentData, messageContainer, true, false, false);
-                    } else if (this.isCryptoPayment()) { 
-                        self.endOrder(self, null, paymentData, messageContainer, false, false, true);
-                    } else if (this.isPixPayment()) {                        
-                        self.endOrder(self, null, paymentData, messageContainer, false, true, false);
-                    } else {                        
+                    } else if (this.isBoletoPayment()) {
+                        self.endOrder(self, null, null, paymentData, messageContainer, true, false, false);
+                    } else if (this.isCryptoPayment()) {
+                        self.endOrder(self, null, null, paymentData, messageContainer, false, false, true);
+                    } else if (this.isPixPayment()) {
+                        self.endOrder(self, null, null, paymentData, messageContainer, false, true, false);
+                    } else {
                         let cardData = {
                             CardHolderName: $('#tuna_credit_card_holder').val(),
                             CardNumber: this.onlyNumbers($('#tuna_credit_card_number').val()),
@@ -581,17 +836,12 @@ define(
                             Cvv: $('#tuna_credit_card_code').val()
                         };
 
-                        let generateResponse = await tokenizator.generate(cardData);
+                        const creditCardData = await this.tokenizeCardData(cardData);
 
-                        if (generateResponse.code == 1) {
-                            let creditCardData = {
-                                token: generateResponse.token,
-                                brand: generateResponse.brand,
-                                expirationMonth: cardData.ExpirationMonth,
-                                expirationYear: cardData.ExpirationYear,
-                                cardHolderName: cardData.CardHolderName
-                            };
-                            self.endOrder(self, creditCardData, paymentData, messageContainer);
+                        if (creditCardData) {
+                            creditCardData.installments = parseInt($('#tuna_credit_card_installments').val() || "1");
+                            creditCardData.amount = getOrderTotal();
+                            self.endOrder(self, creditCardData, null, paymentData, messageContainer);
                         }
                         else {
                             alert({
@@ -601,10 +851,12 @@ define(
                             return;
                         }
                     }
-                } else {                    
-                    let validationLabels = ["holderInvalidInfo", "cpfInvalidInfo", "cvvSavedInvalidInfo",
-                        "boletoHolderInvalidInfo", "creditCardInvalidInfo", "validityDateInvalidInfo",
-                        "cvvInvalidInfo", "noCreditCardSelected", "installmentsInvalidInfo"];
+                } else {
+                    let validationLabels = [
+                        "secondHolderInvalidInfo", "holderInvalidInfo", "cpfInvalidInfo", "cvvSavedInvalidInfo",
+                        "boletoHolderInvalidInfo", "secondCreditCardInvalidInfo", "creditCardInvalidInfo", "secondValidityDateInvalidInfo",
+                        "validityDateInvalidInfo", "secondCvvInvalidInfo", "cvvInvalidInfo", "secondNoCreditCardSelected",
+                        "noCreditCardSelected", "installmentsInvalidInfo"];
 
                     validationLabels.forEach(fieldID => {
                         $("#" + fieldID).hide();
