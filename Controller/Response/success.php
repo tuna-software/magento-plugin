@@ -39,8 +39,6 @@ class Success extends \Magento\Framework\App\Action\Action
 
         $oldOrderTotal = $this->order()->getBaseGrandTotal();
         $newOrderTotal = $this->order()->getGrandTotal();
-        $parcel = $this->order()->getPayment()->getAdditionalInformation()["credit_card_installments"];
-        $fee = $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/p' . $parcel);
 
         $blockInstance = $resultPage->getLayout()->getBlock('tuna.response.success');
 
@@ -49,8 +47,6 @@ class Success extends \Magento\Framework\App\Action\Action
         $resultPage->getLayout()->getBlock('tuna.response.success')->setShippingAmount($this->order()->getBaseShippingAmount());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOldOrderTotal($oldOrderTotal);
         $resultPage->getLayout()->getBlock('tuna.response.success')->setNewOrderTotal($newOrderTotal);
-        $resultPage->getLayout()->getBlock('tuna.response.success')->setInstallmentParcel($parcel);
-        $resultPage->getLayout()->getBlock('tuna.response.success')->setInstallmentFee($fee);
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderProducts($this->products());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setStatus($this->order()->getStatus());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setBoletoURL($this->boletoURL());

@@ -30,11 +30,11 @@ var currencyTypes = {
 
 function getSystemCurrency() {
     var defaultCurrency = 'USD';
-    var currencySymbol = $(".sub .amount .price").html().replaceAll(',', '').replaceAll('.', '').replace(moneyPattern,'');
+    var currencySymbol = $(".sub .amount .price").html().replaceAll(',', '').replaceAll('.', '').replace(moneyPattern, '');
     for (var currency in currencyTypes) {
-      if (currencyTypes[currency].symbol === currencySymbol) {
-        return currency;
-      }
+        if (currencyTypes[currency].symbol === currencySymbol) {
+            return currency;
+        }
     }
 
     return defaultCurrency;
@@ -52,11 +52,11 @@ function formatCurrency(value, currency = 'BRL') {
 }
 
 function getOldOrderTotal(hasFees = false) {
-    var orderSummary =  $('.totals .amount .price');
+    var orderSummary = $('.totals .amount .price');
     var systemCurrency = getSystemCurrency();
     var subTotal = 0;
     orderSummary.each(function (index, element) {
-        if (index < (orderSummary.length - 1 - 1*hasFees)) {
+        if (index < (orderSummary.length - 1 - 1 * hasFees)) {
             var rawMoneyNumber = $(element).html().replace(currencyTypes[systemCurrency].symbol, '');
             subTotal += getFloatNumber(rawMoneyNumber, systemCurrency);
         }
@@ -65,26 +65,37 @@ function getOldOrderTotal(hasFees = false) {
     return subTotal;
 }
 
-function getNewOrderTotal(currency) {
-    var instalmentTextDefault = $('#tuna_credit_card_installments option[value=1]').text();
-    var installmentSelection = $('#tuna_credit_card_installments option:selected').text();
-    var isValidInstallment = installmentSelection === 'Parcelas' || installmentSelection === '';
-    var installmentText = (isValidInstallment) ? instalmentTextDefault : installmentSelection;
+function extractValueFromInstallmentsOption(selectedInstallmentOption, currency) {
     var symbol = currencyTypes[currency].symbol;
     var pattern = currencyTypes[currency].installmentPattern;
     var decimalDivisor = currencyTypes[currency].decimalDivisor;
     var decimalSeparator = currencyTypes[currency].decimalSeparator;
-    var newOrderTotal = installmentText.match(pattern)[0].substring(symbol.length + 1).trim().replaceAll(decimalSeparator, '');
+    var newOrderTotal = selectedInstallmentOption.match(pattern)[0].substring(symbol.length + 1).trim().replaceAll(decimalSeparator, '');
     newOrderTotal = newOrderTotal.replace(decimalDivisor, '.').substring(0, newOrderTotal.length - 1);
 
     return getFloatNumber(newOrderTotal, currency);
+}
+
+function getNewOrderTotal(currency) {
+    if ($('#payingWithTwoCards').val() == '0') {
+        var instalmentTextDefault = $('#tuna_credit_card_installments option[value=1]').text();
+        var installmentSelection = $('#tuna_credit_card_installments option:selected').text();
+        var isValidInstallment = installmentSelection === 'Parcelas' || installmentSelection === '';
+        var installmentText = (isValidInstallment) ? instalmentTextDefault : installmentSelection;
+        return extractValueFromInstallmentsOption(installmentText, currency);
+    } else {
+        var firstCardInstallmentSelection = $('#tuna_first_credit_card_installments option:selected').text();
+        var secondCardInstallmentSelection = $('#tuna_second_credit_card_installments option:selected').text();
+        return extractValueFromInstallmentsOption(firstCardInstallmentSelection, currency) +
+            extractValueFromInstallmentsOption(secondCardInstallmentSelection, currency);
+    }
 }
 
 function refreshOrderInfo() {
     var newOrderTotal;
     var systemCurrency = getSystemCurrency();
     var hasFees = $('.tuna-order-fees').length > 0;
-    var oldOrderTotal = getOldOrderTotal(hasFees);
+    var oldOrderTotal = getOldOrderTotal(hasFees); ''
     try {
         newOrderTotal = getNewOrderTotal(systemCurrency);
     } catch {
@@ -107,7 +118,7 @@ function insertOrderFeesHtml(oldOrderTotal, newOrderTotal) {
     var feesHtmlElement = $('.tuna-order-fees');
     var hasFees = feesHtmlElement.length > 0;
     if (hasFees) {
-      feesHtmlElement.remove();
+        feesHtmlElement.remove();
     }
     if (feeAmount === 0) return;
 
