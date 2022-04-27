@@ -146,7 +146,7 @@ class CreateTunaOrder implements ObserverInterface
                     foreach ($creditCardData as $creditCard) {
                         $paymentMethod = [
                             "PaymentMethodType" => "1",
-                            "amount" => round($creditCard->credit_card_amount * $juros, 2),
+                            "amount" => $this->getValorFinal($creditCard->credit_card_amount, $creditCard->credit_card_installments),
                             "Installments" => $creditCard->credit_card_installments,
                             "CardInfo" => [
                                 "TokenProvider" => "Tuna",
@@ -270,7 +270,7 @@ class CreateTunaOrder implements ObserverInterface
             /* Create curl factory */
             $httpAdapter = $this->curlFactory->create();
             $bodyJsonRequest = json_encode($requestbody);
-            //  $this->saveLog($bodyJsonRequest);
+            // $this->saveLog($bodyJsonRequest);
             $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
             $result = $httpAdapter->read();

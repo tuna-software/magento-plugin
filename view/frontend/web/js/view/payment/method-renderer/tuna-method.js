@@ -33,8 +33,10 @@ define(
             $("#tuna_first_credit_card_value").mask("9999999999,99");
             $("#tuna_second_credit_card_value").mask("999999999,99");
             $("#tuna_credit_card_code").mask("999");
+            $("#tuna_second_credit_card_code").mask("999");
             $(".CcCvv").mask("999");
             $("#tuna_credit_card_number").mask("9999 9999 9999 9999");
+            $("#tuna_second_credit_card_number").mask("9999 9999 9999 9999");
             $("#tuna_billing_address_zip").mask("99.999-999");
 
             $('#tuna_billing_address_phone').mask('(00) 0000-00009');
@@ -232,10 +234,18 @@ define(
         function payUsingTwoCardsClicked() {
             if ($("#payingWithTwoCards").val() === "0") {
                 // Pay with two cards
-                $("#payingWithTwoCards").val("1");
+                const savedCards = window.checkoutConfig.payment.tunagateway.savedCreditCards;
                 $("#secondCardSelectorDiv").show();
+                if (!savedCards || savedCards.length == 0) {
+                    $("#tuna_second_savedCard_label").remove();
+                    $("#tuna_second_new_card_radio").prop("checked", true);
+                    $("#secondNewCardDiv").show();
+                } else {
+                    $("#tuna_second_card_radio_saved").prop("checked", true);
+                    $("#secondSavedCardDiv").show();
+                }
+                $("#payingWithTwoCards").val("1");
                 $("#payUsingTwoCardsLink").text("Pagar usando um cartão");
-                $("#tuna_second_card_radio_saved").prop("checked", true);
                 $("#installmentsDiv").hide();
 
                 const valuePerCard = (getOrderTotal() / 2).toFixed(2);
