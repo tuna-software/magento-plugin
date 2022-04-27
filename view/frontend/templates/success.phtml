@@ -3,7 +3,7 @@
 /** @var $block \Magento\Checkout\Block\Onepage\Success */ ?>
 
 <div>
-    <?php if ($block->getStatus() == "tuna_Captured" || $block->getStatus() == "tuna_PendingCapture") { ?>
+    <?php if ($block->getStatus() == "tuna_Captured" || ($block->getStatus() == "tuna_PendingCapture" && ($block->getIsCrypto() == "true" || $block->getIsBoleto() == "true" || $block->getIsCrypto() == "true"))) { ?>
 
         <h2><?php echo __('Compra concluída com sucesso # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
 
