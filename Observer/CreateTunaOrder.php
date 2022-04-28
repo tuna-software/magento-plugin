@@ -61,7 +61,17 @@ class CreateTunaOrder implements ObserverInterface
             $juros = 1;
 
             if ($creditCardData != null && count($creditCardData) > 0) {
+
+                if (count($creditCardData) > 2) {
+                    $order->setStatus('tuna_Cancelled');
+                    $order->addStatusHistoryComment('Não é permitida a compra com mais de 2 cartões');
+                    $order->setGrandTotal($valorTotal);
+                    $order->save();
+                    return;
+                }
+
                 $creditCardAmount = $creditCardData[0]->credit_card_amount + ($creditCardData[1]->credit_card_amount ?? 0);
+
                 if ($creditCardAmount != $valorTotal) {
                     $order->setStatus('tuna_Cancelled');
                     $order->addStatusHistoryComment('Os valores informados para cada cartão não totalizam o valor da compra.');
@@ -69,6 +79,7 @@ class CreateTunaOrder implements ObserverInterface
                     $order->save();
                     return;
                 }
+
                 $valorTotalComJuros = $this->getValorFinal($creditCardData[0]->credit_card_amount, $creditCardData[0]->credit_card_installments) +
                     $this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0, $creditCardData[1]->credit_card_installments ?? 1);
 
@@ -143,10 +154,16 @@ class CreateTunaOrder implements ObserverInterface
                     $payment->setMethod('credit');
                     $payment->save();
 
-                    foreach ($creditCardData as $creditCard) {
+                    foreach ($creditCardData as $index => $creditCard) {
+                        if ($index == 0) {
+                            $creditCardAmount = round($this->getValorFinal($creditCard->credit_card_amount, $creditCard->credit_card_installments), 2);
+                        } else {
+                            $creditCardAmount = $valorTotal - round($this->getValorFinal($creditCardData[0]->credit_card_amount, $creditCardData[0]->credit_card_installments), 2);
+                        }
+
                         $paymentMethod = [
                             "PaymentMethodType" => "1",
-                            "amount" => $this->getValorFinal($creditCard->credit_card_amount, $creditCard->credit_card_installments),
+                            "amount" => $creditCardAmount,
                             "Installments" => $creditCard->credit_card_installments,
                             "CardInfo" => [
                                 "TokenProvider" => "Tuna",
