@@ -352,6 +352,7 @@ class CreateTunaOrder implements ObserverInterface
                         if ($response["methods"] != null && $response["methods"][0]["redirectInfo"] != null) {
                             $additionalData = $payment->getAdditionalInformation();
                             $additionalData["boleto_url"] = $response["methods"][0]["redirectInfo"]["url"];
+                            $order->addStatusHistoryComment('Link: '+ $response["methods"][0]["redirectInfo"]["url"]);
                             $payment->setData('additional_information', $additionalData);
                             $payment->save();
                         }

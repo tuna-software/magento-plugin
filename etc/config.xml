@@ -16,7 +16,7 @@
 				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
-				<group>credit</group>
+				<group>tuna</group>
 			</credit>			
 			<boleto>
 				<title>Boleto</title>
@@ -24,7 +24,7 @@
 				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
-				<group>boleto</group>
+				<group>tuna</group>
 			</boleto>
 			<crypto>
 				<title>Crypto</title>
@@ -32,7 +32,7 @@
 				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
-				<group>pix</group>
+				<group>tuna</group>
 			</crypto>
 			<pix>
 				<title>PIX</title>
@@ -40,7 +40,7 @@
 				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
-				<group>pix</group>
+				<group>tuna</group>
 			</pix>
 		</payment>
 	</default>
