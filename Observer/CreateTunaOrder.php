@@ -57,7 +57,8 @@ class CreateTunaOrder implements ObserverInterface
 
             $creditCardData = json_decode($payment->getAdditionalInformation()["credit_card_data"]);
 
-            $valorTotal = $this->getValorFinal($order->getGrandTotal(), 1);
+            $valorTotal = $this->getValorFinal($order->getGrandTotal());
+
             $juros = 1;
 
             if ($creditCardData != null && count($creditCardData) > 0) {
@@ -70,19 +71,9 @@ class CreateTunaOrder implements ObserverInterface
                     return;
                 }
 
-                $creditCardAmount = $creditCardData[0]->credit_card_amount + ($creditCardData[1]->credit_card_amount ?? 0);
-
-                if ($creditCardAmount != $valorTotal) {
-                    $order->setStatus('tuna_Cancelled');
-                    $order->addStatusHistoryComment('Os valores informados para cada cartão não totalizam o valor da compra.');
-                    $order->setGrandTotal($valorTotal);
-                    $order->save();
-                    return;
-                }
-
                 $valorTotalComJuros = $this->getValorFinal($creditCardData[0]->credit_card_amount, $creditCardData[0]->credit_card_installments) +
                     $this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0, $creditCardData[1]->credit_card_installments ?? 1);
-
+                
                 $juros = $valorTotalComJuros / $valorTotal;
                 $valorTotal = round($valorTotalComJuros, 2);
             }
@@ -392,7 +383,7 @@ class CreateTunaOrder implements ObserverInterface
         #return $this;
     }
 
-    public function getValorFinal($valorTotal, $parcela)
+    public function getValorFinal($valorTotal, $parcela = -1)
     {
         $tmpJuros = $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/p' . $parcela);
         $juros = 0;
