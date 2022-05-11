@@ -31,6 +31,13 @@ class CreateTunaOrder implements ObserverInterface
         $this->_coreSession = $coreSession;
     }
 
+    function roundDown($decimal, $precision)
+    {
+        $sign = $decimal > 0 ? 1 : -1;
+        $base = pow(10, $precision);
+        return floor(abs($decimal) * $base) / $base * $sign;
+    }
+
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $order = $observer->getEvent()->getOrder();
@@ -79,10 +86,12 @@ class CreateTunaOrder implements ObserverInterface
             }
 
             $itemsCollection = $order->getAllVisibleItems();
-            $tmpvalorTotalPendente = $valorTotal - $order->getBaseShippingAmount();
+            $shippingAmountPerItem =  ($order->getBaseShippingAmount() * $juros) / count($itemsCollection);
             foreach ($itemsCollection as $item) {
-                $valorItem = round($item->getPrice() * $juros, 2);
-                $tmpvalorTotalPendente = $tmpvalorTotalPendente - ($valorItem * $item->getQtyToInvoice());
+
+                $discountByItem = $item->getOriginalPrice() - $item->getPrice()  + ($item->getDiscountAmount() / $item->getQtyToInvoice());
+
+                $valorItem = $this->roundDown(( ($item->getPrice() - $discountByItem) * $juros) + ($shippingAmountPerItem / $item->getQtyToInvoice()) , 2);
                 $cItem = [[
                     "Amount" =>  $valorItem,
                     "ProductDescription" => $item->getProduct()->getName(),
@@ -94,6 +103,7 @@ class CreateTunaOrder implements ObserverInterface
                 ]];
                 $itens = array_merge($itens, $cItem);
             }
+
             $deliveryAddress = [];
             if (!empty($shipping) && isset($shipping["street"]) && isset($shipping["city"]) && isset($shipping["region"]) && isset($shipping["postcode"]) && isset($shipping["telephone"])) {
                 $address = preg_split("/(\r\n|\n|\r)/", $shipping["street"]);
@@ -253,13 +263,6 @@ class CreateTunaOrder implements ObserverInterface
                     "IpAddress" => $order->getRemoteIp(),
                     "CookiesAccepted" => true
                 ],
-                "ShippingItems" => [
-                    "Items" => [[
-                        "Type" => $order->getShippingDescription(),
-                        "Amount" => $order->getBaseShippingAmount() + $tmpvalorTotalPendente,
-                        "Code" =>  ""
-                    ]]
-                ],
                 "PaymentItems" => [
                     "Items" => $itens
                 ],
@@ -278,7 +281,7 @@ class CreateTunaOrder implements ObserverInterface
             /* Create curl factory */
             $httpAdapter = $this->curlFactory->create();
             $bodyJsonRequest = json_encode($requestbody);
-            // $this->saveLog($bodyJsonRequest);
+            $this->saveLog($bodyJsonRequest);
             $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
             $result = $httpAdapter->read();
