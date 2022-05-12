@@ -87,11 +87,11 @@ class CreateTunaOrder implements ObserverInterface
 
             $itemsCollection = $order->getAllVisibleItems();
             $shippingAmountPerItem =  ($order->getBaseShippingAmount() * $juros) / count($itemsCollection);
-            foreach ($itemsCollection as $item) {
-
-                $discountByItem = $item->getOriginalPrice() - $item->getPrice()  + ($item->getDiscountAmount() / $item->getQtyToInvoice());
-
-                $valorItem = $this->roundDown(( ($item->getPrice() - $discountByItem) * $juros) + ($shippingAmountPerItem / $item->getQtyToInvoice()) , 2);
+            $fullDiscountAmountPerItem =  ($order->getDiscountAmount() * $juros) / count($itemsCollection);
+            foreach ($itemsCollection as $item) {               
+                $valorItem = (($item->getPrice()) * $juros) + ($shippingAmountPerItem / $item->getQtyToInvoice());
+                $percentualDiscount = ($valorItem*$item->getQtyToInvoice())/($valorTotal-($order->getDiscountAmount() * $juros));
+                $valorItem = $this->roundDown(($valorItem +((($order->getDiscountAmount() * $juros)/$item->getQtyToInvoice())*$percentualDiscount)),2);
                 $cItem = [[
                     "Amount" =>  $valorItem,
                     "ProductDescription" => $item->getProduct()->getName(),
@@ -104,7 +104,7 @@ class CreateTunaOrder implements ObserverInterface
                 $itens = array_merge($itens, $cItem);
             }
 
-            $deliveryAddress = [];
+            $deliveryAddress = null;
             if (!empty($shipping) && isset($shipping["street"]) && isset($shipping["city"]) && isset($shipping["region"]) && isset($shipping["postcode"]) && isset($shipping["telephone"])) {
                 $address = preg_split("/(\r\n|\n|\r)/", $shipping["street"]);
                 $number = "";
@@ -281,13 +281,13 @@ class CreateTunaOrder implements ObserverInterface
             /* Create curl factory */
             $httpAdapter = $this->curlFactory->create();
             $bodyJsonRequest = json_encode($requestbody);
-            $this->saveLog($bodyJsonRequest);
+            //$this->saveLog($bodyJsonRequest);
             $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
             $result = $httpAdapter->read();
 
             $body = \Zend_Http_Response::extractBody($result);
-            // $this->saveLog($body);
+            //$this->saveLog($body);
             try {
                 $response = $this->jsonHelper->jsonDecode($body);
                 switch (strval($response["status"])) {
