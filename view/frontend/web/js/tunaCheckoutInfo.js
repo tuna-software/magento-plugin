@@ -26,6 +26,14 @@ var currencyTypes = {
         moneyPattern: moneyPattern,
         installmentPattern: /\(NZ\$.*\)/,
     },
+    'EUR': {
+        language: 'en-US',
+        symbol: '€',
+        decimalDivisor: '.',
+        decimalSeparator: ',',
+        moneyPattern: moneyPattern,
+        installmentPattern: /\(\$.*\)/,
+    }
 };
 
 function getSystemCurrency() {
@@ -72,7 +80,7 @@ function extractValueFromInstallmentsOption(selectedInstallmentOption, currency)
     var decimalDivisor = currencyTypes[currency].decimalDivisor;
     var decimalSeparator = currencyTypes[currency].decimalSeparator;
     var newOrderTotal = selectedInstallmentOption.match(pattern)[0].substring(symbol.length + 1).trim().replaceAll(decimalSeparator, '');
-    newOrderTotal = newOrderTotal.replace(decimalDivisor, '.').substring(0, newOrderTotal.length - 1);
+    newOrderTotal = newOrderTotal.substring(0, newOrderTotal.length - 1);
 
     return getFloatNumber(newOrderTotal, currency);
 }
@@ -114,7 +122,7 @@ function resetOrderInfo() {
     insertNewOrderTotalHtml(newOrderTotal);
 }
 
-function insertOrderFeesHtml(oldOrderTotal, newOrderTotal) {
+function insertOrderFeesHtml(oldOrderTotal, newOrderTotal) {    
     var feeAmount = newOrderTotal - oldOrderTotal;
     var feesHtmlElement = $('.tuna-order-fees');
     var hasFees = feesHtmlElement.length > 0;
@@ -125,8 +133,7 @@ function insertOrderFeesHtml(oldOrderTotal, newOrderTotal) {
 
     var systemCurrency = getSystemCurrency();
     var systemSymbol = currencyTypes[systemCurrency].symbol;
-    var feeAmountFormatted = formatCurrency(feeAmount, systemCurrency);
-
+    var feeAmountFormatted = formatCurrency(feeAmount, systemCurrency);    
     var feeDescription = feeAmount > 0 ? 'Acréscimo de Juros' : 'Desconto';
 
     var feeOrderHtml = `<tr class="totals tuna-order-fees"> <th data-bind="i18n: title" class="mark" scope="row">${feeDescription}</th> <td class="amount">

@@ -205,7 +205,8 @@ class CreateTunaOrder implements ObserverInterface
                     $order->addStatusHistoryComment('Pagamento em Bitcoin');
                     $paymentMethods = [
                         [
-                            "PaymentMethodType" => "E"
+                            "PaymentMethodType" => "E",
+                            "Amount" => $valorTotal
                         ]
                     ];
                 } else {
@@ -215,7 +216,8 @@ class CreateTunaOrder implements ObserverInterface
                     $order->addStatusHistoryComment('Pagamento em PIX');
                     $paymentMethods = [
                         [
-                            "PaymentMethodType" => "D"
+                            "PaymentMethodType" => "D",
+                            "Amount" => $valorTotal
                         ]
                     ];
                 }
@@ -227,6 +229,7 @@ class CreateTunaOrder implements ObserverInterface
                 $paymentMethods = [
                     [
                         "PaymentMethodType" => "3",
+                        "Amount" => $valorTotal,
                         "BoletoInfo" => [
                             "BillingInfo" => [
                                 "Document" => $payment->getAdditionalInformation()["buyer_document"],
@@ -369,7 +372,11 @@ class CreateTunaOrder implements ObserverInterface
                     if ($payment->getAdditionalInformation()["is_pix_payment"] == "true") {
                         if ($response["methods"] != null && $response["methods"][0]["pixInfo"] != null) {
                             $additionalData = $payment->getAdditionalInformation();
-                            $additionalData["pix_image"] = $response["methods"][0]["pixInfo"]["qrImage"];
+                            $pixImageIndo = $response["methods"][0]["pixInfo"]["qrImage"];
+                            if (stripos($pixImageIndo,'data:image') === false)
+                            {
+                                $additionalData["pix_image"] = 'data:image/png;base64,'.$pixImageIndo;
+                            }
                             $additionalData["pix_key"] = $response["methods"][0]["pixInfo"]["qrContent"];
                             $payment->setData('additional_information', $additionalData);
                             $payment->save();
