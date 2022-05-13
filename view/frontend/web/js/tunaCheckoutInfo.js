@@ -43,8 +43,9 @@ function getSystemCurrency() {
 function getFloatNumber(value, currency) {
     var currencyFormat = currencyTypes[currency];
     var floatNumber = value.replaceAll(currencyFormat.decimalSeparator, '').replace(currencyFormat.decimalDivisor, '.');
-
-    return parseFloat(floatNumber, 10);
+    try{
+        return parseFloat(floatNumber, 10);
+    }catch(e){return 0;}
 }
 
 function formatCurrency(value, currency = 'BRL') {

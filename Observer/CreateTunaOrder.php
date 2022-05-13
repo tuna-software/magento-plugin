@@ -84,9 +84,12 @@ class CreateTunaOrder implements ObserverInterface
                 $juros = $valorTotalComJuros / $valorTotal;
                 $valorTotal = round($valorTotalComJuros, 2);
             }
-
+            $shippingValue = 0;
+            try{
+                $shippingValue = $order->getBaseShippingAmount();
+            } catch (\Exception $e) {}
             $itemsCollection = $order->getAllVisibleItems();
-            $shippingAmountPerItem =  ($order->getBaseShippingAmount() * $juros) / count($itemsCollection);
+            $shippingAmountPerItem =  ($shippingValue * $juros) / count($itemsCollection);
             $fullDiscountAmountPerItem =  ($order->getDiscountAmount() * $juros) / count($itemsCollection);
             foreach ($itemsCollection as $item) {               
                 $valorItem = (($item->getPrice()) * $juros) + ($shippingAmountPerItem / $item->getQtyToInvoice());
