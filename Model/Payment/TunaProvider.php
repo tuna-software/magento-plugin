@@ -53,16 +53,14 @@ class TunaProvider implements ConfigProviderInterface
     }
     public function getFee($totalInstallments)
     {
-        $feeList = array();
-        for($i=1;$i<=$totalInstallments;$i++){
-            $tmpFee = $this->scopeConfig->getValue('payment/tuna_payment/credit_card/p'.$i);
-            $fee = 0;
-            if ($tmpFee!='')
-            {
-                $fee = (float)$tmpFee;
-            }            
-            $feeList[$i-1] = $fee;
+        $feeList = [];
+
+        for($i = 1; $i <= $totalInstallments; $i++){
+            $feeInput = $this->scopeConfig->getValue('payment/tuna_payment/credit_card/p'.$i);
+            $fee = is_numeric($feeInput) ? (float) $feeInput : 0;           
+            $feeList[$i - 1] = $fee;
         }
+
         return $feeList;
     }
     /**
@@ -193,11 +191,14 @@ class TunaProvider implements ConfigProviderInterface
                     'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto'),
+                    'allow_crypto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_crypto'),
                     'allow_pix' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_pix'),
+                    'allow_pay_with_two_cards' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/allow_pay_with_two_cards'),
+                    'minimum_installment_value' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/minimum_installment_value'),
                     'installments' =>  $this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments'),
                     'feeList'=>$this->getFee($this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments')),
-                    'feeType' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/fee_config'),
                     'billingAddresses' => $billingAddresses,
+                    'internalSessionID' =>  $this->_session->getSessionId(),
                     'title' => $this->scopeConfig->getValue('payment/tuna_payment/options/title')
                 ]
             ],

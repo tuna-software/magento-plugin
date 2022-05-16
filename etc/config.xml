@@ -10,6 +10,38 @@
 				<log_file>var/log/tuna.log</log_file>
 				<group>tuna</group>
 			</tuna>
+			<credit>
+				<title>Cartão de crédito</title>
+				<active>1</active>
+				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
+				<order_status>tuna_Started</order_status>
+				<log_file>var/log/tuna.log</log_file>
+				<group>tuna</group>
+			</credit>			
+			<boleto>
+				<title>Boleto</title>
+				<active>1</active>
+				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
+				<order_status>tuna_Started</order_status>
+				<log_file>var/log/tuna.log</log_file>
+				<group>tuna</group>
+			</boleto>
+			<crypto>
+				<title>Crypto</title>
+				<active>1</active>
+				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
+				<order_status>tuna_Started</order_status>
+				<log_file>var/log/tuna.log</log_file>
+				<group>tuna</group>
+			</crypto>
+			<pix>
+				<title>PIX</title>
+				<active>1</active>
+				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
+				<order_status>tuna_Started</order_status>
+				<log_file>var/log/tuna.log</log_file>
+				<group>tuna</group>
+			</pix>
 		</payment>
 	</default>
 </config>

@@ -38,7 +38,11 @@ class Request extends \Magento\Framework\App\Action\Action
         $payment = $lastRealOrder->getPayment();
         $paymentData = $payment->getData();
 
-        if ($paymentData['method'] === 'tuna') {
+        if ($paymentData['method'] === 'tuna' ||
+        $paymentData['method'] === 'crypto' ||
+        $paymentData['method'] === 'pix' ||
+        $paymentData['method'] === 'boleto' ||
+        $paymentData['method'] === 'credit') {
             $this->orderId = $lastRealOrder->getId();
             $orderStatusText = '';
             $orderStatus = $lastRealOrder->getStatus();            
@@ -66,6 +70,13 @@ class Request extends \Magento\Framework\App\Action\Action
                 if ($isBoletoPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto') === "0") {
                     return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
                 }
+
+                $isCryptoPayment = $payment->getAdditionalInformation()["is_crypto_payment"];
+
+                if ($isCryptoPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_crypto') === "0") {
+                    return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
+                }
+
                 $isPixPayment = $payment->getAdditionalInformation()["is_pix_payment"];
 
                 if ($isPixPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_pix') === "0") {
@@ -78,8 +89,14 @@ class Request extends \Magento\Framework\App\Action\Action
                         'order_products' => $orderProducts,
                         'order_status' => $orderStatus,
                         'is_boleto' => $isBoletoPayment,
+                        'is_crypto' => $isCryptoPayment,
                         'is_pix' => $isPixPayment,
                         'boleto_url' => $isBoletoPayment == "true" ? $payment->getAdditionalInformation()["boleto_url"] : "",
+                        'crypto_coin_value' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin_value"] : "",
+                        'crypto_coin_rate_currency' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin_rate_currency"] : "",
+                        'crypto_coin_addr' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin_addr"] : "",
+                        'crypto_coin_qrcode_url' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin_qrcode_url"] : "",
+                        'crypto_coin' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin"] : "",
                         'pix_image' => $isPixPayment == "true" ? $payment->getAdditionalInformation()["pix_image"] : "",
                         'pix_key' => $isPixPayment == "true" ? $payment->getAdditionalInformation()["pix_key"] : "",
                     ]

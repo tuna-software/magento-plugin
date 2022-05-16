@@ -1,83 +1,267 @@
-<?php /** @var $block \Magento\Checkout\Block\Onepage\Success */ ?>
+<?php
+
+/** @var $block \Magento\Checkout\Block\Onepage\Success */ ?>
+
 <div>
-    <?php if ($block->getStatus() == "tuna_Captured" || $block->getStatus() == "tuna_PendingCapture") { ?>
+    <?php if ($block->getStatus() == "tuna_Captured" || ($block->getStatus() == "tuna_PendingCapture" && ($block->getIsPix() == "true" || $block->getIsBoleto() == "true" || $block->getIsCrypto() == "true"))) { ?>
+
         <h2><?php echo __('Compra concluída com sucesso # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
+
         <?php if ($block->getIsBoleto() == "true") { ?>
-            <h2><?php echo __('Clique <a href="%1" target="_blank"> aqui</a> e imprima seu boleto para realizar o pagamento', $block->escapeHtml($block->getBoletoURL())) ?></h3>
-            <?php } ?>
-            <?php if ($block->getIsPix() == "true" && $block->getStatus()=="tuna_PendingCapture") { ?>
-                <h2><?php echo __('Pagamento via PIX') ?></h3>
-                <div style="height: 451px;">	
-                    <div style="width:300px; float:left">					
-                            <img src="<?php echo __( $block->getPixImage() ); ?>" width="250px" />
-                            <input style="width:250px;margin-top:5px" id="tuna-qr-code" value="<?php echo __( $block->getPixKey()); ?>"></input> 
-                            <button style="width:250px;margin-top:5px"  onclick="copy_qr_code()" onclick="true"><?php echo __( 'Pix Copia e Cola' ); ?></button>
-                            <script>
-                                function copy_qr_code() {
-                                    var copyText = document.getElementById("tuna-qr-code");
-                                    copyText.select();
-                                    copyText.setSelectionRange(0, 99999)
-                                    document.execCommand("copy");
-                                }
-                            </script>		   
-                    </div>
-                    <div style="float:left">			
-                        <p>1 - <?php echo __( 'Abra o app do seu banco ou instituição financeira e entre no ambiente Pix'); ?></p>
-                        <p>2 - <?php echo __( 'Escolha a opção pagar com qr code e escaneie ou copie e cole o código'); ?></p>
-                        <p>3 - <?php echo __('Confirme as informações e finalize o pagamento' ); ?></p>		
-                        <p style="color:#999999;border-top:1px solid #CCCCCC"><?php echo __('verificando pagamento...' ); ?></p>
-                    </div>
-                            
-                </div>
-                <script>
-                    function doPoll(purchaseid) {countPoll++;
-                        jQuery.ajax({
-                            type: "POST",
-                                        data: {partnerUniqueId: purchaseid, fetch: false},
-                                cache: false,
-                                    url: "/tunagateway/order/pixvalidation",
-                                    success: function (data) {
-                                if (data == "OK1" || countPoll>200){
-                                    clearTimeout(timeout);
-                                window.location.reload();
-                            }
-                            timeout = setTimeout(function () {
-                                    doPoll(purchaseid);
-                                    }, 6000);			
-                        },
-                        error: function (data) { 
-                            clearTimeout(timeout);
-                        }
-                        });
-                    } 
-                    var countPoll=0;
-                    var timeout = setTimeout(function () {
-                                    doPoll(<?php echo __($block->escapeHtml($block->getOrderId())) ?>);
-                                    }, 6000);			
-                </script>
-            <?php } ?>
-        <?php } else { ?>
-            <h2><?php echo __('Sua compra esta sendo processada. Número do pedido # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
+            <h3><?php echo __('Clique <a href="%1" target="_blank"> aqui</a> e imprima seu boleto para realizar o pagamento', $block->escapeHtml($block->getBoletoURL())) ?></h3>
         <?php } ?>
 
-        <div>
-            <p>Você comprou</p>
-            <table>
-                <tr>
-                    <th>#</th>
-                    <th>Produto</th>
-					<th>Quantidade</th>
-                    <th>Preço Final</th>
-                   
-                </tr>
-                <?php foreach ($block->getOrderProducts() as $key => $product) : ?>
-                    <tr>
-                        <td><?php echo $key + 1 ?></td>
-                        <td><?php echo $product["ProductDescription"] ?></td>                        
-                        <td><?php echo $product["ItemQuantity"] ?></td>
-						<td><?php echo number_format((float)$product["Amount"]*$product["ItemQuantity"], 2, ',', '') ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </table>
-        </div>
+        <?php if ($block->getIsPix() == "true" && $block->getStatus() == "tuna_PendingCapture") { ?>
+            <h3><?php echo __('Pagamento via PIX') ?></h3>
+            <div style="height: 451px;">
+                <div style="width:300px; float:left">
+                    <img src="<?php echo __($block->getPixImage()); ?>" width="250px" />
+                    <input style="width:250px;margin-top:5px" id="tuna-qr-code" value="<?php echo __($block->getPixKey()); ?>"></input>
+                    <button style="width:250px;margin-top:5px" onclick="copy_qr_code()" onclick="true"><?php echo __('Pix Copia e Cola'); ?></button>
+                    <script>
+                        function copy_qr_code() {
+                            var copyText = document.getElementById("tuna-qr-code");
+                            copyText.select();
+                            copyText.setSelectionRange(0, 99999)
+                            document.execCommand("copy");
+                        }
+                    </script>
+                </div>
+                <div style="float:left">
+                    <p><?php echo __('1) Abra o app do seu banco ou instituição financeira e entre no ambiente Pix'); ?></p>
+                    <p><?php echo __('2) Escolha a opção pagar com qr code e escaneie ou copie e cole o código'); ?></p>
+                    <p><?php echo __('3) Confirme as informações e finalize o pagamento'); ?></p>
+                    <p style="color:#999999;border-top:1px solid #CCCCCC"><?php echo __('verificando pagamento...'); ?></p>
+                </div>
+
+            </div>
+            <script>
+                function doPoll(purchaseid) {
+                    countPoll++;
+                    jQuery.ajax({
+                        type: "POST",
+                        data: {
+                            partnerUniqueId: purchaseid,
+                            fetch: false
+                        },
+                        cache: false,
+                        url: "/tunagateway/order/pixvalidation",
+                        success: function(data) {
+                            if (data == "OK1" || countPoll > 200) {
+                                clearTimeout(timeout);
+                                window.location.reload();
+                            }
+                            timeout = setTimeout(function() {
+                                doPoll(purchaseid);
+                            }, 6000);
+                        },
+                        error: function(data) {
+                            clearTimeout(timeout);
+                        }
+                    });
+                }
+                var countPoll = 0;
+                var timeout = setTimeout(function() {
+                    doPoll(<?php echo __($block->escapeHtml($block->getOrderId())) ?>);
+                }, 6000);
+            </script>
+
+        <?php } elseif (($block->getIsCrypto() == "true" && $block->getStatus() == "tuna_PendingCapture")) { ?>
+            <h3><?php echo __('Pagar com Bitcoin') ?></h3>
+            <p><?php echo __('A partir da sua wallet de preferência, efetue o pagamento de acordo com a cotação do momento.') ?></p>
+            <div style="height: 451px;">
+                <div style="width:300px; float:left">
+                    <img src="<?php echo __($block->getCryptoCoinQRCodeURL()); ?>" width="250px" />
+                    <input style="width:250px;margin-top:5px" id="tuna-qr-code" value="<?php echo __($block->getCryptoCoinAddr()); ?>"></input>
+                    <button style="width:250px;margin-top:5px" onclick="copy_qr_code()" onclick="true"><?php echo __('Copiar Hash'); ?></button>
+                    <script>
+                        function copy_qr_code() {
+                            var copyText = document.getElementById("tuna-qr-code");
+                            copyText.select();
+                            copyText.setSelectionRange(0, 99999)
+                            document.execCommand("copy");
+                        }
+                    </script>
+                </div>
+
+                <div style="float:left">
+                    <table>
+                        <tr>
+                            <th style="width:20px"> </th>
+                            <th> </th>
+                        </tr>
+                        <tr>
+                            <td> <?php echo __('1)'); ?></td>
+                            <td> <?php echo __('Abra a sua wallet de preferência'); ?> </td>
+                        </tr>
+                        <tr>
+                            <td> <?php echo __('2)'); ?></td>
+                            <td> <?php echo __('Escolha a opção pagar com qr code e escaneie o código ao lado'); ?> </td>
+                        </tr>
+                        <tr>
+                            <td> <?php echo __('3)'); ?></td>
+                            <td> <?php echo __('Confirme as informações e finalize a compra'); ?> </td>
+                        </tr>
+                    </table>
+
+                    <hr>
+                    <table>
+                        <tr>
+                            <td> <b> <?php echo __('Total:'); ?> </b> </td>
+                            <td align="right">
+                                <b>
+                                    <?php
+                                    $value = $block->getCryptoCoinValue();
+                                    $arrayOfValues = preg_split('/\./', $value);
+                                    $formattedValue = ($arrayOfValues[0] == '0' ? '0' : preg_replace('/,/', '.', $arrayOfValues[0])) . ',' . $arrayOfValues[1];
+                                    echo __('₿ ' . $formattedValue);
+                                    ?>
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td> </td>
+                            <td align="right" style="color:#999999">
+                                <?php
+                                $value = $block->getCryptoCoinRateCurrency();
+                                $arrayOfValues = preg_split('/\./', $value);
+                                $formattedValue = ($arrayOfValues[0] == '0' ? '0,' : preg_replace('/,/', '.', $arrayOfValues[0])) . ',' . $arrayOfValues[1];
+                                echo __('1 ₿ ≈ R$ ' . $formattedValue);
+                                ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td> </td>
+                            <td align="right" style="color:#999999;font-size:90%"> <?php echo __('cotação expira em 10 minutos'); ?> </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <script>
+                function doPoll(purchaseid) {
+                    countPoll++;
+                    jQuery.ajax({
+                        type: "POST",
+                        data: {
+                            partnerUniqueId: purchaseid,
+                            fetch: false
+                        },
+                        cache: false,
+                        url: "/tunagateway/order/pixvalidation",
+                        success: function(data) {
+                            if (data == "OK1" || countPoll > 200) {
+                                clearTimeout(timeout);
+                                window.location.reload();
+                            }
+                            timeout = setTimeout(function() {
+                                doPoll(purchaseid);
+                            }, 6000);
+                        },
+                        error: function(data) {
+                            clearTimeout(timeout);
+                        }
+                    });
+                }
+                var countPoll = 0;
+                var timeout = setTimeout(function() {
+                    doPoll(<?php echo __($block->escapeHtml($block->getOrderId())) ?>);
+                }, 6000);
+            </script>
+        <?php } ?>
+
+    <?php } else { ?>
+        <h2><?php echo __('Sua compra esta sendo processada. Número do pedido # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
+    <?php } ?>
+
+    <div>
+        <p>Você comprou</p>
+
+      <span style="display: none;" id="tunaOrderProducts">
+            <?php
+                $tunaOrderProducts = $block->getOrderProducts();
+                echo json_encode($tunaOrderProducts);
+            ?>
+        </span>
+
+
+        <span style="display: none;" id="tunaShippingAmount">
+            <?php
+                $tunaShippingAmount = (float) $block->getShippingAmount();
+                echo $tunaShippingAmount;
+            ?>
+        </span>
+
+        <span style="display: none;" id="tunaDiscountExtra">
+            <?php
+                $tunaDiscountExtra = (float) $block->getDiscountExtra();
+                echo $tunaDiscountExtra;
+            ?>
+        </span>
+
+        <span style="display: none;" id="tunaFeeAmount">
+            <?php
+                $tunaFeeAmount = ((float) $block->getNewOrderTotal()) - ((float) $block->getOldOrderTotal());
+                echo $tunaFeeAmount;
+            ?>
+        </span>
+
+        <span style="display: none;" id="tunaNewOrderTotal">
+            <?php
+                $tunaNewOrderTotal = (float) $block->getNewOrderTotal();
+                echo $tunaNewOrderTotal;
+            ?>
+        </span>
+
+        <div id="tuna-order-table"></div>
+
+    </div>
 </div>
+
+<script type="text/javascript">
+    var tunaOrderTableHtml;
+    var tunaProductsHtml = '';
+    var tunaShippingHtml = '';
+    var tunaDiscountHtml = ''
+    var tunaFeeHtml = '';
+    var horizontalLineHtml = `<tr style="border-bottom:1px solid gray"> <td colspan="100%"></td> </tr>`;
+    var tableHeaderHtml = `<tr><th>#</th><th>Produto</th><th>Quantidade</th><th>Preço Final</th></tr>`;
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('pt-BR', { currency: 'BRL', minimumFractionDigits: 2 }).format(value);
+    }
+
+    function productHtmlTemplate (product, index) {
+        var productAmount = formatCurrency(product.ItemQuantity * product.Amount);
+        return `<tr><td>${index + 1}</td><td>${product.ProductDescription}</td><td>${product.ItemQuantity}</td><td>${productAmount}</td></tr>`;
+    }
+
+    var tunaOrderProducts = JSON.parse(document.getElementById('tunaOrderProducts').textContent.slice(2).trim());
+    tunaOrderProducts.forEach(function (product, index) {
+      tunaProductsHtml += productHtmlTemplate(product, index);
+    });
+
+    var tunaShippingAmount =  parseFloat(document.getElementById('tunaShippingAmount').textContent.slice(2).trim(), 10);
+    var tunaDiscountExtra =  parseFloat(document.getElementById('tunaDiscountExtra').textContent.slice(2).trim(), 10);
+    var tunaFeeAmount =  parseFloat(document.getElementById('tunaFeeAmount').textContent.slice(2).trim(), 10);
+    var tunaNewOrderTotal =  parseFloat(document.getElementById('tunaNewOrderTotal').textContent.slice(2).trim(), 10);
+    
+    tunaOrderTableHtml = tableHeaderHtml + tunaProductsHtml;
+    
+    if (tunaDiscountExtra !== 0) {
+      tunaDiscountHtml = `<tr><td>+</td><td>Desconto em Produtos</td><td>1</td><td>${formatCurrency(tunaDiscountExtra)}</td></tr>`;
+    }
+
+    if (tunaShippingAmount !== 0) {
+      tunaShippingHtml = `<tr><td>+</td><td>Frete</td><td>1</td><td>${formatCurrency(tunaShippingAmount)}</td></tr>`;
+    }
+
+    if (tunaFeeAmount !== 0) {
+      var tunaFeeMessage = tunaFeeAmount > 0 ? 'Acréscimo de Juros' : 'Desconto';
+      tunaFeeHtml = `<tr><td>+</td><td>${tunaFeeMessage}</td><td>1</td><td>${formatCurrency(tunaFeeAmount)}</td></tr>`;
+    }
+
+    tunaOrderTableHtml += tunaDiscountHtml + tunaShippingHtml + tunaFeeHtml + horizontalLineHtml;
+    tunaOrderTableHtml += `<tr><th colspan="3">Total</th><th>${formatCurrency(tunaNewOrderTotal)}</th></tr>`
+
+    document.getElementById('tuna-order-table').innerHTML = `<table>${tunaOrderTableHtml}</table>`;
+</script>
