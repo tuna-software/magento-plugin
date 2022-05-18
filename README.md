@@ -4,13 +4,13 @@ This is the official magento 2 module for the [tuna payment gateway](https://tun
     tuna/module-tunagateway
 
 ## Installation
-This module is available through [*Packagist*](https://packagist.org/packages/tuna/module-tunagateway), below follow instructions to install either through a zip file or using composer.
+This module is available through [*Packagist*](https://packagist.org/packages/tuna/module-tunagateway), below follow instructions to install either through a zip file.
 
 \* = in production please use the `--keep-generated` option
 
-### Type 1: Zip file
+### Downloaded Zip file
 
- - Unzip the zip file in `app/code/Tuna`
+ - Unzip the zip file in `app/code/Tuna` like `app/code/Tuna/TunaGateway/*`
  - Enable the module by running `php bin/magento module:enable Tuna_TunaGateway`
  - Apply database updates by running `php bin/magento setup:upgrade`
  - force rebuild by running `php bin/magento setup:di:compile`
