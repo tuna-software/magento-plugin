@@ -42,7 +42,7 @@ class Success extends \Magento\Framework\App\Action\Action
 
         $blockInstance = $resultPage->getLayout()->getBlock('tuna.response.success');
 
-        $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderId($this->order()->getIncrementId());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderId($this->order()->getId());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setDiscountExtra($this->order()->getDiscountAmount());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setShippingAmount($this->order()->getBaseShippingAmount());
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOldOrderTotal($oldOrderTotal);
