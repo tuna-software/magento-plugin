@@ -62,7 +62,7 @@
                 }
                 var countPoll = 0;
                 var timeout = setTimeout(function() {
-                    doPoll(<?php echo __($block->escapeHtml($block->getOrderId())) ?>);
+                    doPoll("<?php echo $block->getOrderId() ?>");
                 }, 6000);
             </script>
 
@@ -164,7 +164,7 @@
                 }
                 var countPoll = 0;
                 var timeout = setTimeout(function() {
-                    doPoll(<?php echo __($block->escapeHtml($block->getOrderId())) ?>);
+                    doPoll("<?php echo $block->getOrderId() ?>");
                 }, 6000);
             </script>
         <?php } ?>

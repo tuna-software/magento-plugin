@@ -44,7 +44,7 @@ class CreateTunaOrder implements ObserverInterface
 
         //verify transaction
         if ($order->getStatus() == 'tuna_Started') {
-            $orderId = $order->getId();
+            $orderId = $order->getIncrementId();
             $shipping = $order->getShippingAddress();
             $billing = $order->getBillingAddress();
             $payment = $order->getPayment();

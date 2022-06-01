@@ -40,7 +40,8 @@ class PixValidation extends \Magento\Framework\App\Action\Action
             echo print_r("ERROR - partneruniqueid parameter not found.");
             exit;
         }
-        $order = $this->_objectManager->create('Magento\Sales\Model\Order')->load($orderID );
+        
+        $order = $this->_objectManager->create('Magento\Sales\Model\Order')->loadByIncrementId($orderID );
         if ($order==null)
         {
             echo print_r("ERROR - order not found.");

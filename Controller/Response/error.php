@@ -40,7 +40,7 @@ class Error extends \Magento\Framework\App\Action\Action
         $oldOrderTotal = $this->order()->getBaseGrandTotal();
         $newOrderTotal = $this->order()->getGrandTotal();
 
-        $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderId($this->order()->getId());
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderId($this->order()->getIncrementId().'');
         $resultPage->getLayout()->getBlock('tuna.response.error')->setStatus($this->status());
         $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderProducts($this->products());
         $resultPage->getLayout()->getBlock('tuna.response.error')->setDiscountExtra($this->order()->getDiscountAmount());
@@ -67,7 +67,7 @@ class Error extends \Magento\Framework\App\Action\Action
      */
     private function order()
     {
-        return $this->_objectManager->create('Magento\Sales\Model\Order')->load($this->session()->order_id);
+        return $this->_objectManager->create('Magento\Sales\Model\Order')->loadByIncrementId($this->session()->order_id);
     }
 
     private function status()

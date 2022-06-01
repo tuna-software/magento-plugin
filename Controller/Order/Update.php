@@ -49,12 +49,12 @@ class Update extends \Magento\Framework\App\Action\Action
             echo print_r($this->getRequest()->getHeader('Authorization'));
             exit;
         }
-        if ($this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey')!= 'Bearer '.$appkey )
+        if ('Bearer '.$this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey')!= $appkey )
         {
             echo print_r("ERROR - invalid header.");
             exit; 
         }
-        $order = $this->_objectManager->create('Magento\Sales\Model\Order')->load($orderID );
+        $order = $this->_objectManager->create('Magento\Sales\Model\Order')->loadByIncrementId($orderID );
         if ($order==null)
         {
             echo print_r("ERROR - order not found.");
@@ -118,5 +118,17 @@ class Update extends \Magento\Framework\App\Action\Action
         echo print_r("OK"); 
         exit;
         
+    }
+    public function saveLog2($txt)
+    {
+        $filename = "/var/www/html/app/code/Tuna/TunaGateway/newfile.txt";
+        $file = fopen($filename, "a");
+
+        if ($file == false) {
+            echo ("Error in opening new file");
+            exit();
+        }
+        fwrite($file, $txt . " | " . date("j/n/Y h:i:s") . "\n");
+        fclose($file);
     }
 }

@@ -43,7 +43,7 @@ class Request extends \Magento\Framework\App\Action\Action
         $paymentData['method'] === 'pix' ||
         $paymentData['method'] === 'boleto' ||
         $paymentData['method'] === 'credit') {
-            $this->orderId = $lastRealOrder->getId();
+            $this->orderId = $lastRealOrder->getIncrementId();
             $orderStatusText = '';
             $orderStatus = $lastRealOrder->getStatus();            
             $itemsCollection = $lastRealOrder->getAllVisibleItems();
