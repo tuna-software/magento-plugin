@@ -56,7 +56,11 @@
 					<field id="allow_pix" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="14" translate="label" type="select">
 						<label>Allow Pix Payment (PIX)</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-					</field>				
+					</field>	
+					<field id="auto_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="15" translate="label" type="select">
+						<label>Generate Invoice Automatically</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>			
 					<field id="sort_order" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="60" translate="label" type="text">
 						<label>Sort Order</label>
 					</field>

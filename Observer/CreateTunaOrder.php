@@ -4,6 +4,9 @@ namespace Tuna\TunaGateway\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Session\SessionManagerInterface as CoreSession;
+use Magento\Sales\Model\Service\InvoiceService;
+use Magento\Framework\DB\Transaction;
+use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 
 class CreateTunaOrder implements ObserverInterface
 {
@@ -11,13 +14,19 @@ class CreateTunaOrder implements ObserverInterface
     protected $_tunaEndpointDomain;
     protected $_code = "tuna";
     protected $_coreSession;
+    protected $invoiceService;
+    protected $transaction;
+    protected $invoiceSender;
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
         \Magento\Framework\Session\SessionManager $sessionManager,
         \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
         \Magento\Framework\Json\Helper\Data $jsonHelper,
-        CoreSession $coreSession
+        CoreSession $coreSession, 
+        InvoiceService $invoiceService,
+        InvoiceSender $invoiceSender,
+        Transaction $transaction
     ) {
         $this->_scopeConfig = $scopeConfigInterface;
         $this->_session = $sessionManager;
@@ -28,6 +37,9 @@ class CreateTunaOrder implements ObserverInterface
         } else {
             $this->_tunaEndpointDomain = 'sandbox.tuna-demo.uy';
         }
+        $this->invoiceService = $invoiceService;
+        $this->transaction = $transaction;
+        $this->invoiceSender = $invoiceSender;
         $this->_coreSession = $coreSession;
     }
 
@@ -305,6 +317,26 @@ class CreateTunaOrder implements ObserverInterface
                         break;
                     case '2':
                         $order->setStatus('tuna_Captured');
+                        if ( $this->_scopeConfig->getValue('payment/tuna_payment/options/auto_invoice')=="1"){
+                            if ($order->canInvoice()) {
+                                try{
+                                    $invoice = $this->invoiceService->prepareInvoice($order);
+                                    $invoice->register();
+                                    $invoice->save();
+                                
+                                    $transactionSave = 
+                                        $this->transaction
+                                            ->addObject($invoice)
+                                            ->addObject($invoice->getOrder());
+                                    $transactionSave->save();
+                                    
+                                    $this->invoiceSender->send($invoice);
+                                    $order->addCommentToStatusHistory(
+                                        __('Usuário notificado sobre o pedido #%1.', $invoice->getId())
+                                    )->setIsCustomerNotified(true)->save();    
+                                } catch (\Exception $e) {}
+                            }
+                        }
                         break;
                     case '3':
                         $order->setStatus('tuna_Refunded');

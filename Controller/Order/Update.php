@@ -2,12 +2,18 @@
 
 namespace Tuna\TunaGateway\Controller\Order;
 use \Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
+use Magento\Sales\Model\Service\InvoiceService;
+use Magento\Framework\DB\Transaction;
+use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 
 class Update extends \Magento\Framework\App\Action\Action
 {
     protected $_pageFactory;
     protected $_session;
     protected $curl;
+    protected $invoiceService;
+    protected $transaction;
+    protected $invoiceSender;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -15,13 +21,20 @@ class Update extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Session\SessionManager $sessionManager,
         \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
         \Magento\Framework\Json\Helper\Data $jsonHelper,
-        ScopeConfig $scopeConfig
+        ScopeConfig $scopeConfig, 
+        InvoiceService $invoiceService,
+        InvoiceSender $invoiceSender,
+        Transaction $transaction
+        
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->_pageFactory = $pageFactory;
         $this->_session = $sessionManager;
         $this->curlFactory = $curlFactory;
         $this->jsonHelper = $jsonHelper;
+        $this->invoiceService = $invoiceService;
+        $this->transaction = $transaction;
+        $this->invoiceSender = $invoiceSender;
         return parent::__construct($context);
     }
 
@@ -70,6 +83,25 @@ class Update extends \Magento\Framework\App\Action\Action
                 break;
             case '2':
                 $status = ('tuna_Captured');
+                if ( $this->scopeConfig->getValue('payment/tuna_payment/options/auto_invoice')=="1"){
+                    if ($order->canInvoice()) {
+                        $invoice = $this->invoiceService->prepareInvoice($order);
+                        $invoice->register();
+                        $invoice->save();
+                        try{
+                            $transactionSave = 
+                                $this->transaction
+                                    ->addObject($invoice)
+                                    ->addObject($invoice->getOrder());
+                            $transactionSave->save();
+                            
+                            $this->invoiceSender->send($invoice);
+                            $order->addCommentToStatusHistory(
+                                __('Usuário notificado sobre o pedido #%1.', $invoice->getId())
+                            )->setIsCustomerNotified(true)->save();    
+                        } catch (\Exception $e) {}
+                    }
+                }
                 break;
             case '3':
                 $status = ('tuna_Refunded');
