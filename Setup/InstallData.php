@@ -44,9 +44,26 @@ class InstallData implements InstallDataInterface
                 'status' => $code,
                 'label' => $info
             ];
+            $tmpState = 'new';
+            if ($code == 'tuna_Captured' || $code == 'tuna_MoneyReceived' || $code== 'tuna_PartialCancel'){
+                $tmpState = 'complete';
+            }
+            if ($code == 'tuna_Authorized' || $code == 'tuna_Started'|| $code == 'tuna_PendingCapture' || $code == 'tuna_PendingAntiFraud'){
+                $tmpState = 'processing';
+            }
+            if ($code == 'tuna_DeniedAntiFraud' 
+            || $code == 'tuna_Denied'
+            || $code == 'tuna_Cancelled'
+            || $code == 'tuna_Expired' 
+            || $code == 'tuna_Refunded'
+            || $code == 'tuna_Error'
+            || $code == 'tuna_RedFlag'
+            || $code == 'tuna_Chargeback'){
+                $tmpState = 'canceled';
+            }
             $state[] = [
                 'status' => $code,
-                'state' => 'new',
+                'state' => $tmpState,
                 'is_default' => 0,
                 'visible_on_front' => '1'
             ];
