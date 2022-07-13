@@ -53,7 +53,7 @@ class CreateTunaOrder implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $order = $observer->getEvent()->getOrder();
-
+        #$this->saveLog($order->getStatus());
         //verify transaction
         if ($order->getStatus() == 'tuna_Started') {
             $orderId = $order->getIncrementId();
@@ -299,13 +299,13 @@ class CreateTunaOrder implements ObserverInterface
             /* Create curl factory */
             $httpAdapter = $this->curlFactory->create();
             $bodyJsonRequest = json_encode($requestbody);
-            //$this->saveLog($bodyJsonRequest);
+            #$this->saveLog($bodyJsonRequest);
             $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
 
             $result = $httpAdapter->read();
 
             $body = \Zend_Http_Response::extractBody($result);
-            //$this->saveLog($body);
+            #$this->saveLog($body); 
             try {
                 $response = $this->jsonHelper->jsonDecode($body);
                 switch (strval($response["status"])) {
@@ -342,30 +342,38 @@ class CreateTunaOrder implements ObserverInterface
                         $order->setStatus('tuna_Refunded');
                         break;
                     case '4':
-                        $order->setStatus('tuna_Denied');
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
+                        $order->setStatus('tuna_Denied');                        
                         break;
                     case '5':
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         $order->setStatus('tuna_Cancelled');
                         break;
                     case '-1':
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         $order->setStatus('tuna_Cancelled');
                         break;
                     case '6':
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento expirado.'));
                         $order->setStatus('tuna_Expired');
                         break;
                     case '7':
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         $order->setStatus('tuna_Chargeback');
                         break;
                     case '8':
                         $order->setStatus('tuna_MoneyReceived');
                         break;
                     case '9':
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         $order->setStatus('tuna_PartialCancel');
                         break;
                     case 'A':
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         $order->setStatus('tuna_Error');
                         break;
                     case 'B':
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         $order->setStatus('tuna_RedFlag');
                         break;
                     case 'C':
@@ -376,9 +384,11 @@ class CreateTunaOrder implements ObserverInterface
                         $order->setStatus('tuna_PendingAntiFraud');
                         break;
                     case 'E':
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         $order->setStatus('tuna_DeniedAntiFraud');
                         break;
                 }
+            
                 if (strval($response["code"]) == "1" && ($response["status"] == "C" || $response["status"] == "P")) {
                     if ($payment->getAdditionalInformation()["is_boleto_payment"] == "true") {
                         if ($response["methods"] != null && $response["methods"][0]["redirectInfo"] != null) {
@@ -416,7 +426,7 @@ class CreateTunaOrder implements ObserverInterface
                     }
                 }
             } catch (\Exception $e) {
-                $order->setStatus('tuna_Cancelled');
+                throw $e;
             }
             if ($valorTotal != $order->getGrandTotal()) {
                 $order->addStatusHistoryComment('Acréscimo de R$ ' . number_format($valorTotal - $order->getGrandTotal(), 2, ",", ".") . ' em juros');

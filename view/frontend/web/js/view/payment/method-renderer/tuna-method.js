@@ -582,6 +582,11 @@ define(
                     $.when(
                         placeOrder(paymentData, messageContainer)).done(function () {
                             $.mage.redirect(window.checkoutConfig.tuna_payment);
+                        }).fail(function (result) {
+                            alert({
+                                title: $.mage.__('Ocorreu um erro no processamento'),
+                                content: $.mage.__(result.responseJSON.message)
+                            });
                         });
                 }).fail(function () {
                     alert({

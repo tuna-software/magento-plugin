@@ -48,7 +48,7 @@ class InstallData implements InstallDataInterface
             if ($code == 'tuna_Captured' || $code == 'tuna_MoneyReceived' || $code== 'tuna_PartialCancel'){
                 $tmpState = 'complete';
             }
-            if ($code == 'tuna_Authorized' || $code == 'tuna_Started'|| $code == 'tuna_PendingCapture' || $code == 'tuna_PendingAntiFraud'){
+            if ($code == 'tuna_Authorized' || $code == 'tuna_PendingCapture' || $code == 'tuna_PendingAntiFraud'){
                 $tmpState = 'processing';
             }
             if ($code == 'tuna_DeniedAntiFraud' 
