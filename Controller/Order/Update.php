@@ -82,7 +82,7 @@ class Update extends \Magento\Framework\App\Action\Action
                 $status = ('tuna_Authorized');
                 break;
             case '2':
-                $status = ('tuna_Captured');
+                
                 if ( $this->scopeConfig->getValue('payment/tuna_payment/options/auto_invoice')=="1"){
                     if ($order->canInvoice()) {
                         $invoice = $this->invoiceService->prepareInvoice($order);
@@ -102,6 +102,7 @@ class Update extends \Magento\Framework\App\Action\Action
                         } catch (\Exception $e) {}
                     }
                 }
+                $status = ('tuna_Captured');
                 break;
             case '3':
                 $status = ('tuna_Refunded');

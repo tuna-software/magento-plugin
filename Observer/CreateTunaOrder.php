@@ -316,7 +316,7 @@ class CreateTunaOrder implements ObserverInterface
                         $order->setStatus('tuna_Authorized');
                         break;
                     case '2':
-                        $order->setStatus('tuna_Captured');
+                       
                         if ( $this->_scopeConfig->getValue('payment/tuna_payment/options/auto_invoice')=="1"){
                             if ($order->canInvoice()) {
                                 try{
@@ -337,6 +337,7 @@ class CreateTunaOrder implements ObserverInterface
                                 } catch (\Exception $e) {}
                             }
                         }
+                        $order->setStatus('tuna_Captured');
                         break;
                     case '3':
                         $order->setStatus('tuna_Refunded');
@@ -378,6 +379,31 @@ class CreateTunaOrder implements ObserverInterface
                         break;
                     case 'C':
                     case 'P':
+                        if (($payment->getAdditionalInformation()["is_crypto_payment"] == "false")
+                            && ($payment->getAdditionalInformation()["is_pix_payment"] == "false")
+                            && ($payment->getAdditionalInformation()["is_boleto_payment"] == "false"))
+                            {
+                                
+                                    switch (strval($response["methods"][0]["status"])) 
+                                    {
+                                        case '3':
+                                        case '4':
+                                        case '5':
+                                        case '6':
+                                        case '7':
+                                        case '9':
+                                        case '-1':
+                                        case 'A':
+                                        case 'E':
+                                        case 'B':
+                                        case 'G':
+                                        case 'N':
+                                            throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));           
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                            }
                         $order->setStatus('tuna_PendingCapture');
                         break;
                     case 'D':

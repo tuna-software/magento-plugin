@@ -114,9 +114,7 @@ class PixValidation extends \Magento\Framework\App\Action\Action
                 case '8':
                 case '9':
                 case '2': 
-                    $order->addStatusToHistory('tuna_Captured', null, true);
-                    $order->setStatus('tuna_Captured');
-                    $order->save();
+                   
                     if ( $this->scopeConfig->getValue('payment/tuna_payment/options/auto_invoice')=="1"){
                         if ($order->canInvoice()) {
                             $invoice = $this->invoiceService->prepareInvoice($order);
@@ -136,6 +134,9 @@ class PixValidation extends \Magento\Framework\App\Action\Action
                             } catch (\Exception $e) {}
                         }
                     }
+                    $order->addStatusToHistory('tuna_Captured', null, true);
+                    $order->setStatus('tuna_Captured');
+                    $order->save();
                     echo print_r("OK");
                     break;
                 case '0':
