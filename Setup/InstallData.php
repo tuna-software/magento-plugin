@@ -52,11 +52,11 @@ class InstallData implements InstallDataInterface
                 $tmpState = 'processing';
             }
             if ($code == 'tuna_DeniedAntiFraud' 
-            || $code == 'tuna_Denied'
-            || $code == 'tuna_Cancelled'
+             
+             
             || $code == 'tuna_Expired' 
             || $code == 'tuna_Refunded'
-            || $code == 'tuna_Error'
+             
             || $code == 'tuna_RedFlag'
             || $code == 'tuna_Chargeback'){
                 $tmpState = 'canceled';

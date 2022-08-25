@@ -17,15 +17,17 @@ class CreateTunaOrder implements ObserverInterface
     protected $invoiceService;
     protected $transaction;
     protected $invoiceSender;
+    protected $_checkoutSession;
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
         \Magento\Framework\Session\SessionManager $sessionManager,
         \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
         \Magento\Framework\Json\Helper\Data $jsonHelper,
+        \Magento\Checkout\Model\Session $checkoutSession,
         CoreSession $coreSession, 
         InvoiceService $invoiceService,
-        InvoiceSender $invoiceSender,
+        InvoiceSender $invoiceSender,        
         Transaction $transaction
     ) {
         $this->_scopeConfig = $scopeConfigInterface;
@@ -41,6 +43,7 @@ class CreateTunaOrder implements ObserverInterface
         $this->transaction = $transaction;
         $this->invoiceSender = $invoiceSender;
         $this->_coreSession = $coreSession;
+        $this->_checkoutSession = $checkoutSession;
     }
 
     function roundDown($decimal, $precision)
@@ -343,39 +346,47 @@ class CreateTunaOrder implements ObserverInterface
                         $order->setStatus('tuna_Refunded');
                         break;
                     case '4':
+                        $order->setStatus('tuna_Denied');   
+                        $this->_checkoutSession->restoreOrder();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
-                        $order->setStatus('tuna_Denied');                        
                         break;
                     case '5':
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         $order->setStatus('tuna_Cancelled');
+                        $this->_checkoutSession->restoreOrder();
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         break;
                     case '-1':
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         $order->setStatus('tuna_Cancelled');
+                        $this->_checkoutSession->restoreOrder();
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         break;
                     case '6':
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento expirado.'));
                         $order->setStatus('tuna_Expired');
+                        $this->_checkoutSession->restoreOrder();
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento expirado.'));                        
                         break;
                     case '7':
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         $order->setStatus('tuna_Chargeback');
+                        $this->_checkoutSession->restoreOrder();
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));                        
                         break;
                     case '8':
                         $order->setStatus('tuna_MoneyReceived');
                         break;
                     case '9':
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         $order->setStatus('tuna_PartialCancel');
+                        $this->_checkoutSession->restoreOrder();
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));                        
                         break;
                     case 'A':
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         $order->setStatus('tuna_Error');
+                        $this->_checkoutSession->restoreOrder();
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));                        
                         break;
                     case 'B':
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         $order->setStatus('tuna_RedFlag');
+                        $this->_checkoutSession->restoreOrder();
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));                        
                         break;
                     case 'C':
                     case 'P':
@@ -383,7 +394,7 @@ class CreateTunaOrder implements ObserverInterface
                             && ($payment->getAdditionalInformation()["is_pix_payment"] == "false")
                             && ($payment->getAdditionalInformation()["is_boleto_payment"] == "false"))
                             {
-                                
+                                $order->setStatus('tuna_PendingCapture');                                
                                     switch (strval($response["methods"][0]["status"])) 
                                     {
                                         case '3':
@@ -398,20 +409,22 @@ class CreateTunaOrder implements ObserverInterface
                                         case 'B':
                                         case 'G':
                                         case 'N':
+                                            $this->_checkoutSession->restoreOrder();
                                             throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));           
                                             break;
                                         default:
                                             break;
                                     }
                             }
-                        $order->setStatus('tuna_PendingCapture');
+                        
                         break;
                     case 'D':
                         $order->setStatus('tuna_PendingAntiFraud');
                         break;
                     case 'E':
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         $order->setStatus('tuna_DeniedAntiFraud');
+                        $this->_checkoutSession->restoreOrder();
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));                        
                         break;
                 }
             
