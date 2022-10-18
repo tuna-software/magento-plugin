@@ -68,7 +68,7 @@ class Update extends \Magento\Framework\App\Action\Action
             exit; 
         }
         $order = $this->_objectManager->create('Magento\Sales\Model\Order')->loadByIncrementId($orderID );
-        if ($order==null)
+        if ($order==null || $order->getStatus()=='')
         {
             echo print_r("ERROR - order not found.");
             exit;
