@@ -5,4 +5,7 @@
     <event name="payment_method_assign_data_tuna">
         <observer name="tuna_custom_gateway_data_assign" instance="Tuna\TunaGateway\Observer\DataAssignObserver" />
     </event>
+    <event name="sales_order_invoice_pay">
+        <observer name="tuna_invoice_observe_partial_refund" instance="Tuna\TunaGateway\Observer\InvoicePartialRefundObserver" />
+    </event>
 </config>

@@ -193,6 +193,7 @@ class TunaProvider implements ConfigProviderInterface
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto'),
                     'allow_crypto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_crypto'),
                     'allow_pix' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_pix'),
+                    'allow_card' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_card'),
                     'allow_pay_with_two_cards' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/allow_pay_with_two_cards'),
                     'minimum_installment_value' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/minimum_installment_value'),
                     'installments' =>  $this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments'),

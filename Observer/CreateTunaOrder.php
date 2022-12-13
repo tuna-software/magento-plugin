@@ -415,6 +415,9 @@ class CreateTunaOrder implements ObserverInterface
                                         default:
                                             break;
                                     }
+                            }else
+                            {
+                                $order->setStatus('tuna_PendingCapture');                            
                             }
                         
                         break;
@@ -457,8 +460,12 @@ class CreateTunaOrder implements ObserverInterface
                             if (stripos($pixImageIndo,'data:image') === false)
                             {
                                 $additionalData["pix_image"] = 'data:image/png;base64,'.$pixImageIndo;
+                            }else
+                            {
+                                $additionalData["pix_image"] = $pixImageIndo;
                             }
                             $additionalData["pix_key"] = $response["methods"][0]["pixInfo"]["qrContent"];
+                            
                             $payment->setData('additional_information', $additionalData);
                             $payment->save();
                         }

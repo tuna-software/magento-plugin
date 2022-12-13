@@ -165,66 +165,35 @@ define(
         function cardRadioChanged() {
             if ($("#tuna_card_radio_saved").prop("checked")) {
                 $("#creditCardPaymentDiv").show();
-                $("#newCardDiv").hide();
-                $("#lblHolderNameBoleto").hide();
+                DisableAllMethods();
                 $("#lblHolderNameCard").show();
-                $("#savedCardDiv").show();
-                $("#boletoDiv").hide();
+                $("#savedCardDiv").show();            
                 $('#tuna_credit_card_document').show();
                 $('#cpfCnpjDiv').show();
-                $("#cryptoDiv").hide();
-                $("#pixDiv").hide();
-                $(".checkout").html("Pagar");
                 $('#tuna_credit_card_installments').prop('selectedIndex', 1);
                 refreshOrderInfo();
             } else if ($("#tuna_card_radio_new").prop("checked")) {
-                $("#savedCardDiv").hide();
-                $("#creditCardPaymentDiv").show();
-                $("#lblHolderNameBoleto").hide();
+                DisableAllMethods();
+                $("#creditCardPaymentDiv").show();                
                 $("#lblHolderNameCard").show();
-                $("#newCardDiv").show();
-                $("#boletoDiv").hide();
+                $("#newCardDiv").show();                
                 $('#tuna_credit_card_document').show();
                 $('#cpfCnpjDiv').show();
-                $("#cryptoDiv").hide();
-                $("#pixDiv").hide();
-                $(".checkout").html("Pagar");
                 $('#tuna_credit_card_installments').prop('selectedIndex', 1);
                 refreshOrderInfo();
             } else if ($("#tuna_crypto_radio").prop("checked")) {
-                $("#savedCardDiv").hide();
-                $("#creditCardPaymentDiv").hide();
-                $("#lblHolderNameBoleto").hide();
-                $("#lblHolderNameCard").hide();
-                $('#tuna_credit_card_document').hide();
-                $('#cpfCnpjDiv').hide();
-                $("#newCardDiv").hide();
-                $("#cryptoDiv").show();
-                $("#pixDiv").hide();
-                $("#boletoDiv").hide();
-                $(".checkout").html("Pagar");
+                DisableAllMethods();
+                $("#cryptoDiv").show(); 
                 resetOrderInfo();
             } else if ($("#tuna_pix_radio").prop("checked")) {
-                $("#savedCardDiv").hide();
-                $("#creditCardPaymentDiv").hide();
-                $("#lblHolderNameBoleto").hide();
-                $("#lblHolderNameCard").hide();
-                $('#tuna_credit_card_document').hide();
-                $('#cpfCnpjDiv').hide();
-                $("#newCardDiv").hide();
-                $("#cryptoDiv").hide();
-                $("#pixDiv").show();
-                $("#boletoDiv").hide();
-                $(".checkout").html("Pagar");
+                DisableAllMethods();
+                $("#pixDiv").show(); 
                 resetOrderInfo();
             } else {
-                $("#creditCardPaymentDiv").hide();
-                $("#lblHolderNameCard").hide();
+                DisableAllMethods();                
                 $('#cpfCnpjDiv').show();
                 $("#lblHolderNameBoleto").show();
-                $('#tuna_credit_card_document').show();
-                $("#cryptoDiv").hide();
-                $("#pixDiv").hide();
+                $('#tuna_credit_card_document').show();                
                 $("#boletoDiv").show();
                 $(".checkout").html("Gerar boleto");
                 resetOrderInfo();
@@ -308,7 +277,19 @@ define(
 
             return (nCheck % 10) == 0;
         }
-
+        function DisableAllMethods(){ 
+            $("#savedCardDiv").hide();
+            $("#creditCardPaymentDiv").hide();
+            $("#lblHolderNameBoleto").hide();
+            $("#lblHolderNameCard").hide();
+            $('#tuna_credit_card_document').hide();
+            $('#cpfCnpjDiv').hide();
+            $("#newCardDiv").hide();
+            $("#cryptoDiv").hide();                        
+            $("#boletoDiv").hide();
+            $("#pixDiv").hide();
+            $(".checkout").html("Pagar");
+        }
         function getOrderTotal() {
             return parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10);
         }
@@ -365,6 +346,35 @@ define(
                     $("#tuna_pix_label").remove();
                     $("#pixDiv").remove();
                 }
+                if (!this.allowCard()) {
+                    $("#creditCardPaymentDiv").remove();
+                    $("#tuna_savedCard_label").remove();
+                    $("#tuna_newCard_label").remove();
+                    if (this.allowPix()) {
+                        this.disableAll();
+                        $("#tuna_pix_radio").prop("checked", true);
+                        $("#pixDiv").show();            
+                       
+                    }else
+                    {
+                        if (this.allowBoleto()) {
+                            this.disableAll();
+                            $("#tuna_boleto_radio").prop("checked", true);
+                            $("#boletoDiv").show();                            
+                        }else
+                        {
+                            if (this.allowCrypto()) {
+                                this.disableAll();
+                                $("#tuna_pix_radio").prop("checked", true);
+                                $("#cryptoDiv").show(); 
+                            }else
+                            {
+                                this.disableAll();    
+                                $(".checkout").hide();                            
+                            }
+                        }
+                    }
+                }
                 if (!this.allowPaymentWithTwoCards()) {
                     $("#payUsingTwoCardsLink").remove();
                 }
@@ -381,6 +391,9 @@ define(
                 $("#billingAddressFields").show();
                 $("input[name='billingAddress']").prop("checked", false);
             },
+            disableAll:function(){
+                DisableAllMethods();
+            },
             hideBillingAddressFields: function () {
                 $('#billingAddressFields').hide();
             },
@@ -395,6 +408,10 @@ define(
             allowPix: function () {
                 return window.checkoutConfig.payment.tunagateway.allow_pix &&
                     window.checkoutConfig.payment.tunagateway.allow_pix === "1";
+            },
+            allowCard: function () {
+                return window.checkoutConfig.payment.tunagateway.allow_card &&
+                    window.checkoutConfig.payment.tunagateway.allow_card === "1";
             },
             allowPaymentWithTwoCards: function () {
                 return window.checkoutConfig.payment.tunagateway.allow_pay_with_two_cards &&

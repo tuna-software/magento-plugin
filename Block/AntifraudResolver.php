@@ -65,7 +65,7 @@ class AntifraudResolver extends \Magento\Framework\View\Element\Template
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
         \Magento\Framework\View\Element\Template\Context $context,
-        array $data = [],
+        array $data,
         CoreSession $coreSession,
         \Magento\Framework\Session\SessionManager $sessionManager
     ) {

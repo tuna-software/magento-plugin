@@ -57,10 +57,22 @@
 						<label>Allow Pix Payment (PIX)</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 					</field>	
-					<field id="auto_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="15" translate="label" type="select">
+					<field id="allow_card" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="15" translate="label" type="select">
+						<label>Allow credit card Payment</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>
+					<field id="auto_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="16" translate="label" type="select">
 						<label>Generate Invoice Automatically</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-					</field>			
+					</field>
+					<field id="enable_partial_refund_with_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="17" translate="label" type="select">
+						<label>Enable partial refund when invoice is generated with value less than order amount (ONLY FOR PIX PAYMENT)</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>
+					<field id="enable_partial_refund_with_invoice_order_status" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="18" translate="label" type="select">
+						<label>Order status to be observed in order to allow perform partial refund</label>
+						<source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+					</field>		
 					<field id="sort_order" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="60" translate="label" type="text">
 						<label>Sort Order</label>
 					</field>
