@@ -457,7 +457,8 @@ class CreateTunaOrder implements ObserverInterface
                         if ($response["methods"] != null && $response["methods"][0]["pixInfo"] != null) {
                             $additionalData = $payment->getAdditionalInformation();
                             $pixImageIndo = $response["methods"][0]["pixInfo"]["qrImage"];
-                            if (stripos($pixImageIndo,'data:image') === false)
+                            if (stripos($pixImageIndo,'data:image') === false 
+                            && stripos($pixImageIndo,'https://') === false )
                             {
                                 $additionalData["pix_image"] = 'data:image/png;base64,'.$pixImageIndo;
                             }else
