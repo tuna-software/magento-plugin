@@ -466,7 +466,7 @@ class CreateTunaOrder implements ObserverInterface
                                 $additionalData["pix_image"] = $pixImageIndo;
                             }
                             $additionalData["pix_key"] = $response["methods"][0]["pixInfo"]["qrContent"];
-                            
+                            $additionalData["initial_total_value"] = $order->getGrandTotal();                            
                             $payment->setData('additional_information', $additionalData);
                             $payment->save();
                         }
@@ -479,6 +479,7 @@ class CreateTunaOrder implements ObserverInterface
                 $order->addStatusHistoryComment('Acréscimo de R$ ' . number_format($valorTotal - $order->getGrandTotal(), 2, ",", ".") . ' em juros');
                 $order->setGrandTotal($valorTotal);
             }
+            $order->addStatusHistoryComment('Valor total da compra: R$ ' . number_format($valorTotal, 2, ",", "."));
             $order->save();
         }
 

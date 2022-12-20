@@ -30,10 +30,10 @@ class InstallData implements InstallDataInterface
             'tuna_Cancelled'  => __('Cancelada'),
             'tuna_Expired'  => __('Expirada'),
             'tuna_Chargeback'  => __('Chargeback'),
-            'tuna_MoneyReceived'  => __('Finalizada com sucesso'),
+            'tuna_MoneyReceived'  => __('Finalizada com sucesso*'),
             'tuna_PartialCancel'  => __('Parcialmente cancelada'),
             'tuna_Error'  => __('Erro'),
-            'tuna_RedFlag'  => __('Erro'),
+            'tuna_RedFlag'  => __('Erro*'),
             'tuna_PendingCapture'  => __('Pendente'),
             'tuna_PendingAntiFraud'  => __('Em análise'),
             'tuna_DeniedAntiFraud'  => __('Negada*')

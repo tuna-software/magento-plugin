@@ -56,8 +56,9 @@ class InvoicePartialRefundObserver extends AbstractDataAssignObserver
                 $statusToRefund == $order->getStatus() &&
                 $order->getPayment()->getMethod() == 'pix' &&
                 $refundAllowed
-            ) {
-                $orderTotalPaid = $order->getTotalPaid();
+            ) {               
+                $payment = $order->getPayment();
+                $orderTotalPaid =  $payment->getAdditionalInformation()["initial_total_value"];
                 $invoiceGrandTotal = $invoice->getGrandTotal();
 
                 $totalToRefund = $orderTotalPaid - $invoiceGrandTotal;
@@ -85,7 +86,7 @@ class InvoicePartialRefundObserver extends AbstractDataAssignObserver
                         $response = $this->jsonHelper->jsonDecode($body);
 
                         if (strval($response["status"]) == '9' || strval($response["status"]) == '5') {
-                            $order->addStatusHistoryComment('Realizado estorno parcial de R$' . number_format($totalToRefund, 2, ",", ".") . "após geração de invoice com valor menor que o da order");
+                            $order->addStatusHistoryComment('Realizado estorno parcial de R$' . number_format($totalToRefund, 2, ",", ".") . " após geração de invoice com valor menor que o da order");
                         } else {
                             $order->addStatusHistoryComment('Erro ao tentar realizar cancelamento parcial no valor de R$' . number_format($totalToRefund, 2, ",", ".") . ". Por favor proceder com reembolso parcial manual");
                         }
