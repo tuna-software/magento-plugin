@@ -189,6 +189,10 @@ define(
                 DisableAllMethods();
                 $("#pixDiv").show(); 
                 resetOrderInfo();
+            } else if ($("#tuna_link_radio").prop("checked")) {
+                DisableAllMethods();
+                $("#linkDiv").show(); 
+                resetOrderInfo();
             } else {
                 DisableAllMethods();                
                 $('#cpfCnpjDiv').show();
@@ -241,6 +245,7 @@ define(
         $("#tuna_boleto_radio").live("change", cardRadioChanged);
         $("#tuna_crypto_radio").live("change", cardRadioChanged);
         $("#tuna_pix_radio").live("change", cardRadioChanged);
+        $("#tuna_link_radio").live("change", cardRadioChanged);
         $("#tuna_second_card_radio_saved").live("change", secondCardRadioChanged);
         $("#tuna_second_new_card_radio").live("change", secondCardRadioChanged);
         $("#payUsingTwoCardsLink").live("click", payUsingTwoCardsClicked);
@@ -288,6 +293,7 @@ define(
             $("#cryptoDiv").hide();                        
             $("#boletoDiv").hide();
             $("#pixDiv").hide();
+            $("#linkDiv").hide();
             $(".checkout").html("Pagar");
         }
         function getOrderTotal() {
@@ -328,6 +334,7 @@ define(
                         $("#tuna_newCard_label").remove();
                         $("#cryptoDiv").remove();
                         $("#pixDiv").remove();
+                        $("#linkDiv").remove();
                         $("#tuna_boleto_radio").prop("checked", true);
                         $("#boletoDiv").show();
                         return;
@@ -345,6 +352,10 @@ define(
                 if (!this.allowPix()) {
                     $("#tuna_pix_label").remove();
                     $("#pixDiv").remove();
+                }
+                if (!this.allowLink()) {
+                    $("#tuna_link_label").remove();
+                    $("#linkDiv").remove();
                 }
                 if (!this.allowCard()) {
                     $("#creditCardPaymentDiv").remove();
@@ -365,12 +376,19 @@ define(
                         {
                             if (this.allowCrypto()) {
                                 this.disableAll();
-                                $("#tuna_pix_radio").prop("checked", true);
+                                $("#tuna_cripto_radio").prop("checked", true);
                                 $("#cryptoDiv").show(); 
+                            }else
+                            {if (this.allowLink()) {
+                                this.disableAll();
+                                $("#tuna_link_radio").prop("checked", true);
+                                $("#linkDiv").show();            
+                               
                             }else
                             {
                                 this.disableAll();    
                                 $(".checkout").hide();                            
+                            }
                             }
                         }
                     }
@@ -409,6 +427,10 @@ define(
                 return window.checkoutConfig.payment.tunagateway.allow_pix &&
                     window.checkoutConfig.payment.tunagateway.allow_pix === "1";
             },
+            allowLink: function () {
+                return window.checkoutConfig.payment.tunagateway.allow_link &&
+                    window.checkoutConfig.payment.tunagateway.allow_link === "1";
+            },
             allowCard: function () {
                 return window.checkoutConfig.payment.tunagateway.allow_card &&
                     window.checkoutConfig.payment.tunagateway.allow_card === "1";
@@ -416,6 +438,10 @@ define(
             allowPaymentWithTwoCards: function () {
                 return window.checkoutConfig.payment.tunagateway.allow_pay_with_two_cards &&
                     window.checkoutConfig.payment.tunagateway.allow_pay_with_two_cards === "1";
+            },
+            isTunaActive: function () {                                
+                return window.checkoutConfig.payment.tunagateway.tuna_active &&
+                    window.checkoutConfig.payment.tunagateway.tuna_active === "1";
             },
             getStoredCreditCards: function () {
                 return window.checkoutConfig.payment.tunagateway.savedCreditCards;
@@ -558,7 +584,7 @@ define(
                 return true;
 
             },
-            endOrder: function (self, creditCardData, secondCreditCardData, paymentData, messageContainer, isBoleto = false, isPix = false, isCrypto = false) {
+            endOrder: function (self, creditCardData, secondCreditCardData, paymentData, messageContainer, isBoleto = false, isPix = false, isCrypto = false, isLink = false) {
 
                 const pushCreditCard = (array, creditCardData) => {
                     array.push({
@@ -585,7 +611,8 @@ define(
                     'is_boleto_payment': isBoleto ? "true" : "false",
                     'is_crypto_payment': isCrypto ? "true" : "false",
                     'is_pix_payment': isPix ? "true" : "false",
-                    'payment_type': isBoleto ? "TUNA_EBOL" : isPix ? "TUNA_EPIX" : isCrypto ? "TUNA_ECRYPTO" : "TUNA_ECAC",
+                    'is_link_payment': isLink ? "true" : "false",
+                    'payment_type': isBoleto ? "TUNA_EBOL" : isPix ? "TUNA_EPIX" : isCrypto ? "TUNA_ECRYPTO" : isLink ? "TUNA_ELINK" : "TUNA_ECAC",
                 };
 
                 if (Object.prototype.hasOwnProperty.call(paymentData, '__disableTmpl')) { delete paymentData.__disableTmpl; }
@@ -638,6 +665,9 @@ define(
             },
             isPixPayment: function () {
                 return $("#tuna_pix_radio").prop("checked");
+            },
+            isLinkPayment: function () {
+                return $("#tuna_link_radio").prop("checked");
             },
             getSelectedCardToken: function (cardIndex) {
                 const fieldname = cardIndex === 1 ? "firstStoredCard" : "secondStoredCard";
@@ -732,13 +762,14 @@ define(
                         return "boletoHolderInvalidInfo";
                 } else if (this.isCryptoPayment()) {
                 } else if (this.isPixPayment()) {
+                } else if (this.isLinkPayment()) {
                 } else {
                     return "error";
                 }
 
                 let document = $('#tuna_credit_card_document')[0].value;
                 const hasDocument = !!document;
-                const hasDocumentCheck = !this.isPixPayment() && !this.isCryptoPayment();
+                const hasDocumentCheck = !this.isPixPayment() && !this.isCryptoPayment() && !this.isLinkPayment();
                 const isValidDocument = this.isCNPJValid(document) || this.isCPFValid(document);
                 if (hasDocumentCheck && !(hasDocument && isValidDocument)) {
                     return "cpfInvalidInfo";
@@ -854,11 +885,13 @@ define(
                         }
 
                     } else if (this.isBoletoPayment()) {
-                        self.endOrder(self, null, null, paymentData, messageContainer, true, false, false);
+                        self.endOrder(self, null, null, paymentData, messageContainer, true, false, false, false);
                     } else if (this.isCryptoPayment()) {
-                        self.endOrder(self, null, null, paymentData, messageContainer, false, false, true);
+                        self.endOrder(self, null, null, paymentData, messageContainer, false, false, true, false);
                     } else if (this.isPixPayment()) {
-                        self.endOrder(self, null, null, paymentData, messageContainer, false, true, false);
+                        self.endOrder(self, null, null, paymentData, messageContainer, false, true, false, false);
+                    } else if (this.isLinkPayment()) {
+                        self.endOrder(self, null, null, paymentData, messageContainer, false, false, false, true);
                     } else {
                         let cardData = {
                             CardHolderName: $('#tuna_credit_card_holder').val(),

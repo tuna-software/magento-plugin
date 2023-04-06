@@ -167,6 +167,7 @@ class CreateTunaOrder implements ObserverInterface
                 if (
                     $payment->getAdditionalInformation()["is_pix_payment"] == "false"
                     && $payment->getAdditionalInformation()["is_crypto_payment"] == "false"
+                    && $payment->getAdditionalInformation()["is_link_payment"] == "false"
                 ) {
                     $order->addStatusHistoryComment('Pagamento em Cartão de crédito');
                     $payment = $order->getPayment();
@@ -224,7 +225,7 @@ class CreateTunaOrder implements ObserverInterface
                             "Amount" => $valorTotal
                         ]
                     ];
-                } else {
+                } elseif ($payment->getAdditionalInformation()["is_pix_payment"] == "true") {
                     $payment = $order->getPayment();
                     $payment->setMethod('pix');
                     $payment->save();
@@ -235,6 +236,19 @@ class CreateTunaOrder implements ObserverInterface
                             "Amount" => $valorTotal
                         ]
                     ];
+                } else 
+                {
+                    $payment = $order->getPayment();
+                    $payment->setMethod('link');
+                    $payment->save();
+                    $order->addStatusHistoryComment('Pagamento em Link de pagamento');
+                    $paymentMethods = [
+                        [
+                            "PaymentMethodType" => "U",
+                            "Amount" => $valorTotal
+                        ]
+                    ];
+                    
                 }
             } else {
                 $payment = $order->getPayment();
@@ -265,6 +279,7 @@ class CreateTunaOrder implements ObserverInterface
                     ]
                 ];
             }
+            if ($payment->getAdditionalInformation()["is_link_payment"] == "false"){
             $url  = 'https://' . $this->_tunaEndpointDomain . '/api/Payment/Init';
             $requestbody = [
                 'AppToken' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
@@ -481,9 +496,114 @@ class CreateTunaOrder implements ObserverInterface
             }
             $order->addStatusHistoryComment('Valor total da compra: R$ ' . number_format($valorTotal, 2, ",", "."));
             $order->save();
-        }
+        }else
+        {
+            $itens=[];
+            foreach ($itemsCollection as $item) {     
+                $imageURL = null;
+                #$productimages = $item->getProduct()->getMediaGalleryImages();
+                #foreach($productimages as $productimage)
+                #{
+                #    $imageURL = $productimage['url'];
+                #    continue;
+                #}          
+                $valorItem = ($item->getPrice()) ;
+                $percentualDiscount = ($valorItem*$item->getQtyToInvoice())/($valorTotal-($order->getDiscountAmount()));
+                $valorItem = $this->roundDown(($valorItem +((($order->getDiscountAmount() * $juros)/$item->getQtyToInvoice())*$percentualDiscount)),2);
+                $cItem = [[
+                    "Amount" =>  $valorItem,
+                    "ProductDescription" => $item->getProduct()->getName(),
+                    "ItemQuantity" => $item->getQtyToInvoice(),
+                    "CategoryName" => $item->getProductType(),
+                    "ImageURL" => $imageURL,
+                    "AntiFraud" => [
+                        "Ean" => $item->getSku()
+                    ]
+                ]];
+                $itens = array_merge($itens, $cItem);
+            }
+            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+            $storeManager = $objectManager->get('\Magento\Store\Model\StoreManagerInterface');
+            $baseURL = $storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK);
+            $url  = 'https://' . $this->_tunaEndpointDomain . '/api/PaymentLink/Create';
+            $requestbody = [
+                'AppToken' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
+                'Account' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'),
+                'PartnerUniqueID' => $orderId,
+                "Amount" => $valorTotal,
+                "description"=>  "Pagamento Pedido Nº:". $orderId,
+                "UrlSuccessReturn"=>$baseURL,
+                "UrlPendingReturn"=>$baseURL,
+                "UrlFailReturn"=>$baseURL,
+                "UrlExpiredReturn"=>$baseURL,
+                "DeliveryAmount" => $shippingValue,
+                "DeliveryDescription" => "Entrega",
+                'Customer' => [
+                    'Email' => $billing["email"],
+                    'Name' => $fullName,
+                    'ID' => $customerID,
+                    'Document' => $payment->getAdditionalInformation()["buyer_document"],
+                    'DocumentType' => $documentType
+                ],
+                "expirationinminutes"=>  2880,
+                "PaymentMethod"=>  "U",   
+                "type"=>  "U",
+                "MaxInstallments"=>  $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/installments'),             
+                "BillingAddress" => $deliveryAddress,
+                "deliveryaddress" => $deliveryAddress,
+                "FrontData" => [
+                    "SessionID" => $this->_session->getSessionId(),
+                    "Origin" => "WEBSITE",
+                    "IpAddress" => $order->getRemoteIp(),
+                    "CookiesAccepted" => true
+                ],
+                "Items" =>   $itens                 
+            ];
 
-        #return $this;
+            /* Create curl factory */
+            $httpAdapter = $this->curlFactory->create();
+            $bodyJsonRequest = json_encode($requestbody);
+            #$this->saveLog($bodyJsonRequest);
+            $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
+
+            $result = $httpAdapter->read();
+
+            $body = \Zend_Http_Response::extractBody($result);
+            #$this->saveLog($body); 
+            try {
+                $response = $this->jsonHelper->jsonDecode($body);
+                switch (strval($response["code"])) {                                        
+                    case '1':
+                            $order->setStatus('tuna_PendingCapture');                        
+                        break;
+                    default:
+                        $order->setStatus('tuna_Error');
+                        $this->_checkoutSession->restoreOrder();
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));                        
+                        break;
+                }
+            
+                if (strval($response["code"]) == "1" && $response["paymentLink"] !=null && $response["paymentLink"]["url"] != null) {                    
+                    $additionalData = $payment->getAdditionalInformation();
+                    $additionalData["link_url"] = $response["paymentLink"]["url"];                            
+                    $payment->setData('additional_information', $additionalData);
+                    $payment->save();
+                    $order->addStatusHistoryComment('Link: '. $response["paymentLink"]["url"]);                                                           
+                }else
+                {
+                    $order->setStatus('tuna_Error');
+                    $this->_checkoutSession->restoreOrder();
+                    throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
+                }
+            } catch (\Exception $e) {
+                throw $e;
+            }
+            $order->addStatusHistoryComment('Valor total da compra: R$ ' . number_format($valorTotal, 2, ",", "."));
+            $order->save();
+        }
+    }
+
+       #return $this;
     }
 
     public function getValorFinal($valorTotal, $parcela = -1)

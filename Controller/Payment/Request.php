@@ -42,7 +42,8 @@ class Request extends \Magento\Framework\App\Action\Action
         $paymentData['method'] === 'crypto' ||
         $paymentData['method'] === 'pix' ||
         $paymentData['method'] === 'boleto' ||
-        $paymentData['method'] === 'credit') {
+        $paymentData['method'] === 'credit' ||
+        $paymentData['method'] === 'link') {
             $this->orderId = $lastRealOrder->getIncrementId();
             $orderStatusText = '';
             $orderStatus = $lastRealOrder->getStatus();            
@@ -82,6 +83,11 @@ class Request extends \Magento\Framework\App\Action\Action
                 if ($isPixPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_pix') === "0") {
                     return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
                 }
+                $isLinkPayment = $payment->getAdditionalInformation()["is_link_payment"];
+
+                if ($isLinkPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_link') === "0") {
+                    return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
+                }
                 $this->session()->setData(
                     'tuna_payment' , [
                         'payment_type'  => $paymentData['method'],
@@ -89,6 +95,7 @@ class Request extends \Magento\Framework\App\Action\Action
                         'order_products' => $orderProducts,
                         'order_status' => $orderStatus,
                         'is_boleto' => $isBoletoPayment,
+                        'is_link' => $isLinkPayment,
                         'is_crypto' => $isCryptoPayment,
                         'is_pix' => $isPixPayment,
                         'boleto_url' => $isBoletoPayment == "true" ? $payment->getAdditionalInformation()["boleto_url"] : "",
@@ -99,6 +106,7 @@ class Request extends \Magento\Framework\App\Action\Action
                         'crypto_coin' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin"] : "",
                         'pix_image' => $isPixPayment == "true" ? $payment->getAdditionalInformation()["pix_image"] : "",
                         'pix_key' => $isPixPayment == "true" ? $payment->getAdditionalInformation()["pix_key"] : "",
+                        'link_url' => $isLinkPayment == "true" ? $payment->getAdditionalInformation()["link_url"] : "",
                     ]
                 );
                 return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));

@@ -4,7 +4,7 @@
         clear: both;
     }
 </style>
-
+<!-- ko if: isTunaActive() -->
 <div class="payment-method" style="overflow: auto;"
     data-bind="css: {'_active': (getCode() == isChecked())}, afterRender: afterRender">
 
@@ -48,8 +48,11 @@
             <label class="radio-inline" id="tuna_crypto_label" style="margin-right: 15px;">
                 <input id="tuna_crypto_radio" type="radio" name="cardRadio">Bitcoin
             </label>
-            <label class="radio-inline" id="tuna_pix_label">
+            <label class="radio-inline" id="tuna_pix_label" style="margin-right: 15px;">
                 <input id="tuna_pix_radio" type="radio" name="cardRadio">Pix
+            </label>
+            <label class="radio-inline" id="tuna_link_label">
+                <input id="tuna_link_radio" type="radio" name="cardRadio">Link de Pagamento
             </label>
         </div>
 
@@ -468,7 +471,12 @@
                 <!-- /ko -->
             </h4>
         </div>
-
+        <div id="linkDiv" style="display: none;">
+            <h4>
+                <!-- ko i18n: 'Seu link será exibido na próxima tela.' -->
+                <!-- /ko -->
+            </h4>
+        </div>
         <div class="actions-toolbar" style="margin-top: 15px;float:left;clear:both;margin-bottom: 15px;">
             <div class="primary">
                 <button class="action primary checkout" type="submit" data-bind="
@@ -485,3 +493,4 @@
         <h2>Método de pagamento não disponível para as configurações da loja.</h2>
     </div>
 </div>
+<!--/ko-->

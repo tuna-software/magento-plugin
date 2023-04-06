@@ -34,6 +34,7 @@
 					<field id="active" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label" type="select">
 						<label>Enable Tuna</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+						 <config_path>payment/tuna_payment/active</config_path>
 					</field>
 					<field id="title" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="11" translate="label" type="text">
 						<label>Title</label>						
@@ -61,15 +62,19 @@
 						<label>Allow credit card Payment</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 					</field>
-					<field id="auto_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="16" translate="label" type="select">
+					<field id="allow_link" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="16" translate="label" type="select">
+						<label>Allow External Payment Link</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>	
+					<field id="auto_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="17" translate="label" type="select">
 						<label>Generate Invoice Automatically</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 					</field>
-					<field id="enable_partial_refund_with_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="17" translate="label" type="select">
+					<field id="enable_partial_refund_with_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="18" translate="label" type="select">
 						<label>Enable partial refund when invoice is generated with value less than order amount (ONLY FOR PIX PAYMENT)</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 					</field>
-					<field id="enable_partial_refund_with_invoice_order_status" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="18" translate="label" type="select">
+					<field id="enable_partial_refund_with_invoice_order_status" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="19" translate="label" type="select">
 						<label>Order status to be observed in order to allow perform partial refund</label>
 						<source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
 					</field>		
