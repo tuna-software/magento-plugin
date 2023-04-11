@@ -5,14 +5,16 @@
 <div>
     <?php if ($block->getStatus() == "tuna_Captured" || ($block->getStatus() == "tuna_PendingCapture" && ($block->getIsPix() == "true" || $block->getIsLink() == "true"  || $block->getIsBoleto() == "true" || $block->getIsCrypto() == "true"))) { ?>
 
-        <h2><?php echo __('Compra concluída com sucesso # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
+        <h2><?php echo __('Pedido concluído # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
 
         <?php if ($block->getIsBoleto() == "true") { ?>
-            <h3><?php echo __('Clique <a href="%1" target="_blank"> aqui</a> e imprima seu boleto para realizar o pagamento', $block->escapeHtml($block->getBoletoURL())) ?></h3>
+            <button   class="action primary checkout"  style="width:250px;margin-top:5px" onclick="window.open('<?php echo __($block->escapeHtml($block->getBoletoURL()))?>')" onclick="true"><?php echo __('Baixar boleto de pagamento'); ?></button>                        
+            <br /><br />
         <?php } ?>
 
         <?php if ($block->getIsLink() == "true") { ?>
-            <h3><?php echo __('Clique <a href="%1" target="_blank"> aqui</a> para realizar o pagamento', $block->escapeHtml($block->getLinkURL())) ?></h3>
+            <button  class="action primary checkout" style="width:250px;margin-top:5px" onclick="window.open('<?php echo __($block->escapeHtml($block->getLinkURL()))?>')" onclick="true"><?php echo __('Ir para o pagamento'); ?></button>            
+            <br /><br />
             <script>
                 function doPoll(purchaseid) {
                     countPoll++;
@@ -51,7 +53,7 @@
                 <div style="width:300px; float:left">
                     <img src="<?php echo __($block->getPixImage()); ?>" width="250px" />
                     <input style="width:250px;margin-top:5px" id="tuna-qr-code" value="<?php echo __($block->getPixKey()); ?>"></input>
-                    <button style="width:250px;margin-top:5px" onclick="copy_qr_code()" onclick="true"><?php echo __('Pix Copia e Cola'); ?></button>
+                    <button class="action primary checkout"  style="width:250px;margin-top:5px" onclick="copy_qr_code()" onclick="true"><?php echo __('Pix Copia e Cola'); ?></button> <br /><br />
                     <script>
                         function copy_qr_code() {
                             var copyText = document.getElementById("tuna-qr-code");
@@ -134,7 +136,7 @@
                         </tr>
                         <tr>
                             <td> <?php echo __('3)'); ?></td>
-                            <td> <?php echo __('Confirme as informações e finalize a compra'); ?> </td>
+                            <td> <?php echo __('Confirme as informações e finalize o pagamento'); ?> </td>
                         </tr>
                     </table>
 
@@ -204,11 +206,11 @@
         <?php } ?>
 
     <?php } else { ?>
-        <h2><?php echo __('Sua compra esta sendo processada. Número do pedido # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
+        <h2><?php echo __('Seu pedido esta sendo processado. Número do pedido # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
     <?php } ?>
 
     <div>
-        <p>Você comprou</p>
+        <p>Seu pedido</p>
 
       <span style="display: none;" id="tunaOrderProducts">
             <?php
