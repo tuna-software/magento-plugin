@@ -164,8 +164,8 @@ define(
 
         function cardRadioChanged() {
             if ($("#tuna_card_radio_saved").prop("checked")) {
-                $("#creditCardPaymentDiv").show();
                 DisableAllMethods();
+                $("#creditCardPaymentDiv").show();
                 $("#lblHolderNameCard").show();
                 $("#savedCardDiv").show();            
                 $('#tuna_credit_card_document').show();
