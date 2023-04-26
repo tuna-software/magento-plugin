@@ -37,9 +37,9 @@ var currencyTypes = {
 };
 
 function getSystemCurrency() {
-    var defaultCurrency = 'USD';
-    var currencySymbol = $(".sub .amount .price").html().replaceAll(',', '').replaceAll('.', '').replace(moneyPattern, '');
-    for (var currency in currencyTypes) {
+    let defaultCurrency = 'USD';
+    let currencySymbol = $(".sub .amount .price").html().replaceAll(',', '').replaceAll('.', '').replace(moneyPattern, '').replace(/&nbsp;/g, ' ').replace(/[\s]{1,}/g, '');
+    for (let currency in currencyTypes) {
         if (currencyTypes[currency].symbol === currencySymbol) {
             return currency;
         }
@@ -47,26 +47,36 @@ function getSystemCurrency() {
 
     return defaultCurrency;
 }
+function getRawMoneyNumber(stringNumber, systemCurrency = false) {
+    if (systemCurrency === false) {
+        systemCurrency = getSystemCurrency();
+    }
+
+    return stringNumber.replace(currencyTypes[systemCurrency].symbol, '').replace(/&nbsp;/g, ' ').replace(/[\s]{1,}/g, '');
+}
+
 
 function getFloatNumber(value, currency) {
-    var currencyFormat = currencyTypes[currency];
-    var floatNumber = value.replaceAll(currencyFormat.decimalSeparator, '').replace(currencyFormat.decimalDivisor, '.');
+    let currencyFormat = currencyTypes[currency];
+    let floatNumber = value.replaceAll(currencyFormat.decimalSeparator, '').replace(currencyFormat.decimalDivisor, '.');
     try{
         return parseFloat(floatNumber, 10);
     }catch(e){return 0;}
 }
 
+
 function formatCurrency(value, currency = 'BRL') {
     return new Intl.NumberFormat(currencyTypes[currency].language, { currency, minimumFractionDigits: 2 }).format(value);
 }
 
+
 function getOldOrderTotal(hasFees = false) {
-    var orderSummary = $('.totals .amount .price');
-    var systemCurrency = getSystemCurrency();
-    var subTotal = 0;
+    let orderSummary = $('.totals .amount .price');
+    let systemCurrency = getSystemCurrency();
+    let subTotal = 0;
     orderSummary.each(function (index, element) {
         if (index < (orderSummary.length - 1 - 1 * hasFees)) {
-            var rawMoneyNumber = $(element).html().replace(currencyTypes[systemCurrency].symbol, '');
+            let rawMoneyNumber = getRawMoneyNumber($(element).html(), systemCurrency);
             subTotal += getFloatNumber(rawMoneyNumber, systemCurrency);
         }
     });

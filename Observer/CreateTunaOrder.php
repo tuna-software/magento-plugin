@@ -483,6 +483,7 @@ class CreateTunaOrder implements ObserverInterface
                             $additionalData["pix_key"] = $response["methods"][0]["pixInfo"]["qrContent"];
                             $additionalData["initial_total_value"] = $order->getGrandTotal();                            
                             $payment->setData('additional_information', $additionalData);
+                            $order->addStatusHistoryComment('Chave Pix: '. $response["methods"][0]["pixInfo"]["qrContent"]);
                             $payment->save();
                         }
                     }
