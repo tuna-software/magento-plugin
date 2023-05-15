@@ -106,14 +106,15 @@ class CreateTunaOrder implements ObserverInterface
             $itemsCollection = $order->getAllVisibleItems();
             $shippingAmountPerItem =  ($shippingValue * $juros) / count($itemsCollection);
             $fullDiscountAmountPerItem =  ($order->getDiscountAmount() * $juros) / count($itemsCollection);
-            foreach ($itemsCollection as $item) {               
-                $valorItem = (($item->getPrice()) * $juros) + ($shippingAmountPerItem / $item->getQtyToInvoice());
-                $percentualDiscount = ($valorItem*$item->getQtyToInvoice())/($valorTotal-($order->getDiscountAmount() * $juros));
-                $valorItem = $this->roundDown(($valorItem +((($order->getDiscountAmount() * $juros)/$item->getQtyToInvoice())*$percentualDiscount)),2);
+            foreach ($itemsCollection as $item) {      
+                $qtdFloor = floor($item->getQtyToInvoice());
+                $valorItem = (($item->getPrice()) * $juros) + ($shippingAmountPerItem / $qtdFloor);
+                $percentualDiscount = ($valorItem*$qtdFloor)/($valorTotal-($order->getDiscountAmount() * $juros));
+                $valorItem = $this->roundDown(($valorItem +((($order->getDiscountAmount() * $juros)/$qtdFloor)*$percentualDiscount)),2);
                 $cItem = [[
                     "Amount" =>  $valorItem,
                     "ProductDescription" => $item->getProduct()->getName(),
-                    "ItemQuantity" => $item->getQtyToInvoice(),
+                    "ItemQuantity" => $qtdFloor,
                     "CategoryName" => $item->getProductType(),
                     "AntiFraud" => [
                         "Ean" => $item->getSku()
@@ -509,12 +510,13 @@ class CreateTunaOrder implements ObserverInterface
                 #    continue;
                 #}          
                 $valorItem = ($item->getPrice()) ;
-                $percentualDiscount = ($valorItem*$item->getQtyToInvoice())/($valorTotal-($order->getDiscountAmount()));
-                $valorItem = $this->roundDown(($valorItem +((($order->getDiscountAmount() * $juros)/$item->getQtyToInvoice())*$percentualDiscount)),2);
+                $qtdFloor = floor($item->getQtyToInvoice());
+                $percentualDiscount = ($valorItem*$qtdFloor)/($valorTotal-($order->getDiscountAmount()));
+                $valorItem = $this->roundDown(($valorItem +((($order->getDiscountAmount() * $juros)/$qtdFloor)*$percentualDiscount)),2);
                 $cItem = [[
                     "Amount" =>  $valorItem,
                     "ProductDescription" => $item->getProduct()->getName(),
-                    "ItemQuantity" => $item->getQtyToInvoice(),
+                    "ItemQuantity" => $qtdFloor,
                     "CategoryName" => $item->getProductType(),
                     "ImageURL" => $imageURL,
                     "AntiFraud" => [
