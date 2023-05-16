@@ -107,7 +107,7 @@ class CreateTunaOrder implements ObserverInterface
             $shippingAmountPerItem =  ($shippingValue * $juros) / count($itemsCollection);
             $fullDiscountAmountPerItem =  ($order->getDiscountAmount() * $juros) / count($itemsCollection);
             foreach ($itemsCollection as $item) {      
-                $qtdFloor = floor($item->getQtyToInvoice());
+                $qtdFloor = ceil($item->getQtyToInvoice());
                 $valorItem = (($item->getPrice()) * $juros) + ($shippingAmountPerItem / $qtdFloor);
                 $percentualDiscount = ($valorItem*$qtdFloor)/($valorTotal-($order->getDiscountAmount() * $juros));
                 $valorItem = $this->roundDown(($valorItem +((($order->getDiscountAmount() * $juros)/$qtdFloor)*$percentualDiscount)),2);
@@ -510,7 +510,7 @@ class CreateTunaOrder implements ObserverInterface
                 #    continue;
                 #}          
                 $valorItem = ($item->getPrice()) ;
-                $qtdFloor = floor($item->getQtyToInvoice());
+                $qtdFloor = ceil($item->getQtyToInvoice());
                 $percentualDiscount = ($valorItem*$qtdFloor)/($valorTotal-($order->getDiscountAmount()));
                 $valorItem = $this->roundDown(($valorItem +((($order->getDiscountAmount() * $juros)/$qtdFloor)*$percentualDiscount)),2);
                 $cItem = [[
