@@ -32,9 +32,9 @@ define(
             $('#tuna_credit_card_document').mask(CpfCnpjMaskBehavior, cpfCnpjpOptions);
             $("#tuna_first_credit_card_value").mask("9999999999,99");
             $("#tuna_second_credit_card_value").mask("999999999,99");
-            $("#tuna_credit_card_code").mask("999");
-            $("#tuna_second_credit_card_code").mask("999");
-            $(".CcCvv").mask("999");
+            $("#tuna_credit_card_code").mask("9999");
+            $("#tuna_second_credit_card_code").mask("9999");
+            $(".CcCvv").mask("9999");
             $("#tuna_credit_card_number").mask("9999 9999 9999 9999");
             $("#tuna_second_credit_card_number").mask("9999 9999 9999 9999");
             $("#tuna_billing_address_zip").mask("99.999-999");

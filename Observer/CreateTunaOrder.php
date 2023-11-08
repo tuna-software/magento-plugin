@@ -493,7 +493,11 @@ class CreateTunaOrder implements ObserverInterface
                 throw $e;
             }
             if ($valorTotal != $order->getGrandTotal()) {
-                $order->addStatusHistoryComment('Acréscimo de R$ ' . number_format($valorTotal - $order->getGrandTotal(), 2, ",", ".") . ' em juros');
+                if ($valorTotal - $order->getGrandTotal()>0){
+                    $order->addStatusHistoryComment('Acréscimo de R$ ' . number_format($valorTotal - $order->getGrandTotal(), 2, ",", ".") . ' em juros');
+                }else{
+                    $order->addStatusHistoryComment('Desconto de R$ ' . number_format($valorTotal - $order->getGrandTotal(), 2, ",", ".") . '');
+                }
                 $order->setGrandTotal($valorTotal);
             }
             $order->addStatusHistoryComment('Valor total da compra: R$ ' . number_format($valorTotal, 2, ",", "."));
