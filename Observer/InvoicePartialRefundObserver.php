@@ -58,10 +58,10 @@ class InvoicePartialRefundObserver extends AbstractDataAssignObserver
                 $refundAllowed
             ) {               
                 $payment = $order->getPayment();
-                $orderTotalPaid =  $payment->getAdditionalInformation()["initial_total_value"];
-                $invoiceGrandTotal = $invoice->getGrandTotal();
+                $orderTotalPaid =  $this->roundDown($payment->getAdditionalInformation()["initial_total_value"],2);
+                $invoiceGrandTotal = $this->roundDown($invoice->getGrandTotal(),2);
 
-                $totalToRefund = $orderTotalPaid - $invoiceGrandTotal;
+                $totalToRefund = $this->roundDown($orderTotalPaid - $invoiceGrandTotal,2);
                 if ($totalToRefund > 0) {
                     $url  = 'https://' . $this->_tunaEndpointDomain . '/api/Payment/Cancel';
 
@@ -109,5 +109,12 @@ class InvoicePartialRefundObserver extends AbstractDataAssignObserver
         }
         fwrite($file, $txt . " | " . date("j/n/Y h:i:s") . "\n");
         fclose($file);
+    }
+
+    function roundDown($decimal, $precision)
+    {
+        $sign = $decimal > 0 ? 1 : -1;
+        $base = pow(10, $precision);
+        return floor(abs($decimal) * $base) / $base * $sign;
     }
 }
