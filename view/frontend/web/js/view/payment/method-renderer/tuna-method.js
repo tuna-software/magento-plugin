@@ -688,7 +688,7 @@ define(
                     return "validityDateInvalidInfo";
 
                 let expireDate = new Date(expirationYear, parseInt(expirationMonth) - 1);
-                if (expireDate < new Date())
+                if (expireDate < new Date(Date.year,Date.month))
                     return "validityDateInvalidInfo";
 
                 if (!$("#tuna_credit_card_code")[0].value || $("#tuna_credit_card_code")[0].value < 3)
@@ -709,7 +709,7 @@ define(
                     return "secondValidityDateInvalidInfo";
 
                 let expireDate = new Date(expirationYear, parseInt(expirationMonth) - 1);
-                if (expireDate < new Date())
+                if (expireDate < new Date(Date.year,Date.month))
                     return "secondValidityDateInvalidInfo";
 
                 if (!$("#tuna_second_credit_card_code")[0].value || $("#tuna_second_credit_card_code")[0].value < 3)
