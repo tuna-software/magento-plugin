@@ -28,7 +28,7 @@ define(
                     field.mask(CpfCnpjMaskBehavior.apply({}, arguments), options);
                 }
             };
-
+try{
             $('#tuna_credit_card_document').mask(CpfCnpjMaskBehavior, cpfCnpjpOptions);
             $("#tuna_first_credit_card_value").mask("9999999999,99");
             $("#tuna_second_credit_card_value").mask("999999999,99");
@@ -52,6 +52,7 @@ define(
                 var deferred = $.Deferred();
                 getTotalsAction([], deferred);
             });
+        }catch(ex){}
         });
 
         $('input[type=radio][name=billingAddress]').live("change", function () {
