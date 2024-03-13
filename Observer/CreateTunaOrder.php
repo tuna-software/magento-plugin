@@ -92,6 +92,13 @@ class CreateTunaOrder implements ObserverInterface
                     $order->save();
                     return;
                 }
+                if ($this->getValorFinal($order->getGrandTotal()) > $this->getValorFinal($creditCardData[0]->credit_card_amount)+$this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0)) {
+                    $order->setStatus('tuna_Cancelled');
+                    $order->addStatusHistoryComment('Dados invalidos para compra: R$ '.($this->getValorFinal($creditCardData[0]->credit_card_amount)+$this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0)));
+                    $order->setGrandTotal($valorTotal);
+                    $order->save();
+                    return;
+                }
 
                 $valorTotalComJuros = $this->getValorFinal($creditCardData[0]->credit_card_amount, $creditCardData[0]->credit_card_installments) +
                     $this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0, $creditCardData[1]->credit_card_installments ?? 1);
