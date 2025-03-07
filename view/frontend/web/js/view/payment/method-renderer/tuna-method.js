@@ -41,7 +41,7 @@ try{
 
             $('#tuna_billing_address_phone').mask('(00) 0000-00009');
 
-            $("#tuna_billing_address_phone").on("blur", function (event) {
+            $(document).on("blur","#tuna_billing_address_phone", function (event) {
                 if ($(this).val().length == 15) {
                     $('#tuna_billing_address_phone').mask('(00) 00000-0009');
                 } else {
@@ -55,7 +55,7 @@ try{
         }catch(ex){}
         });
 
-        $('input[type=radio][name=billingAddress]').on("change", function () {
+        $(document).on("change",'input[type=radio][name=billingAddress]', function () {
             $("#billingAddressFields").hide();
         });
 
@@ -147,11 +147,11 @@ try{
             return result;
         }
 
-        $('#tuna_first_credit_card_value').on("blur", _ => onPayWithTwoCardsValuesChanges(1));
-        $('#tuna_second_credit_card_value').on("blur", _ => onPayWithTwoCardsValuesChanges(2));
+        $(document).on("blur",'#tuna_first_credit_card_value', _ => onPayWithTwoCardsValuesChanges(1));
+        $(document).on("blur",'#tuna_second_credit_card_value', _ => onPayWithTwoCardsValuesChanges(2));
 
-        $('#tuna_first_credit_card_installments').on("change", _ => refreshOrderInfo());
-        $('#tuna_second_credit_card_installments').on("change", _ => refreshOrderInfo());
+        $(document).on("change", '#tuna_first_credit_card_installments',_ => refreshOrderInfo());
+        $(document).on("change", '#tuna_second_credit_card_installments', _ => refreshOrderInfo());
 
         function secondCardRadioChanged() {
             if ($("#tuna_second_card_radio_saved").prop("checked")) {
@@ -241,21 +241,21 @@ try{
             }
         };
 
-        $("#tuna_card_radio_new").on("change", cardRadioChanged);
-        $("#tuna_card_radio_saved").on("change", cardRadioChanged);
-        $("#tuna_boleto_radio").on("change", cardRadioChanged);
-        $("#tuna_crypto_radio").on("change", cardRadioChanged);
-        $("#tuna_pix_radio").on("change", cardRadioChanged);
-        $("#tuna_link_radio").on("change", cardRadioChanged);
-        $("#tuna_second_card_radio_saved").on("change", secondCardRadioChanged);
-        $("#tuna_second_new_card_radio").on("change", secondCardRadioChanged);
-        $("#payUsingTwoCardsLink").on("click", payUsingTwoCardsClicked);
-        $('#tuna').on("change", () => {
+        $(document).on("change", "#tuna_card_radio_new",cardRadioChanged);
+        $(document).on("change", "#tuna_card_radio_saved",cardRadioChanged);
+        $(document).on("change", "#tuna_boleto_radio", cardRadioChanged);
+        $(document).on("change", "#tuna_crypto_radio",cardRadioChanged);
+        $(document).on("change", "#tuna_pix_radio", cardRadioChanged);
+        $(document).on("change", "#tuna_link_radio", cardRadioChanged);
+        $(document).on("change","#tuna_second_card_radio_saved", secondCardRadioChanged);
+        $(document).on("change", "#tuna_second_new_card_radio", secondCardRadioChanged);
+        $(document).on("click", "#payUsingTwoCardsLink", payUsingTwoCardsClicked);
+        $(document).on("change", '#tuna', () => {
             $("#tuna_credit_card_installments").prop('selectedIndex', 1);
             refreshOrderInfo();
         });
-        $("#checkmo").on("click", resetOrderInfo);
-        $("#tuna_credit_card_installments").on("change", () => {
+        $(document).on("click","#checkmo", resetOrderInfo);
+        $(document).on("change","#tuna_credit_card_installments",  () => {
             if ($("#tuna").prop("checked")) {
                 refreshOrderInfo();
             } else {
@@ -301,7 +301,7 @@ try{
             return parseFloat(quote.getTotals()()['total_segments'][quote.getTotals()()['total_segments'].length - 1].value, 10);
         }
 
-        $("#tuna_billing_address_country").on("change", _ => {
+        $(document).on("change","#tuna_billing_address_country", _ => {
             // Fix unknown info
             if ($("#control").length == 1) {
                 $("#control").remove();
