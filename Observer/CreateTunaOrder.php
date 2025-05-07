@@ -325,6 +325,7 @@ class CreateTunaOrder implements ObserverInterface
                     ],
                     "DeliveryAddress" => $deliveryAddress,
                     "SalesChannel" => "ECOMMERCE",
+                    "Origin" => "TUNA-MAGENTO",
                     "Amount" => $valorTotal,
                     "PaymentMethods" => $paymentMethods
                 ]
