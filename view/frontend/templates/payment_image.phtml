@@ -1,3 +1,6 @@
+<?php
+/** @var \Tuna\TunaGateway\Block\TunaImages $block */
+?>
 <script>
-    window.tunaImages = <?php /* @escapeNotVerified */ echo \Zend_Json::encode($block->fillCardFlags()); ?>;
+    window.tunaImages = <?php echo $block->getJsonHelper()->serialize($block->fillCardFlags());?>;
 </script>

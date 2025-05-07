@@ -4,8 +4,8 @@
 namespace Tuna\TunaGateway\Model\Payment;
 
 
-class Tuna extends BasePaymentMethod
+class Pix extends BasePaymentMethod
 {
-    protected $_code = "tuna";
+     protected $_code = "pix";
 }
 

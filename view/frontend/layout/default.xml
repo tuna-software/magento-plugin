@@ -3,4 +3,8 @@
     <referenceContainer name="after.body.start">
         <block class="Tuna\TunaGateway\Block\AntifraudResolver" name="antifraudResolver" template="Tuna_TunaGateway::antifraud_injector.phtml"/>
     </referenceContainer>
+    <!-- <head>
+        <link src="Tuna_TunaGateway::js/tuna.js"/>
+    </head> -->
+
 </page>

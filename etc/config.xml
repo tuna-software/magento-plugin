@@ -12,38 +12,38 @@
 			<credit>
 				<title>Cartão de crédito</title>
 				<active>1</active>
-				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
+				<model>Tuna\TunaGateway\Model\Payment\Credit</model>
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
 			</credit>			
 			<boleto>
 				<title>Boleto</title>
 				<active>1</active>
-				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
+				<model>Tuna\TunaGateway\Model\Payment\Boleto</model>
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
 			</boleto>
 			<crypto>
 				<title>Crypto</title>
 				<active>1</active>
-				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
+				<model>Tuna\TunaGateway\Model\Payment\Crypto</model>
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
 			</crypto>
-			<pix>
-				<title>PIX</title>
-				<active>1</active>
-				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
-				<order_status>tuna_Started</order_status>
-				<log_file>var/log/tuna.log</log_file>
-			</pix>
 			<link>
 				<title>Link</title>
 				<active>1</active>
-				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
+				<model>Tuna\TunaGateway\Model\Payment\Link</model>
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
 			</link>
+			<pix>
+				<title>PIX</title>
+				<active>1</active>
+				<model>Tuna\TunaGateway\Model\Payment\Pix</model>
+				<order_status>tuna_Started</order_status>
+				<log_file>var/log/tuna.log</log_file>
+			</pix>
 		</payment>
 	</default>
 </config>

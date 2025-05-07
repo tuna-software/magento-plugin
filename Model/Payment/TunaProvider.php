@@ -2,10 +2,11 @@
 
 namespace Tuna\TunaGateway\Model\Payment;
 
-use \Magento\Checkout\Model\ConfigProviderInterface;
-use \Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
+use Magento\Checkout\Model\ConfigProviderInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Framework\Session\SessionManagerInterface as CoreSession;
+use Magento\Framework\HTTP\Client\Curl;
 
 
 class TunaProvider implements ConfigProviderInterface
@@ -14,10 +15,46 @@ class TunaProvider implements ConfigProviderInterface
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
     protected $scopeConfig;
+
+    /**
+     * @var \Magento\Framework\Session\SessionManager
+     */
     protected $_session;
+
+    /**
+     * @var string
+     */
     protected $_tunaEndpointDomain;
+
+    /**
+     * @var \Magento\Directory\Api\CountryInformationAcquirerInterface
+     */
     protected $countryInformationAcquirer;
+
+    /**
+     * @var CoreSession
+     */
     protected $_coreSession;
+
+    /**
+     * @var \Magento\Framework\HTTP\Adapter\CurlFactory
+     */
+    protected $curlFactory;
+
+    /**
+     * @var \Magento\Framework\Json\Helper\Data
+     */
+    protected $jsonHelper;
+
+    /**
+     * @var \Magento\Checkout\Model\Session
+     */
+    protected $checkoutSession;
+
+    /**
+     * @var \Magento\Payment\Model\MethodInterface
+     */
+    protected $tunaPaymentMethod;
 
     /**
      * first config value config path
@@ -57,7 +94,7 @@ class TunaProvider implements ConfigProviderInterface
 
         for($i = 1; $i <= $totalInstallments; $i++){
             $feeInput = $this->scopeConfig->getValue('payment/tuna_payment/credit_card/p'.$i);
-            $fee = is_numeric($feeInput) ? (float) $feeInput : 0;           
+            $fee = is_numeric($feeInput) ? (float) $feeInput : 0;
             $feeList[$i - 1] = $fee;
         }
 
@@ -67,7 +104,7 @@ class TunaProvider implements ConfigProviderInterface
      * {@inheritdoc}
      */
     public function getConfig()
-    {        
+    {
         $tunaSessionID = null;
         $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/NewSession';
         $countriesInfo = $this->countryInformationAcquirer->getCountriesInfo();
@@ -89,7 +126,7 @@ class TunaProvider implements ConfigProviderInterface
             usort($regions, function($a, $b) {
                 return strcmp($a["name"], $b["name"]);
             });
-    
+
             $countries[] = [
                 'id' => $country->getId(),
                 'abbreviation' => $country->getTwoLetterAbbreviation(),
@@ -97,8 +134,10 @@ class TunaProvider implements ConfigProviderInterface
                 'regions' => $regions
             ];
         }
-        usort($countries, function($a, $b) {
-            return strcmp($a["name"], $b["name"]);
+        usort($countries, function ($a, $b) {
+            $nameA = $a["name"] ?? '';
+            $nameB = $b["name"] ?? '';
+            return strcmp($nameA, $nameB);
         });
 
         $om = \Magento\Framework\App\ObjectManager::getInstance();
@@ -123,7 +162,7 @@ class TunaProvider implements ConfigProviderInterface
                     $complementB = $addressB[2];
                 }
                 $countryName = "";
-                
+
                 if($address["country_id"] != null){
                     foreach ($countries as &$c) {
                         if($c["id"] == $address["country_id"]){
@@ -145,7 +184,7 @@ class TunaProvider implements ConfigProviderInterface
                 ]);
             }
         }
-        try{
+        try {
             $cItem = [
                 "AppToken" => $this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
                 "Customer" => [
@@ -155,34 +194,38 @@ class TunaProvider implements ConfigProviderInterface
             ];
             $bodyJsonRequest = json_encode($cItem);
 
-            /* Create curl factory */
-            $httpAdapter = $this->curlFactory->create();
-            /* Forth parameter is POST body */
-            $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
-            $result = $httpAdapter->read();
-            $body = \Zend_Http_Response::extractBody($result);
-            /* convert JSON to Array */
-            $response = $this->jsonHelper->jsonDecode($body);
+            /* Use Curl client */
+            $httpClient = new Curl();
+            $httpClient->addHeader("Content-Type", "application/json");
+            $httpClient->post($url, $bodyJsonRequest);
+            $responseBody = $httpClient->getBody();
+
+            /* Convert JSON to Array */
+            $response = $this->jsonHelper->jsonDecode($responseBody);
             $tunaSessionID = $response["sessionId"];
         }catch(\Exception $e)
-        { 
+        {
         }
         $response = null;
-        if ($tunaSessionID <> null && $customerSession->isLoggedIn()) {
-            $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/List'; 
+        if ($tunaSessionID !== null && $customerSession->isLoggedIn()) {
+            $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/List';
             $cItem = [
                 "SessionId" => $tunaSessionID
             ];
             $bodyJsonRequest = json_encode($cItem);
-            
-            $httpAdapter = $this->curlFactory->create();
-            $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1',  ["Content-Type:application/json"], $bodyJsonRequest);
-            $result = $httpAdapter->read();
-            
-            $body = \Zend_Http_Response::extractBody($result);
-            $response = $this->jsonHelper->jsonDecode($body);
-            
+
+            try {
+                $httpClient = new Curl();
+                $httpClient->addHeader("Content-Type", "application/json");
+                $httpClient->post($url, $bodyJsonRequest);
+                $responseBody = $httpClient->getBody();
+
+                $response = $this->jsonHelper->jsonDecode($responseBody);
+            } catch (\Exception $e) {
+                // Handle exception
+            }
         }
+
         $config = [
             'payment' => [
                 'tunagateway' => [
@@ -202,7 +245,12 @@ class TunaProvider implements ConfigProviderInterface
                     'feeList'=>$this->getFee($this->scopeConfig->getValue('payment/tuna_payment/credit_card/installments')),
                     'billingAddresses' => $billingAddresses,
                     'internalSessionID' =>  $this->_session->getSessionId(),
-                    'title' => $this->scopeConfig->getValue('payment/tuna_payment/options/title')
+                    'title' => $this->scopeConfig->getValue('payment/tuna_payment/options/title'),
+                    'title_credit' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_credit'),
+                    'title_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_boleto'),
+                    'title_pix' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_pix'),
+                    'title_link' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_link'),
+                    'title_crypto' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_crypto')
                 ]
             ],
             'tuna_payment' => $this->tunaPaymentMethod->getStandardCheckoutPaymentUrl(),

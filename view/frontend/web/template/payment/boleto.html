@@ -1,0 +1,95 @@
+<style>
+    .discount-code {
+        float: left;
+        clear: both;
+    }
+</style>
+<!-- ko if: isActive() -->
+<div class="payment-method" style="overflow: auto;"
+    data-bind="css: {'_active': (getCode() == isChecked())}, afterRender: afterRender">
+    <div class="payment-method-title field choice">
+        <input type="radio" name="payment[method]" class="radio" data-bind="attr: {'id': getCode()}, value: getCode(),
+                checked: isChecked,
+                click: selectPaymentMethod,
+                visible: isRadioButtonVisible()" />
+        <label data-bind="attr: {'for': getCode()}" class="label lbl-billing-address">
+            <span id="boletoTitle"></span>
+        </label>
+    </div>
+
+    <div class="payment-method-content" id="tuna_payment_method_content">
+        <span id="control"></span>
+        <label data-bind="attr: {for: 'addressContainer'}" class="label lbl-billing-address">
+            <span>
+                <!-- ko i18n: 'Endereço da compra' -->
+                <!-- /ko -->
+            </span>
+        </label>
+        <div class="payment-method-billing-address">
+            <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
+            <!-- ko template: getTemplate() -->
+            <!-- /ko -->
+            <!--/ko-->
+        </div>
+
+
+        <div id="boletoDiv">
+            <div class="field _required">
+                <label data-bind="attr: {for: 'tuna_credit_card_document_boleto'}" class="label">
+                    <span>
+                        <!-- ko i18n: 'CPF ou CNPJ' -->
+                        <!-- /ko -->
+                    </span>
+                </label>
+
+                <div class="control">
+                    <input class="input-text required-entry required" id="boleto_document" name="payment[boleto_document]" type="text"
+                        maxlength="18" minlength="11" data-validate="{required:true}" required data-bind="attr: {
+                            id: 'boleto_document'},
+                            enable: true,
+                            valueUpdate: 'input'" />
+                </div>
+                <label id="boletoDocumentInvalidInfo" style="display: none; color: #FF3030;">* insira um CPF/CNPJ
+                    válido</label>
+            </div>
+            <div class="field _required">
+                <label data-bind="attr: {for: getCode() + 'number'}" class="label">
+                    <span>
+                        <!-- ko i18n: 'Nome completo' -->
+                        <!-- /ko -->
+                    </span>
+                </label>
+                <div class="control">
+                    <input class="input-text required" name="payment[boleto_holder]" type="text" minlength="3"
+                        data-validate="{required:true}" required data-bind="attr: {
+                                id: 'boleto_buyer_name'},
+                                enable: true,
+                                valueUpdate: 'input'" autocomplete="cc-name" />
+                </div>
+                <label id="boletoBuyerNameInvalidInfo" style="display: none; color: #FF3030;">* Esse campo não pode
+                    ser
+                    vazio</label>
+            </div>
+            <h4>
+                <!-- ko i18n: 'Seu boleto será exibido na próxima tela.' -->
+                <!-- /ko -->
+            </h4>
+        </div>
+
+        <div class="actions-toolbar" style="margin-top: 15px;float:left;clear:both;margin-bottom: 15px;">
+            <div class="primary">
+                <button class="action primary checkout" type="submit" data-bind="
+                        click: placeOrder,
+                        attr: {title: 'Pagar', id: 'placeOrder'},
+                        css: {disabled: !isPlaceOrderActionAllowed()},
+                        enable: (getCode() == isChecked())">
+                    <span data-bind="text: 'Pagar'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="badNewsDiv" style="display: none;">
+        <h2>Método de pagamento não disponível para as configurações da loja.</h2>
+    </div>
+</div>
+<!--/ko-->

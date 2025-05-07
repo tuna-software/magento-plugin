@@ -3,13 +3,20 @@
         float: left;
         clear: both;
     }
+    #payUsingTwoCardsLink:hover {
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    #payingWithTwoCards {
+        visibility: hidden;
+    }
+
 </style>
 <!-- ko if: isTunaActive() -->
 <div class="payment-method" style="overflow: auto;"
-    data-bind="css: {'_active': (getCode() == isChecked())}, afterRender: afterRender">
+    data-bind="css: {'_active': (getCode() == isChecked())}, afterRender: afterRender" id="divTunaAll">
 
-    <input type="hidden" id="payingWithTwoCards" value="0" />
-    
     <div class="payment-method-title field choice">
         <input type="radio" name="payment[method]" class="radio" data-bind="attr: {'id': getCode()}, value: getCode(),
                 checked: isChecked,
@@ -288,7 +295,7 @@
 
                         <div class="control">
                             <input class="input-text required" placeholder="1234 1234 1234 1234"
-                                name="payment[credit_card_number]" type="text" maxlength="19" minlength="16"
+                                name="payment[credit_card_number]" type="text" maxlength="16" minlength="16"
                                 data-validate="{required:true}" data-bind="attr: {
                                     id: 'tuna_second_credit_card_number',
                                     'data-container': getCode() + '_credit_card_number'},
@@ -394,7 +401,8 @@
                 </div>
             </div>
 
-            <a id="payUsingTwoCardsLink" href="javascript:void(0);">Pagar usando dois cartões</a>
+            <label id="payUsingTwoCardsLink" for="payingWithTwoCards">Pagar usando dois cartões</label>
+            <input type="checkbox" id="payingWithTwoCards" value="0" />
 
             <div class="field _required" id="installmentsDiv">
                 <label data-bind="attr: {for: 'tuna_credit_card_installments'}" class="label">
@@ -411,7 +419,7 @@
                 options: getInstallments(),
                 optionsValue: 'value',
                 optionsText: 'text',
-                optionsCaption: $t('Parcelas')">
+                value: 1">
                     </select>
                 </div>
                 <label id="installmentsInvalidInfo" style=" color: #FF3030;display: none;">* insira parcelas</label>
@@ -427,7 +435,7 @@
             </label>
 
             <div class="control">
-                <input class="input-text required-entry required" name="payment[credit_card_document]" type="text"
+                <input class="input-text required-entry required" placeholder="000.000.000-00" name="payment[credit_card_document]" type="text"
                     maxlength="18" minlength="11" data-validate="{required:true}" required data-bind="attr: {
                         id: 'tuna_credit_card_document'},
                         enable: true,

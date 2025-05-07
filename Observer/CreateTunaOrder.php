@@ -7,6 +7,8 @@ use Magento\Framework\Session\SessionManagerInterface as CoreSession;
 use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Framework\DB\Transaction;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
+use Magento\Framework\HTTP\Client\Curl;
+use Magento\Store\Model\StoreManagerInterface; // Add this import
 
 class CreateTunaOrder implements ObserverInterface
 {
@@ -17,18 +19,25 @@ class CreateTunaOrder implements ObserverInterface
     protected $invoiceService;
     protected $transaction;
     protected $invoiceSender;
+    protected $curlFactory;
     protected $_checkoutSession;
+    protected $_session;
+    protected $jsonHelper;
+    protected $curlClient;
+    protected $storeManager; // Add property for StoreManagerInterface
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
         \Magento\Framework\Session\SessionManager $sessionManager,
         \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
-        \Magento\Framework\Json\Helper\Data $jsonHelper,
+        \Magento\Framework\Serialize\Serializer\Json $jsonHelper,
         \Magento\Checkout\Model\Session $checkoutSession,
-        CoreSession $coreSession, 
+        CoreSession $coreSession,
         InvoiceService $invoiceService,
-        InvoiceSender $invoiceSender,        
-        Transaction $transaction
+        InvoiceSender $invoiceSender,
+        Transaction $transaction,
+        Curl $curlClient,
+        StoreManagerInterface $storeManager // Inject StoreManagerInterface
     ) {
         $this->_scopeConfig = $scopeConfigInterface;
         $this->_session = $sessionManager;
@@ -44,6 +53,8 @@ class CreateTunaOrder implements ObserverInterface
         $this->invoiceSender = $invoiceSender;
         $this->_coreSession = $coreSession;
         $this->_checkoutSession = $checkoutSession;
+        $this->curlClient = $curlClient;
+        $this->storeManager = $storeManager; // Assign StoreManagerInterface
     }
 
     function roundDown($decimal, $precision)
@@ -56,7 +67,6 @@ class CreateTunaOrder implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $order = $observer->getEvent()->getOrder();
-        #$this->saveLog($order->getStatus());
         //verify transaction
         if ($order->getStatus() == 'tuna_Started') {
             $orderId = $order->getIncrementId();
@@ -65,12 +75,9 @@ class CreateTunaOrder implements ObserverInterface
             $payment = $order->getPayment();
 
             $tokenSessionParam = $payment->getAdditionalInformation()["session_id"];
-
             $fullName =  $billing["firstname"] . " " . $billing["lastname"];
-
             $this->_coreSession->start();
             $customerID = $this->_coreSession->getCostumerID();
-
             $isNewCustomer = !$order->getCustomerId();
             if (!$isNewCustomer) {
                 $customerID = $order->getCustomerId();
@@ -78,11 +85,8 @@ class CreateTunaOrder implements ObserverInterface
             $itens = [];
 
             $creditCardData = json_decode($payment->getAdditionalInformation()["credit_card_data"]);
-
             $valorTotal = $this->getValorFinal($order->getGrandTotal());
-
             $juros = 1;
-
             if ($creditCardData != null && count($creditCardData) > 0) {
 
                 if (count($creditCardData) > 2) {
@@ -92,10 +96,16 @@ class CreateTunaOrder implements ObserverInterface
                     $order->save();
                     return;
                 }
-
+                if ($this->getValorFinal($order->getGrandTotal()) > $this->getValorFinal($creditCardData[0]->credit_card_amount)+$this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0)) {
+                    $order->setStatus('tuna_Cancelled');
+                    $order->addStatusHistoryComment('Dados invalidos para compra: R$ '.($this->getValorFinal($creditCardData[0]->credit_card_amount)+$this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0)));
+                    $order->setGrandTotal($valorTotal);
+                    $order->save();
+                    return;
+                }
                 $valorTotalComJuros = $this->getValorFinal($creditCardData[0]->credit_card_amount, $creditCardData[0]->credit_card_installments) +
                     $this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0, $creditCardData[1]->credit_card_installments ?? 1);
-                
+
                 $juros = $valorTotalComJuros / $valorTotal;
                 $valorTotal = round($valorTotalComJuros, 2);
             }
@@ -106,7 +116,7 @@ class CreateTunaOrder implements ObserverInterface
             $itemsCollection = $order->getAllVisibleItems();
             $shippingAmountPerItem =  ($shippingValue * $juros) / count($itemsCollection);
             $fullDiscountAmountPerItem =  ($order->getDiscountAmount() * $juros) / count($itemsCollection);
-            foreach ($itemsCollection as $item) {      
+            foreach ($itemsCollection as $item) {
                 $qtdFloor = ceil($item->getQtyToInvoice());
                 $valorItem = (($item->getPrice()) * $juros) + ($shippingAmountPerItem / $qtdFloor);
                 $percentualDiscount = ($valorItem*$qtdFloor)/($valorTotal-($order->getDiscountAmount() * $juros));
@@ -182,6 +192,11 @@ class CreateTunaOrder implements ObserverInterface
                             $creditCardAmount = $valorTotal - round($this->getValorFinal($creditCardData[0]->credit_card_amount, $creditCardData[0]->credit_card_installments), 2);
                         }
 
+                        $cardHolderName = isset($creditCard->card_holder_name) ? $creditCard->card_holder_name : 'Unknown'; // Ensure card_holder_name exists
+
+                        $expirationMonth = isset($creditCard->credit_card_expiration_month) ? $creditCard->credit_card_expiration_month * 1 : null; // Validate existence
+                        $expirationYear = isset($creditCard->credit_card_expiration_year) ? $creditCard->credit_card_expiration_year * 1 : null; // Validate existence
+
                         $paymentMethod = [
                             "PaymentMethodType" => "1",
                             "amount" => $creditCardAmount,
@@ -189,10 +204,10 @@ class CreateTunaOrder implements ObserverInterface
                             "CardInfo" => [
                                 "TokenProvider" => "Tuna",
                                 "CardNumber" => "",
-                                "CardHolderName" => $creditCard->card_holder_name,
+                                "CardHolderName" => $cardHolderName, // Use the validated cardHolderName
                                 "BrandName" => $creditCard->credit_card_brand,
-                                "ExpirationMonth" =>  $creditCard->credit_card_expiration_month * 1,
-                                "ExpirationYear" =>  $creditCard->credit_card_expiration_year * 1,
+                                "ExpirationMonth" => $expirationMonth, // Use validated expirationMonth
+                                "ExpirationYear" => $expirationYear, // Use validated expirationYear
                                 "Token" => $creditCard->credit_card_token,
                                 "TokenSingleUse" => $isNewCustomer ? 1 : 0,
                                 "SaveCard" => false,
@@ -213,7 +228,7 @@ class CreateTunaOrder implements ObserverInterface
                                 ]
                             ]
                         ];
-                        array_push($paymentMethods, $paymentMethod);
+                        $paymentMethods[] = $paymentMethod;
                     }
                 } elseif ($payment->getAdditionalInformation()["is_crypto_payment"] == "true") {
                     $payment = $order->getPayment();
@@ -237,7 +252,7 @@ class CreateTunaOrder implements ObserverInterface
                             "Amount" => $valorTotal
                         ]
                     ];
-                } else 
+                } else
                 {
                     $payment = $order->getPayment();
                     $payment->setMethod('link');
@@ -249,7 +264,7 @@ class CreateTunaOrder implements ObserverInterface
                             "Amount" => $valorTotal
                         ]
                     ];
-                    
+
                 }
             } else {
                 $payment = $order->getPayment();
@@ -314,19 +329,13 @@ class CreateTunaOrder implements ObserverInterface
                     "PaymentMethods" => $paymentMethods
                 ]
             ];
-
-            /* Create curl factory */
-            $httpAdapter = $this->curlFactory->create();
-            $bodyJsonRequest = json_encode($requestbody);
-            #$this->saveLog($bodyJsonRequest);
-            $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
-
-            $result = $httpAdapter->read();
-
-            $body = \Zend_Http_Response::extractBody($result);
-            #$this->saveLog($body); 
             try {
-                $response = $this->jsonHelper->jsonDecode($body);
+                $bodyJsonRequest = json_encode($requestbody);
+                $this->curlClient->addHeader("Content-Type", "application/json");
+                $this->curlClient->post($url, $bodyJsonRequest); // Use Curl client to send POST request
+                $body = $this->curlClient->getBody(); // Get the response body
+
+                $response = $this->jsonHelper->unserialize($body);
                 switch (strval($response["status"])) {
                     case '0':
                         $order->setStatus('tuna_Started');
@@ -335,24 +344,24 @@ class CreateTunaOrder implements ObserverInterface
                         $order->setStatus('tuna_Authorized');
                         break;
                     case '2':
-                       
+
                         if ( $this->_scopeConfig->getValue('payment/tuna_payment/options/auto_invoice')=="1"){
                             if ($order->canInvoice()) {
                                 try{
                                     $invoice = $this->invoiceService->prepareInvoice($order);
                                     $invoice->register();
                                     $invoice->save();
-                                
-                                    $transactionSave = 
+
+                                    $transactionSave =
                                         $this->transaction
                                             ->addObject($invoice)
                                             ->addObject($invoice->getOrder());
                                     $transactionSave->save();
-                                    
+
                                     $this->invoiceSender->send($invoice);
                                     $order->addCommentToStatusHistory(
                                         __('Usuário notificado sobre o pedido #%1.', $invoice->getId())
-                                    )->setIsCustomerNotified(true)->save();    
+                                    )->setIsCustomerNotified(true)->save();
                                 } catch (\Exception $e) {}
                             }
                         }
@@ -362,7 +371,7 @@ class CreateTunaOrder implements ObserverInterface
                         $order->setStatus('tuna_Refunded');
                         break;
                     case '4':
-                        $order->setStatus('tuna_Denied');   
+                        $order->setStatus('tuna_Denied');
                         $this->_checkoutSession->restoreOrder();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         break;
@@ -379,12 +388,12 @@ class CreateTunaOrder implements ObserverInterface
                     case '6':
                         $order->setStatus('tuna_Expired');
                         $this->_checkoutSession->restoreOrder();
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento expirado.'));                        
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento expirado.'));
                         break;
                     case '7':
                         $order->setStatus('tuna_Chargeback');
                         $this->_checkoutSession->restoreOrder();
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));                        
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         break;
                     case '8':
                         $order->setStatus('tuna_MoneyReceived');
@@ -392,17 +401,17 @@ class CreateTunaOrder implements ObserverInterface
                     case '9':
                         $order->setStatus('tuna_PartialCancel');
                         $this->_checkoutSession->restoreOrder();
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));                        
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         break;
                     case 'A':
                         $order->setStatus('tuna_Error');
                         $this->_checkoutSession->restoreOrder();
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));                        
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         break;
                     case 'B':
                         $order->setStatus('tuna_RedFlag');
                         $this->_checkoutSession->restoreOrder();
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));                        
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         break;
                     case 'C':
                     case 'P':
@@ -410,8 +419,8 @@ class CreateTunaOrder implements ObserverInterface
                             && ($payment->getAdditionalInformation()["is_pix_payment"] == "false")
                             && ($payment->getAdditionalInformation()["is_boleto_payment"] == "false"))
                             {
-                                $order->setStatus('tuna_PendingCapture');                                
-                                    switch (strval($response["methods"][0]["status"])) 
+                                $order->setStatus('tuna_PendingCapture');
+                                    switch (strval($response["methods"][0]["status"]))
                                     {
                                         case '3':
                                         case '4':
@@ -426,16 +435,16 @@ class CreateTunaOrder implements ObserverInterface
                                         case 'G':
                                         case 'N':
                                             $this->_checkoutSession->restoreOrder();
-                                            throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));           
+                                            throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                                             break;
                                         default:
                                             break;
                                     }
                             }else
                             {
-                                $order->setStatus('tuna_PendingCapture');                            
+                                $order->setStatus('tuna_PendingCapture');
                             }
-                        
+
                         break;
                     case 'D':
                         $order->setStatus('tuna_PendingAntiFraud');
@@ -443,15 +452,15 @@ class CreateTunaOrder implements ObserverInterface
                     case 'E':
                         $order->setStatus('tuna_DeniedAntiFraud');
                         $this->_checkoutSession->restoreOrder();
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));                        
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         break;
                 }
-            
+
                 if (strval($response["code"]) == "1" && ($response["status"] == "C" || $response["status"] == "P")) {
                     if ($payment->getAdditionalInformation()["is_boleto_payment"] == "true") {
                         if ($response["methods"] != null && $response["methods"][0]["redirectInfo"] != null) {
                             $additionalData = $payment->getAdditionalInformation();
-                            $additionalData["boleto_url"] = $response["methods"][0]["redirectInfo"]["url"];                            
+                            $additionalData["boleto_url"] = $response["methods"][0]["redirectInfo"]["url"];
                             $payment->setData('additional_information', $additionalData);
                             $payment->save();
                             $order->addStatusHistoryComment('Link: '. $response["methods"][0]["redirectInfo"]["url"]);
@@ -473,7 +482,7 @@ class CreateTunaOrder implements ObserverInterface
                         if ($response["methods"] != null && $response["methods"][0]["pixInfo"] != null) {
                             $additionalData = $payment->getAdditionalInformation();
                             $pixImageIndo = $response["methods"][0]["pixInfo"]["qrImage"];
-                            if (stripos($pixImageIndo,'data:image') === false 
+                            if (stripos($pixImageIndo,'data:image') === false
                             && stripos($pixImageIndo,'https://') === false )
                             {
                                 $additionalData["pix_image"] = 'data:image/png;base64,'.$pixImageIndo;
@@ -482,7 +491,7 @@ class CreateTunaOrder implements ObserverInterface
                                 $additionalData["pix_image"] = $pixImageIndo;
                             }
                             $additionalData["pix_key"] = $response["methods"][0]["pixInfo"]["qrContent"];
-                            $additionalData["initial_total_value"] = $order->getGrandTotal();                            
+                            $additionalData["initial_total_value"] = $order->getGrandTotal();
                             $payment->setData('additional_information', $additionalData);
                             $order->addStatusHistoryComment('Chave Pix: '. $response["methods"][0]["pixInfo"]["qrContent"]);
                             $payment->save();
@@ -493,7 +502,11 @@ class CreateTunaOrder implements ObserverInterface
                 throw $e;
             }
             if ($valorTotal != $order->getGrandTotal()) {
-                $order->addStatusHistoryComment('Acréscimo de R$ ' . number_format($valorTotal - $order->getGrandTotal(), 2, ",", ".") . ' em juros');
+                if ($valorTotal - $order->getGrandTotal()>0){
+                    $order->addStatusHistoryComment('Acréscimo de R$ ' . number_format($valorTotal - $order->getGrandTotal(), 2, ",", ".") . ' em juros');
+                }else{
+                    $order->addStatusHistoryComment('Desconto de R$ ' . number_format($valorTotal - $order->getGrandTotal(), 2, ",", ".") . '');
+                }
                 $order->setGrandTotal($valorTotal);
             }
             $order->addStatusHistoryComment('Valor total da compra: R$ ' . number_format($valorTotal, 2, ",", "."));
@@ -501,14 +514,14 @@ class CreateTunaOrder implements ObserverInterface
         }else
         {
             $itens=[];
-            foreach ($itemsCollection as $item) {     
+            foreach ($itemsCollection as $item) {
                 $imageURL = null;
                 #$productimages = $item->getProduct()->getMediaGalleryImages();
                 #foreach($productimages as $productimage)
                 #{
                 #    $imageURL = $productimage['url'];
                 #    continue;
-                #}          
+                #}
                 $valorItem = ($item->getPrice()) ;
                 $qtdFloor = ceil($item->getQtyToInvoice());
                 $percentualDiscount = ($valorItem*$qtdFloor)/($valorTotal-($order->getDiscountAmount()));
@@ -525,9 +538,7 @@ class CreateTunaOrder implements ObserverInterface
                 ]];
                 $itens = array_merge($itens, $cItem);
             }
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $storeManager = $objectManager->get('\Magento\Store\Model\StoreManagerInterface');
-            $baseURL = $storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK);
+            $baseURL = $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK);
             $url  = 'https://' . $this->_tunaEndpointDomain . '/api/PaymentLink/Create';
             $requestbody = [
                 'AppToken' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
@@ -549,9 +560,9 @@ class CreateTunaOrder implements ObserverInterface
                     'DocumentType' => $documentType
                 ],
                 "expirationinminutes"=>  2880,
-                "PaymentMethod"=>  "U",   
+                "PaymentMethod"=>  "U",
                 "type"=>  "U",
-                "MaxInstallments"=>  $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/installments'),             
+                "MaxInstallments"=>  $this->_scopeConfig->getValue('payment/tuna_payment/credit_card/installments'),
                 "BillingAddress" => $deliveryAddress,
                 "deliveryaddress" => $deliveryAddress,
                 "FrontData" => [
@@ -560,38 +571,32 @@ class CreateTunaOrder implements ObserverInterface
                     "IpAddress" => $order->getRemoteIp(),
                     "CookiesAccepted" => true
                 ],
-                "Items" =>   $itens                 
+                "Items" =>   $itens
             ];
-
-            /* Create curl factory */
-            $httpAdapter = $this->curlFactory->create();
-            $bodyJsonRequest = json_encode($requestbody);
-            #$this->saveLog($bodyJsonRequest);
-            $httpAdapter->write(\Zend_Http_Client::POST, $url, '1.1', ["Content-Type:application/json"], $bodyJsonRequest);
-
-            $result = $httpAdapter->read();
-
-            $body = \Zend_Http_Response::extractBody($result);
-            #$this->saveLog($body); 
             try {
-                $response = $this->jsonHelper->jsonDecode($body);
-                switch (strval($response["code"])) {                                        
+                $bodyJsonRequest = json_encode($requestbody);
+                $this->curlClient->addHeader("Content-Type", "application/json");
+                $this->curlClient->post($url, $bodyJsonRequest); // Use Curl client to send POST request
+                $body = $this->curlClient->getBody(); // Get the response body
+
+                $response = $this->jsonHelper->unserialize($body);
+                switch (strval($response["code"])) {
                     case '1':
-                            $order->setStatus('tuna_PendingCapture');                        
+                            $order->setStatus('tuna_PendingCapture');
                         break;
                     default:
                         $order->setStatus('tuna_Error');
                         $this->_checkoutSession->restoreOrder();
-                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));                        
+                        throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         break;
                 }
-            
-                if (strval($response["code"]) == "1" && $response["paymentLink"] !=null && $response["paymentLink"]["url"] != null) {                    
+
+                if (strval($response["code"]) == "1" && $response["paymentLink"] !=null && $response["paymentLink"]["url"] != null) {
                     $additionalData = $payment->getAdditionalInformation();
-                    $additionalData["link_url"] = $response["paymentLink"]["url"];                            
+                    $additionalData["link_url"] = $response["paymentLink"]["url"];
                     $payment->setData('additional_information', $additionalData);
                     $payment->save();
-                    $order->addStatusHistoryComment('Link: '. $response["paymentLink"]["url"]);                                                           
+                    $order->addStatusHistoryComment('Link: '. $response["paymentLink"]["url"]);
                 }else
                 {
                     $order->setStatus('tuna_Error');
@@ -727,3 +732,4 @@ class CreateTunaOrder implements ObserverInterface
         return $code;
     }
 }
+

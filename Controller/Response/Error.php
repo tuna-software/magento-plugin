@@ -21,8 +21,6 @@ class Error extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Controller\ResultFactory $result
         ) {
         parent::__construct($context);
-
-        /** @var  _resultPageFactory */
         $this->_resultPageFactory = $resultPageFactory;
         $this->_scopeConfig = $this->_objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
         $this->resultRedirect = $result;
@@ -52,11 +50,11 @@ class Error extends \Magento\Framework\App\Action\Action
     }
 
     private function clearSession()
-    { 
+    {
         $this->_objectManager->create('Magento\Framework\Session\SessionManager')->getData(
         'tuna_payment', true
         );
-        
+
         $this->_objectManager->create('Magento\Framework\Session\SessionManager')->unsetData('tuna_payment');
     }
 

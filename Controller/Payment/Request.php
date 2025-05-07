@@ -12,7 +12,7 @@ class Request extends \Magento\Framework\App\Action\Action
     protected $result;
     private $orderId;
     protected $scopeConfig;
-
+    private  $_isScopePrivate;
 
 
     public function __construct(
@@ -46,7 +46,7 @@ class Request extends \Magento\Framework\App\Action\Action
         $paymentData['method'] === 'link') {
             $this->orderId = $lastRealOrder->getIncrementId();
             $orderStatusText = '';
-            $orderStatus = $lastRealOrder->getStatus();            
+            $orderStatus = $lastRealOrder->getStatus();
             $itemsCollection = $lastRealOrder->getAllVisibleItems();
             $orderProducts = [];
             foreach ($itemsCollection as $item) {
@@ -65,7 +65,7 @@ class Request extends \Magento\Framework\App\Action\Action
                 $orderStatus == "tuna_Captured" ||
                 $orderStatus == "tuna_PendingCapture"
             ) {
-               
+
                 $isBoletoPayment = $payment->getAdditionalInformation()["is_boleto_payment"];
 
                 if ($isBoletoPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto') === "0") {
@@ -116,20 +116,20 @@ class Request extends \Magento\Framework\App\Action\Action
                           $orderStatusText = 'Pagamento negado pelo banco emissor.';
                         break;
                     case 'tuna_Cancelled':
-                          $orderStatusText = 'Pagamento cancelado.'; 
-                        break;              
+                          $orderStatusText = 'Pagamento cancelado.';
+                        break;
                     case 'tuna_Expired':
-                          $orderStatusText = 'Pagamento expirado.'; 
-                        break;               
+                          $orderStatusText = 'Pagamento expirado.';
+                        break;
                     case 'tuna_Error':
                     case 'tuna_RedFlag':
-                           $orderStatusText = 'Erro no pagamento.'; 
-                        break;               
+                           $orderStatusText = 'Erro no pagamento.';
+                        break;
                     case 'tuna_PendingAntiFraud':
-                          $orderStatusText = 'Pagamento em análise. Aguarde.'; 
+                          $orderStatusText = 'Pagamento em análise. Aguarde.';
                         break;
                     case 'tuna_DeniedAntiFraud':
-                          $orderStatusText = 'Pagamento negado.'; 
+                          $orderStatusText = 'Pagamento negado.';
                         break;
                   }
                 $this->session()->setData(

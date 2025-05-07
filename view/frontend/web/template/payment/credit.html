@@ -1,0 +1,203 @@
+<style>
+    .discount-code {
+        float: left;
+        clear: both;
+    }
+    .paybutton
+    {
+        line-height: 2.2rem !important;
+    padding: 14px 17px !important;
+    font-size: 1.8rem !important;
+    margin-top:10px
+    }
+    /*.tunaSavedCardCvv {float:left}*/
+    .tunaSavedCardCvv .tunaInput{width:70px;}
+    /*.tunaRadioBox { float:left;}*/
+    /*.CcCvv {width: 90px; display: none;float:left;}*/
+    .payment-icon{float:left}
+    .cardName  {float:left;margin-top:6px;padding:0px 10px}
+    .cardNumber  {float:left;margin-top:6px;padding:0px 10px}
+    /*.tunaSavedCardCvv.tunaInputSuffix {float:left}*/
+    #tuna_customArea {clear:both}
+    .addNewCardForm #CREDIT_CARD_CVV .tunaInputSuffix {float:left}
+    .addNewCardForm #CREDIT_CARD_CVV .tunaInput label {float: left;    width: 100%;}
+    .addNewCardForm #CREDIT_CARD_CVV .tunaInput {float:left; padding-right:15px}
+    .addNewCardForm #CREDIT_CARD_CVV .tunaInput input {width:70px;    float: left;
+        clear: both;}
+    #CREDIT_CARD .tunaInput{float:left; padding-right:15px}
+    #CREDIT_CARD .tunaInput input {width:200px}
+    #CREDIT_CARD label{
+    clear: both;
+    width: auto;
+    float: left;
+}
+    #CREDIT_CARD .tunaInput input{
+    width: 200px;
+    clear: both;
+    float: left;
+} #CREDIT_CARD .tunaInputSuffix{
+  
+   
+    width: 70px;
+    float: left;
+    padding-left: 10px;
+
+}
+#CREDIT_CARD_CVV{width: 300px;}
+#VALIDITY{clear:both}
+#SINGLE_USE_FIELD{clear:both}
+
+    /* saved card display styles*/
+    .cardItem {
+        display: flex;
+        position: relative;
+        align-items: center;
+        padding: 0.5rem;
+    }
+
+    .tunaRadioBox {
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .cardDataDiv {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        flex-shrink: 0;
+    }
+
+    .cardLabel {
+        display: flex;
+        justify-content: space-between;
+        white-space: nowrap;
+        gap: 1rem;
+        margin-inline: 1.5rem;
+    }
+
+    .tunaSavedCardCvv {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        min-width: 160px;
+
+        .tunaInputWrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+    }
+    .tunaInputSuffix {
+        margin-left: 2rem;
+    }
+    /* order place button styles*/
+    .defaultTunaButton {
+        background: #1979c3;
+        border: 1px solid #1979c3;
+        color: #fff;
+        padding: 0.75rem 1.5rem;
+        font-size: 1.4rem;
+        border-radius: 4px;
+        cursor: pointer;
+        display: inline-block;
+        line-height: 1.6;
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+    .defaultTunaButton:hover,
+    .defaultTunaButton:focus {
+        background: #145a86;
+        border-color: #145a86;
+        color: #fff;
+    }
+
+    .tunaRow {
+        display: flex;
+        gap: 3rem;
+    }
+
+    #VALIDITY,
+    #CREDIT_CARD_CVV {
+        width: 20%;
+    }
+
+    #CREDIT_CARD,
+    #CREDIT_CARD_CVV {
+        position: relative;
+    }
+
+    #CREDIT_CARD .tunaInputWrapper,
+    #CREDIT_CARD_CVV .tunaInputWrapper {
+        display: flex;
+    }
+
+    #CREDIT_CARD img,
+    #CREDIT_CARD_CVV img {
+        position: absolute;
+        bottom: 0;
+    }
+
+    #CREDIT_CARD .tunaInput {
+        flex: 100 1 auto;
+    }
+
+    #CREDIT_CARD .tunaInputSuffix {
+        flex: 1 1 54px;
+    }
+</style>
+<!-- ko if: isActive() -->
+<div class="payment-method" style="overflow: auto;"
+    data-bind="css: {'_active': (getCode() == isChecked())}, afterRender: afterRender" id="divCreditOnly">
+
+    <div class="payment-method-title field choice">
+        <input type="radio" name="payment[method]" class="radio" data-bind="attr: {'id': getCode()}, value: getCode(),
+                checked: isChecked,
+                click: selectPaymentMethod,
+                visible: isRadioButtonVisible()" />
+        <label data-bind="attr: {'for': getCode()}" class="label lbl-billing-address">
+            <span id="creditTitle"></span>
+        </label>
+    </div>
+
+    <div class="payment-method-content" id="tuna_payment_method_content">
+        <span id="control"></span>
+        <label data-bind="attr: {for: 'addressContainer'}" class="label lbl-billing-address">
+            <span>
+                <!-- ko i18n: 'Endereço da compra' -->
+                <!-- /ko -->
+            </span>
+        </label>
+        <div class="payment-method-billing-address">
+            <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
+            <!-- ko template: getTemplate() -->
+            <!-- /ko -->
+            <!--/ko-->
+        </div>
+
+        <div id="creditCardPaymentDiv">
+
+        </div>
+
+        <!-- <div class="actions-toolbar" style="margin-top: 15px;float:left;clear:both;margin-bottom: 15px;">
+            <div class="primary">
+                <button class="action primary checkout" type="submit" data-bind="
+                        click: placeOrder,
+                        attr: {title: 'Pagar', id: 'placeOrder'},
+                        css: {disabled: !isPlaceOrderActionAllowed()},
+                        enable: (getCode() == isChecked())">
+                    <span data-bind="text: 'Pagar'"></span>
+                </button>
+            </div>
+        </div> -->
+    </div>
+    <div id="badNewsDiv" style="display: none;">
+        <h2>Método de pagamento não disponível para as configurações da loja.</h2>
+    </div>
+</div>
+<!--/ko-->

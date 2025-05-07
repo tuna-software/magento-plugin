@@ -6,32 +6,36 @@
             <values>
                 <value id="script-tuna-token-sandbox" type="host">https://token.tuna-demo.uy</value>
                 <value id="script-tuna-token" type="host">https://token.tunagateway.com</value>
-				<value id="script-tuna-engine" type="host">https://engine.tunagateway.com/</value>
+                <value id="script-tuna-engine" type="host">https://engine.tunagateway.com/</value>
                 <value id="script-tuna-engine-sandbox" type="host">https://sandbox.tuna-demo.uy</value>
+                <value id="img-tuna-js" type="host">https://js.tuna.uy</value>
             </values>
         </policy>
         <policy id="frame-src">
             <values>
-				<value id="frame-tuna-token-sandbox" type="host">https://token.tuna-demo.uy</value>
+                <value id="frame-tuna-token-sandbox" type="host">https://token.tuna-demo.uy</value>
                 <value id="frame-tuna-token" type="host">https://token.tunagateway.com</value>
-				<value id="frame-tuna-engine" type="host">https://engine.tunagateway.com/</value>
+                <value id="frame-tuna-engine" type="host">https://engine.tunagateway.com/</value>
                 <value id="frame-tuna-engine-sandbox" type="host">https://sandbox.tuna-demo.uy</value>
+                <value id="img-tuna-js" type="host">https://js.tuna.uy</value>
             </values>
         </policy>
         <policy id="img-src">
             <values>
                 <value id="img-tuna-token-sandbox" type="host">https://token.tuna-demo.uy</value>
                 <value id="img-tuna-token" type="host">https://token.tunagateway.com</value>
-				<value id="img-tuna-engine" type="host">https://engine.tunagateway.com/</value>
+                <value id="img-tuna-engine" type="host">https://engine.tunagateway.com/</value>
                 <value id="img-tuna-engine-sandbox" type="host">https://sandbox.tuna-demo.uy</value>
+                <value id="img-tuna-js" type="host">https://js.tuna.uy</value>
             </values>
         </policy>
-		<policy id="connect-src">
-            <values>                
-				<value id="connect-tuna-token-sandbox" type="host">https://token.tuna-demo.uy</value>
+        <policy id="connect-src">
+            <values>
+                <value id="connect-tuna-token-sandbox" type="host">https://token.tuna-demo.uy</value>
                 <value id="connect-tuna-token" type="host">https://token.tunagateway.com</value>
-				<value id="connect-tuna-engine" type="host">https://engine.tunagateway.com/</value>
+                <value id="connect-tuna-engine" type="host">https://engine.tunagateway.com/</value>
                 <value id="connect-tuna-engine-sandbox" type="host">https://sandbox.tuna-demo.uy</value>
+                <value id="img-tuna-js" type="host">https://js.tuna.uy</value>
             </values>
         </policy>
     </policies>

@@ -3,9 +3,8 @@
 
 namespace Tuna\TunaGateway\Model\Payment;
 
-
-class Tuna extends BasePaymentMethod
+class Boleto extends BasePaymentMethod
 {
-    protected $_code = "tuna";
+    protected $_code = "boleto";
 }
 

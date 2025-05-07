@@ -1,31 +1,40 @@
 <?php
 
 namespace Tuna\TunaGateway\Controller\Order;
-use \Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
+use Magento\Framework\HTTP\Adapter\CurlFactory;
+use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Framework\Session\SessionManager;
+use Magento\Framework\View\Result\PageFactory;
 use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Framework\DB\Transaction;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 
-class Update extends \Magento\Framework\App\Action\Action
+class Update extends Action
 {
-    protected $_pageFactory;
+    protected PageFactory$_pageFactory;
     protected $_session;
     protected $curl;
     protected $invoiceService;
     protected $transaction;
     protected $invoiceSender;
+    protected ScopeConfig $scopeConfig;
+    protected CurlFactory $curlFactory;
+    protected Json $jsonHelper;
 
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Magento\Framework\View\Result\PageFactory $pageFactory,
-        \Magento\Framework\Session\SessionManager $sessionManager,
-        \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
-        \Magento\Framework\Json\Helper\Data $jsonHelper,
-        ScopeConfig $scopeConfig, 
+        Context $context,
+        PageFactory $pageFactory,
+        SessionManager $sessionManager,
+        CurlFactory $curlFactory,
+        Json $jsonHelper,
+        ScopeConfig $scopeConfig,
         InvoiceService $invoiceService,
         InvoiceSender $invoiceSender,
         Transaction $transaction
-        
+
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->_pageFactory = $pageFactory;
@@ -39,11 +48,11 @@ class Update extends \Magento\Framework\App\Action\Action
     }
 
     public function execute()
-    {      
+    {
         $appkey = $this->getRequest()->getHeader('Authorization');
-        $body = $this->jsonHelper->jsonDecode(file_get_contents('php://input'));
+        $body = $this->jsonHelper->unserialize(file_get_contents('php://input'));
         $orderID = $body['partnerUniqueId'];
-        $status = $body['statusId'];   
+        $status = $body['statusId'];
         if ($orderID==null)
         {
             echo print_r("ERROR - partneruniqueid parameter not found.");
@@ -65,7 +74,7 @@ class Update extends \Magento\Framework\App\Action\Action
         if ('Bearer '.$this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey')!= $appkey )
         {
             echo print_r("ERROR - invalid header.");
-            exit; 
+            exit;
         }
         $order = $this->_objectManager->create('Magento\Sales\Model\Order')->loadByIncrementId($orderID );
         if ($order==null || $order->getStatus()=='')
@@ -73,7 +82,7 @@ class Update extends \Magento\Framework\App\Action\Action
             echo print_r("ERROR - order not found.");
             exit;
         }
-        $payment = $order->getPayment();    
+        $payment = $order->getPayment();
         switch ($status.'') {
             case '0':
                 $status = ('tuna_Started');
@@ -82,23 +91,23 @@ class Update extends \Magento\Framework\App\Action\Action
                 $status = ('tuna_Authorized');
                 break;
             case '2':
-                
+
                 if ( $this->scopeConfig->getValue('payment/tuna_payment/options/auto_invoice')=="1"){
                     if ($order->canInvoice()) {
                         $invoice = $this->invoiceService->prepareInvoice($order);
                         $invoice->register();
                         $invoice->save();
                         try{
-                            $transactionSave = 
+                            $transactionSave =
                                 $this->transaction
                                     ->addObject($invoice)
                                     ->addObject($invoice->getOrder());
                             $transactionSave->save();
-                            
+
                             $this->invoiceSender->send($invoice);
                             $order->addCommentToStatusHistory(
                                 __('Usuário notificado sobre o pedido #%1.', $invoice->getId())
-                            )->setIsCustomerNotified(true)->save();    
+                            )->setIsCustomerNotified(true)->save();
                         } catch (\Exception $e) {}
                     }
                 }
@@ -143,14 +152,14 @@ class Update extends \Magento\Framework\App\Action\Action
                 break;
           }
         if ($status != $order->getStatus() && $order->getStatus()!= 'complete')
-        { 
+        {
             $order->addStatusToHistory($status, null, true);
             $order->setStatus($status);
             $order->save();
         }
-        echo print_r("OK"); 
+        echo print_r("OK");
         exit;
-        
+
     }
     public function saveLog2($txt)
     {
