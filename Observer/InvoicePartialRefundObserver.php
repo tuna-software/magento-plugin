@@ -74,6 +74,7 @@ class InvoicePartialRefundObserver extends AbstractDataAssignObserver
                         'AppToken' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
                         'Account' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'),
                         'PartnerUniqueID' => $order->getIncrementId(),
+                        'Origin' => 'Magento',
                         'PaymentDate' =>  date("Y-m-d", strtotime($order->getCreatedAt())),
                         'CardsDetail' => [
                             [
