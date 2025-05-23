@@ -3,7 +3,7 @@
     "description": "Tuna's Magento 2 module.",
     "type": "magento2-module",
     "license": "MIT",
-    "version": "2.1",
+    "version": "2.2",
     "authors": [
         {
             "email": "tuna@tuna.uy",

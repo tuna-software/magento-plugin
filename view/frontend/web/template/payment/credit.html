@@ -3,50 +3,6 @@
         float: left;
         clear: both;
     }
-    .paybutton
-    {
-        line-height: 2.2rem !important;
-    padding: 14px 17px !important;
-    font-size: 1.8rem !important;
-    margin-top:10px
-    }
-    /*.tunaSavedCardCvv {float:left}*/
-    .tunaSavedCardCvv .tunaInput{width:70px;}
-    /*.tunaRadioBox { float:left;}*/
-    /*.CcCvv {width: 90px; display: none;float:left;}*/
-    .payment-icon{float:left}
-    .cardName  {float:left;margin-top:6px;padding:0px 10px}
-    .cardNumber  {float:left;margin-top:6px;padding:0px 10px}
-    /*.tunaSavedCardCvv.tunaInputSuffix {float:left}*/
-    #tuna_customArea {clear:both}
-    .addNewCardForm #CREDIT_CARD_CVV .tunaInputSuffix {float:left}
-    .addNewCardForm #CREDIT_CARD_CVV .tunaInput label {float: left;    width: 100%;}
-    .addNewCardForm #CREDIT_CARD_CVV .tunaInput {float:left; padding-right:15px}
-    .addNewCardForm #CREDIT_CARD_CVV .tunaInput input {width:70px;    float: left;
-        clear: both;}
-    #CREDIT_CARD .tunaInput{float:left; padding-right:15px}
-    #CREDIT_CARD .tunaInput input {width:200px}
-    #CREDIT_CARD label{
-    clear: both;
-    width: auto;
-    float: left;
-}
-    #CREDIT_CARD .tunaInput input{
-    width: 200px;
-    clear: both;
-    float: left;
-} #CREDIT_CARD .tunaInputSuffix{
-  
-   
-    width: 70px;
-    float: left;
-    padding-left: 10px;
-
-}
-#CREDIT_CARD_CVV{width: 300px;}
-#VALIDITY{clear:both}
-#SINGLE_USE_FIELD{clear:both}
-
     /* saved card display styles*/
     .cardItem {
         display: flex;
@@ -153,7 +109,7 @@
 </style>
 <!-- ko if: isActive() -->
 <div class="payment-method" style="overflow: auto;"
-    data-bind="css: {'_active': (getCode() == isChecked())}, afterRender: afterRender" id="divCreditOnly">
+     data-bind="css: {'_active': (getCode() == isChecked())}, afterRender: afterRender" id="divCreditOnly">
 
     <div class="payment-method-title field choice">
         <input type="radio" name="payment[method]" class="radio" data-bind="attr: {'id': getCode()}, value: getCode(),
@@ -177,14 +133,399 @@
             <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
             <!-- ko template: getTemplate() -->
             <!-- /ko -->
-            <!--/ko-->
+            <!-- /ko -->
         </div>
 
         <div id="creditCardPaymentDiv">
+            <div id="firstCardSelectorDiv">
+                <label class="radio-inline" id="tuna_first_savedCard_label" style="margin-right: 15px;">
+                    <input id="tuna_first_card_radio_saved" type="radio" name="firstCardRadio" checked>
+                    Usar cartão salvo
+                </label>
+                <label class="radio-inline" id="tuna_first_newCard_label" style="margin-right: 15px;">
+                    <input id="tuna_first_new_card_radio" type="radio" name="firstCardRadio">
+                    Usar novo cartão
+                </label>
 
+                <div id="savedCardDiv" style="overflow: auto;">
+                    <div>
+                        <!-- ko foreach: getStoredCreditCards() -->
+                        <p class="radio-inline" style="clear:both;float:left;padding:10px 0px">
+                            <input type="radio" name="firstStoredCard" data-bind="attr: {id: 'tuna_first_card_'+token},
+                                event: {change: $parent.selectStoredCard.bind($data, 1)}"
+                                   style="float:left;margin-top:10px">
+
+                            <img data-bind="attr: {src: $parent.getCreditCardFlag(brand), height: '', width: '50' }"
+                                 class="payment-icon" style="float:left" />
+                            <span data-bind="text: maskedNumber"
+                                  style="float:left;margin-top:6px;padding:0px 10px"></span>
+                            <span data-bind="text: cardHolderName"
+                                  style="float:left;margin-top:6px;padding:0px 10px"></span>
+                            <input class="CcCvv" style="width: 90px; display: none;float:left;" type="text"
+                                   placeholder="CVV" maxlength="4" data-bind="attr: {id: 'tuna_card_cvv_'+token}" />
+                        </p>
+                        <!-- /ko -->
+                        <label id="cvvSavedInvalidInfo" style=" color: #FF3030; display: none;float:left;clear: both">
+                            * O cvv deve ter ao menos 3 caracteres
+                        </label>
+                        <label id="noCreditCardSelected" style="color: #FF3030;display: none;float:left;clear: both;">
+                            * Selecione um cartão como forma de pagamento
+                        </label>
+                    </div>
+                </div>
+                <div id="newCardDiv" style="display: none; overflow: auto;">
+
+                    <div class="field _required">
+                        <label data-bind="attr: {for: getCode() + 'number'}" class="label" id="lblHolderNameCard">
+                            <span>
+                                <!-- ko i18n: 'Nome impresso no cartão' -->
+                                <!-- /ko -->
+                            </span>
+                        </label>
+                        <div class="control">
+                            <input class="input-text required" name="payment[credit_card_holder]" type="text"
+                                   minlength="3" data-validate="{required:true}" required data-bind="attr: {
+                                id: 'tuna_credit_card_holder'},
+                                enable: true,
+                                valueUpdate: 'input'" autocomplete="cc-name" />
+                        </div>
+                        <label id="holderInvalidInfo" style="display: none;">* Esse campo não pode ser vazio</label>
+                    </div>
+
+                    <div class="field _required">
+                        <label data-bind="attr: {for: getCode() + 'number'}" class="label">
+                            <span>
+                                <!-- ko i18n: 'Número do cartão' -->
+                                <!-- /ko -->
+                            </span>
+                        </label>
+
+                        <div class="control">
+                            <input class="input-text required" placeholder="1234 1234 1234 1234"
+                                   name="payment[credit_card_number]" type="text" maxlength="19" minlength="16"
+                                   data-validate="{required:true}" data-bind="attr: {
+                                id: 'tuna_credit_card_number',
+                                'data-container': getCode() + '_credit_card_number'},
+                                enable: true,
+                                valueUpdate: 'input'" autocomplete="cc-number" />
+                        </div>
+                        <label id="creditCardInvalidInfo" style="display: none; color: #FF3030;">* Insira um número de
+                            cartão válido</label>
+
+                    </div>
+
+                    <div class="field date required" data-bind="attr: {id: getCode() + '_cc_type_exp_div'}"
+                         style="float:left;padding-right:10px">
+                        <label data-bind="attr: {for: getCode() + '_expiration'}" class="label">
+                            <span>
+                                <!-- ko i18n: 'Data de Validade'-->
+                                <!-- /ko -->
+                            </span>
+                        </label>
+                        <div class="control">
+                            <div class="fields" style="display: inline-block;">
+                                <div class="field" style="float: left;">
+                                    <div class="control">
+                                        <select name="payment[cc_exp_month]" class="select select-month" data-bind="attr: {id: 'tuna_credit_card_expiration_month'},
+                                                enable: true,
+                                                options: getMonthsValues(),
+                                                optionsValue: 'value',
+                                                optionsText: 'month',
+                                                optionsCaption: $t('Mês')">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="field" style="float: left;">
+                                    <div class="control">
+                                        <select name="payment[cc_exp_year]" class="select select-year" data-bind="attr: {id: 'tuna_credit_card_expiration_year', 'data-container': getCode() + '-cc-year', 'data-validate': JSON.stringify({required:true})},
+                                            enable: true,
+                                            options: getYearsValues(),
+                                            optionsValue: 'value',
+                                            optionsText: 'year',
+                                            optionsCaption: $t('Ano')">
+                                        </select>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <label id="validityDateInvalidInfo" style=" color: #FF3030; display: none;">* Insira uma data
+                            válida</label>
+                    </div>
+
+                    <div class="field _required" style="float:left">
+                        <label data-bind="attr: {for: 'tuna_credit_card_code'}" class="label">
+                            <span>
+                                <!-- ko i18n: 'Código de segurança (CVV)' -->
+                                <!-- /ko -->
+                            </span>
+                        </label>
+
+                        <div class="control">
+                            <input class="input-text required-entry required" name="payment[tuna_credit_card_code]"
+                                   type="number" maxlength="4" minlength="1" required data-validate="{required:true}"
+                                   data-bind="attr: {
+                                id: 'tuna_credit_card_code'},
+                                enable: true,
+                                valueUpdate: 'input'" />
+                        </div>
+                        <label id="cvvInvalidInfo" style=" color: #FF3030;display: none;">* Insira um cvv válido</label>
+
+                    </div>
+
+                </div>
+                <div class="field _required" id="firstCardValueDiv" style="display: none;">
+                    <label data-bind="attr: {for: 'tuna_first_credit_card_value'}" class="label">
+                        <span>
+                            <!-- ko i18n: 'Valor' -->
+                            <!-- /ko -->
+                        </span>
+                    </label>
+
+                    <div class="control">
+                        <input id="tuna_first_credit_card_value" class="input-text required-entry required"
+                               name="payment[first_credit_card_value]" type="text" data-validate="{required:true}"
+                               required />
+                    </div>
+                    <label id="firstCreditCardInvalidInfo" style="display: none; color: #FF3030;">
+                        * insira um valor válido
+                    </label>
+                </div>
+
+                <div class="field _required" id="first_card_installments_div" style="display: none;">
+                    <label data-bind="attr: {for: 'tuna_first_credit_card_installments'}" class="label">
+                        <span>
+                            <!-- ko i18n: 'Parcelas' -->
+                            <!-- /ko -->
+                        </span>
+                    </label>
+
+                    <div class="control">
+                        <select id="tuna_first_credit_card_installments"
+                                name="payment[tuna_first_credit_card_installments]" class="select">
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div id="secondCardSelectorDiv" style="display: none; overflow: auto;">
+                <h4>Segundo cartão</h4>
+                <label class="radio-inline" id="tuna_second_savedCard_label" style="margin-right: 15px;">
+                    <input id="tuna_second_card_radio_saved" type="radio" name="secondCardRadio" checked>
+                    Usar cartão salvo
+                </label>
+                <label class="radio-inline" id="tuna_second_newCard_label" style="margin-right: 15px;">
+                    <input id="tuna_second_new_card_radio" type="radio" name="secondCardRadio">
+                    Usar novo cartão
+                </label>
+
+                <div id="secondSavedCardDiv" style="overflow: auto;">
+                    <div>
+                        <!-- ko foreach: getStoredCreditCards() -->
+                        <p class="radio-inline" style="clear:both;float:left;padding:10px 0px">
+                            <input type="radio" name="secondStoredCard" data-bind="attr: {id: 'tuna_second_card_'+token},
+                                    event: {change: $parent.selectStoredCard.bind($data, 2)}"
+                                   style="float:left;margin-top:10px">
+
+                            <img data-bind="attr: {src: $parent.getCreditCardFlag(brand), height: '', width: '50' }"
+                                 class="payment-icon" style="float:left" />
+                            <span data-bind="text: maskedNumber"
+                                  style="float:left;margin-top:6px;padding:0px 10px"></span>
+                            <span data-bind="text: cardHolderName"
+                                  style="float:left;margin-top:6px;padding:0px 10px"></span>
+                            <input class="CcCvv" style="width: 90px; display: none;float:left;" type="text"
+                                   placeholder="CVV" maxlength="4" data-bind="attr: {id: 'tuna_second_card_cvv_'+token}" />
+                        </p>
+                        <!-- /ko -->
+                        <label id="secondCvvSavedInvalidInfo"
+                               style=" color: #FF3030; display: none;float:left;clear: both">
+                            * O cvv deve ter ao menos 3 caracteres
+                        </label>
+                        <label id="secondNoCreditCardSelected"
+                               style="color: #FF3030;display: none;float:left;clear: both;">
+                            * Selecione um cartão como forma de pagamento
+                        </label>
+                    </div>
+                </div>
+
+                <div id="secondNewCardDiv" style="display: none; overflow: auto;">
+
+                    <div class="field _required">
+                        <label data-bind="attr: {for: getCode() + 'number'}" class="label" id="lblHolderNameCard">
+                            <span>
+                                <!-- ko i18n: 'Nome impresso no cartão' -->
+                                <!-- /ko -->
+                            </span>
+                        </label>
+                        <div class="control">
+                            <input class="input-text required" name="payment[credit_card_holder]" type="text"
+                                   minlength="3" data-validate="{required:true}" required data-bind="attr: {
+                                    id: 'tuna_second_credit_card_holder'},
+                                    enable: true,
+                                    valueUpdate: 'input'" autocomplete="cc-name" />
+                        </div>
+                        <label id="secondHolderInvalidInfo" style="display: none;">* Esse campo não pode ser vazio</label>
+                    </div>
+
+                    <div class="field _required">
+                        <label data-bind="attr: {for: getCode() + 'number'}" class="label">
+                            <span>
+                                <!-- ko i18n: 'Número do cartão' -->
+                                <!-- /ko -->
+                            </span>
+                        </label>
+
+                        <div class="control">
+                            <input class="input-text required" placeholder="1234 1234 1234 1234"
+                                   name="payment[credit_card_number]" type="text" maxlength="16" minlength="16"
+                                   data-validate="{required:true}" data-bind="attr: {
+                                    id: 'tuna_second_credit_card_number',
+                                    'data-container': getCode() + '_credit_card_number'},
+                                    enable: true,
+                                    valueUpdate: 'input'" autocomplete="cc-number" />
+                        </div>
+                        <label id="secondCreditCardInvalidInfo" style="display: none; color: #FF3030;">* Insira um número de
+                            cartão válido</label>
+
+                    </div>
+
+                    <div class="field date required" data-bind="attr: {id: getCode() + '_cc_type_exp_div'}"
+                         style="float:left;padding-right:10px">
+                        <label data-bind="attr: {for: getCode() + '_expiration'}" class="label">
+                            <span>
+                                <!-- ko i18n: 'Data de Validade'-->
+                                <!-- /ko -->
+                            </span>
+                        </label>
+                        <div class="control">
+                            <div class="fields" style="display: inline-block;">
+                                <div class="field" style="float: left;">
+                                    <div class="control">
+                                        <select name="payment[cc_exp_month]" class="select select-month" data-bind="attr: {id: 'tuna_second_credit_card_expiration_month'},
+                                                    enable: true,
+                                                    options: getMonthsValues(),
+                                                    optionsValue: 'value',
+                                                    optionsText: 'month',
+                                                    optionsCaption: $t('Mês')">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="field" style="float: left;">
+                                    <div class="control">
+                                        <select name="payment[cc_exp_year]" class="select select-year" data-bind="attr: {id: 'tuna_second_credit_card_expiration_year', 'data-container': getCode() + '-cc-year', 'data-validate': JSON.stringify({required:true})},
+                                                enable: true,
+                                                options: getYearsValues(),
+                                                optionsValue: 'value',
+                                                optionsText: 'year',
+                                                optionsCaption: $t('Ano')">
+                                        </select>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <label id="secondValidityDateInvalidInfo" style=" color: #FF3030; display: none;">* Insira uma data
+                            válida</label>
+                    </div>
+
+                    <div class="field _required" style="float:left">
+                        <label data-bind="attr: {for: 'tuna_credit_card_code'}" class="label">
+                            <span>
+                                <!-- ko i18n: 'Código de segurança (CVV)' -->
+                                <!-- /ko -->
+                            </span>
+                        </label>
+
+                        <div class="control">
+                            <input class="input-text required-entry required" name="payment[tuna_credit_card_code]"
+                                   type="number" maxlength="4" minlength="1" required data-validate="{required:true}"
+                                   data-bind="attr: {
+                                    id: 'tuna_second_credit_card_code'},
+                                    enable: true,
+                                    valueUpdate: 'input'" />
+                        </div>
+                        <label id="secondCvvInvalidInfo" style=" color: #FF3030;display: none;">* Insira um cvv válido</label>
+
+                    </div>
+
+                </div>
+
+                <div class="field _required" id="secondCardValueDiv">
+                    <label data-bind="attr: {for: 'tuna_second_credit_card_value'}" class="label">
+                        <span>
+                            <!-- ko i18n: 'Valor' -->
+                            <!-- /ko -->
+                        </span>
+                    </label>
+
+                    <div class="control">
+                        <input id="tuna_second_credit_card_value" class="input-text required-entry required"
+                               name="payment[second_credit_card_value]" type="text" data-validate="{required:true}"
+                               required />
+                    </div>
+                    <label id="secondCreditCardInvalidInfo" style="display: none; color: #FF3030;">* insira um valor
+                        válido</label>
+                </div>
+
+                <div class="field _required" id="second_card_installments_div">
+                    <label data-bind="attr: {for: 'tuna_second_credit_card_installments'}" class="label">
+                        <span>
+                            <!-- ko i18n: 'Parcelas' -->
+                            <!-- /ko -->
+                        </span>
+                    </label>
+
+                    <div class="control">
+                        <select id="tuna_second_credit_card_installments"
+                                name="payment[tuna_second_credit_card_installments]" class="select">
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <label id="payUsingTwoCardsLink" for="payingWithTwoCards">Pagar usando dois cartões</label>
+            <input type="checkbox" id="payingWithTwoCards" value="0" />
+
+            <div class="field _required" id="installmentsDiv">
+                <label data-bind="attr: {for: 'tuna_credit_card_installments'}" class="label">
+                    <span>
+                        <!-- ko i18n: 'Parcelas' -->
+                        <!-- /ko -->
+                    </span>
+                </label>
+
+                <div class="control">
+                    <select id="payment[tuna_credit_card_installments]" name="payment[tuna_credit_card_installments]"
+                            class="select" data-bind="attr: {id: 'tuna_credit_card_installments'},
+                enable: true,
+                options: getInstallments(),
+                optionsValue: 'value',
+                optionsText: 'text',
+                value: 1">
+                    </select>
+                </div>
+                <label id="installmentsInvalidInfo" style=" color: #FF3030;display: none;">* insira parcelas</label>
+            </div>
         </div>
 
-        <!-- <div class="actions-toolbar" style="margin-top: 15px;float:left;clear:both;margin-bottom: 15px;">
+        <div class="field _required" id="cpfCnpjDiv">
+            <label data-bind="attr: {for: 'tuna_credit_card_document'}" class="label">
+                <span>
+                    <!-- ko i18n: 'CPF ou CNPJ' -->
+                    <!-- /ko -->
+                </span>
+            </label>
+
+            <div class="control">
+                <input class="input-text required-entry required" placeholder="000.000.000-00" name="payment[credit_card_document]" type="text"
+                       maxlength="18" minlength="11" data-validate="{required:true}" required data-bind="attr: {
+                        id: 'tuna_credit_card_document'},
+                        enable: true,
+                        valueUpdate: 'input'" />
+            </div>
+            <label id="cpfInvalidInfo" style="display: none; color: #FF3030;">* insira um CPF/CNPJ válido</label>
+        </div>
+
+        <div class="actions-toolbar" style="margin-top: 15px;float:left;clear:both;margin-bottom: 15px;">
             <div class="primary">
                 <button class="action primary checkout" type="submit" data-bind="
                         click: placeOrder,
@@ -194,10 +535,10 @@
                     <span data-bind="text: 'Pagar'"></span>
                 </button>
             </div>
-        </div> -->
+        </div>
     </div>
     <div id="badNewsDiv" style="display: none;">
         <h2>Método de pagamento não disponível para as configurações da loja.</h2>
     </div>
 </div>
-<!--/ko-->
+<!-- /ko -->
