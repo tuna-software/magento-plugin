@@ -172,6 +172,36 @@
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
+					<field id="p13" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 13x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-number</validate>
+					</field>
+					<field id="p14" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 14x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-number</validate>
+					</field>
+					<field id="p15" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 15x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-number</validate>
+					</field>
+					<field id="p16" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 16x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-number</validate>
+					</field>
+					<field id="p17" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 17x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-number</validate>
+					</field>
+					<field id="p18" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+						<label>Fee 18x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-number</validate>
+					</field>
 				</group>
 			</group>
 		</section>
