@@ -92,7 +92,11 @@
 					<field id="enable_partial_refund_with_invoice_order_status" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="25" translate="label" type="select">
 						<label>Order status to be observed in order to allow perform partial refund</label>
 						<source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
-					</field>		
+					</field>	
+					<field id="split_enabled" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="25" translate="label" type="select">
+						<label>Ativar split</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>	
 					<field id="sort_order" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="60" translate="label" type="text">
 						<label>Sort Order</label>
 					</field>
@@ -117,88 +121,103 @@
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p2" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p2" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="2x" type="text">
 						<label>Fee 2x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p3" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p3" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="3x" type="text">
 						<label>Fee 3x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p4" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p4" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="4x" type="text">
 						<label>Fee 4x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p5" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p5" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="5x" type="text">
 						<label>Fee 5x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p6" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p6" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="6x" type="text">
 						<label>Fee 6x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p7" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p7" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="7x" type="text">
 						<label>Fee 7x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p8" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p8" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="8x" type="text">
 						<label>Fee 8x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p9" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p9" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="9x" type="text">
 						<label>Fee 9x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p10" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p10" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="10x" type="text">
 						<label>Fee 10x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p11" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p11" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="11x" type="text">
 						<label>Fee 11x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p12" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p12" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="12x" type="text">
 						<label>Fee 12x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p13" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p13" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="13x" type="text">
 						<label>Fee 13x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p14" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p14" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="14x" type="text">
 						<label>Fee 14x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p15" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p15" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="15x" type="text">
 						<label>Fee 15x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p16" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p16" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="16x" type="text">
 						<label>Fee 16x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p17" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p17" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="17x" type="text">
 						<label>Fee 17x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>
-					<field id="p18" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="1x" type="text">
+					<field id="p18" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="18x" type="text">
 						<label>Fee 18x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-number</validate>
+					</field>
+					<field id="p19" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="19x" type="text">
+						<label>Fee 19x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-number</validate>
+					</field>
+					<field id="p20" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="20x" type="text">
+						<label>Fee 20x</label>
+						<comment>Ex.: 1.5</comment>
+						<validate>validate-number</validate>
+					</field>
+					<field id="p21" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="21x" type="text">
+						<label>Fee 21x</label>
 						<comment>Ex.: 1.5</comment>
 						<validate>validate-number</validate>
 					</field>

@@ -26,7 +26,10 @@ class InstallmentOption implements ArrayInterface
             ['value' => '15', 'label' => __('15x')],
             ['value' => '16', 'label' => __('16x')],
             ['value' => '17', 'label' => __('17x')],
-            ['value' => '18', 'label' => __('18x')]
+            ['value' => '18', 'label' => __('18x')],
+            ['value' => '19', 'label' => __('19x')],
+            ['value' => '20', 'label' => __('20x')],
+            ['value' => '21', 'label' => __('21x')]
         ];
     }
 }
