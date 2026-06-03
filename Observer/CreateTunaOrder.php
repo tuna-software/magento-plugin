@@ -9,6 +9,7 @@ use Magento\Framework\DB\Transaction;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Framework\HTTP\Client\Curl;
 use Magento\Store\Model\StoreManagerInterface; // Add this import
+use Tuna\TunaGateway\Helper\MarketplaceSplitResolver;
 
 class CreateTunaOrder implements ObserverInterface
 {
@@ -25,6 +26,7 @@ class CreateTunaOrder implements ObserverInterface
     protected $jsonHelper;
     protected $curlClient;
     protected $storeManager; // Add property for StoreManagerInterface
+    protected $marketplaceSplitResolver;
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
@@ -37,7 +39,8 @@ class CreateTunaOrder implements ObserverInterface
         InvoiceSender $invoiceSender,
         Transaction $transaction,
         Curl $curlClient,
-        StoreManagerInterface $storeManager // Inject StoreManagerInterface
+        StoreManagerInterface $storeManager, // Inject StoreManagerInterface
+        MarketplaceSplitResolver $marketplaceSplitResolver
     ) {
         $this->_scopeConfig = $scopeConfigInterface;
         $this->_session = $sessionManager;
@@ -55,6 +58,7 @@ class CreateTunaOrder implements ObserverInterface
         $this->_checkoutSession = $checkoutSession;
         $this->curlClient = $curlClient;
         $this->storeManager = $storeManager; // Assign StoreManagerInterface
+        $this->marketplaceSplitResolver = $marketplaceSplitResolver;
     }
 
     function roundDown($decimal, $precision)
@@ -121,7 +125,8 @@ class CreateTunaOrder implements ObserverInterface
                 $valorItem = (($item->getPrice()) * $juros) + ($shippingAmountPerItem / $qtdFloor);
                 $percentualDiscount = ($valorItem*$qtdFloor)/($valorTotal-($order->getDiscountAmount() * $juros));
                 $valorItem = $this->roundDown(($valorItem +((($order->getDiscountAmount() * $juros)/$qtdFloor)*$percentualDiscount)),2);
-                $cItem = [[
+                
+                $itemData = [
                     "Amount" =>  $valorItem,
                     "ProductDescription" => $item->getProduct()->getName(),
                     "ItemQuantity" => $qtdFloor,
@@ -129,7 +134,15 @@ class CreateTunaOrder implements ObserverInterface
                     "AntiFraud" => [
                         "Ean" => $item->getSku()
                     ]
-                ]];
+                ];
+                
+                // Adicionar split se configuração estiver ativa
+                $splitData = $this->marketplaceSplitResolver->getSplitForItem($item);
+                if ($splitData) {
+                    $itemData['split'] = $splitData;
+                }
+                
+                $cItem = [$itemData];
                 $itens = array_merge($itens, $cItem);
             }
 
@@ -527,7 +540,8 @@ class CreateTunaOrder implements ObserverInterface
                 $qtdFloor = ceil($item->getQtyToInvoice());
                 $percentualDiscount = ($valorItem*$qtdFloor)/($valorTotal-($order->getDiscountAmount()));
                 $valorItem = $this->roundDown(($valorItem +((($order->getDiscountAmount() * $juros)/$qtdFloor)*$percentualDiscount)),2);
-                $cItem = [[
+                
+                $itemData = [
                     "Amount" =>  $valorItem,
                     "ProductDescription" => $item->getProduct()->getName(),
                     "ItemQuantity" => $qtdFloor,
@@ -536,7 +550,15 @@ class CreateTunaOrder implements ObserverInterface
                     "AntiFraud" => [
                         "Ean" => $item->getSku()
                     ]
-                ]];
+                ];
+                
+                // Adicionar split se configuração estiver ativa
+                $splitData = $this->marketplaceSplitResolver->getSplitForItem($item);
+                if ($splitData) {
+                    $itemData['split'] = $splitData;
+                }
+                
+                $cItem = [$itemData];
                 $itens = array_merge($itens, $cItem);
             }
             $baseURL = $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK);
