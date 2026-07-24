@@ -71,8 +71,6 @@ class InvoicePartialRefundObserver extends AbstractDataAssignObserver
                     $url  = 'https://' . $this->_tunaEndpointDomain . '/api/Payment/Cancel';
 
                     $requestbody = [
-                        'AppToken' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
-                        'Account' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'),
                         'PartnerUniqueID' => $order->getIncrementId(),
                         'Origin' => 'TUNA-MAGENTO',
                         'PaymentDate' =>  date("Y-m-d", strtotime($order->getCreatedAt())),
@@ -87,6 +85,8 @@ class InvoicePartialRefundObserver extends AbstractDataAssignObserver
                         $bodyJsonRequest = json_encode($requestbody);
 
                         $this->curlClient->addHeader("Content-Type", "application/json");
+                        $this->curlClient->addHeader("x-tuna-apptoken", (string)$this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'));
+                        $this->curlClient->addHeader("x-tuna-account", (string)$this->_scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'));
                         $this->curlClient->post($url, $bodyJsonRequest);
                         $body = $this->curlClient->getBody();
 

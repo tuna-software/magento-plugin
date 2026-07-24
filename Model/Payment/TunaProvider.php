@@ -106,7 +106,9 @@ class TunaProvider implements ConfigProviderInterface
     public function getConfig()
     {
         $tunaSessionID = null;
-        $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/NewSession';
+        $response = null;
+        $tokenDomainUsed = $this->_tunaEndpointDomain;
+        $url = 'https://token.' . $tokenDomainUsed . '/api/Token/NewSession';
         $countriesInfo = $this->countryInformationAcquirer->getCountriesInfo();
         $countries = [];
         foreach ($countriesInfo as $country) {
@@ -186,10 +188,10 @@ class TunaProvider implements ConfigProviderInterface
         }
         try {
             $cItem = [
-                "AppToken" => $this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
                 "Customer" => [
-                    "Email" => $customerSessionEmail,
                     "ID" => $customerSessionID,
+                    "Name" => $customerSessionEmail !== '' ? $customerSessionEmail : $customerSessionID,
+                    "Email" => $customerSessionEmail,
                 ]
             ];
             $bodyJsonRequest = json_encode($cItem);
@@ -197,18 +199,54 @@ class TunaProvider implements ConfigProviderInterface
             /* Use Curl client */
             $httpClient = new Curl();
             $httpClient->addHeader("Content-Type", "application/json");
+            $httpClient->addHeader("x-tuna-apptoken", (string)$this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey'));
             $httpClient->post($url, $bodyJsonRequest);
             $responseBody = $httpClient->getBody();
 
             /* Convert JSON to Array */
             $response = $this->jsonHelper->jsonDecode($responseBody);
-            $tunaSessionID = $response["sessionId"];
+
+            if (!is_array($response)) {
+                $response = [];
+            }
+
+            $tunaSessionID = $response['sessionId']
+                ?? $response['SessionId']
+                ?? $response['sessionID']
+                ?? $response['SessionID']
+                ?? null;
+
+            if (empty($tunaSessionID)) {
+                $fallbackDomain = $tokenDomainUsed === 'tunagateway.com' ? 'tuna-demo.uy' : 'tunagateway.com';
+                $fallbackUrl = 'https://token.' . $fallbackDomain . '/api/Token/NewSession';
+
+                $fallbackClient = new Curl();
+                $fallbackClient->addHeader("Content-Type", "application/json");
+                $fallbackClient->post($fallbackUrl, $bodyJsonRequest);
+                $fallbackBody = $fallbackClient->getBody();
+                $fallbackResponse = $this->jsonHelper->jsonDecode($fallbackBody);
+
+                if (!is_array($fallbackResponse)) {
+                    $fallbackResponse = [];
+                }
+
+                $fallbackSessionId = $fallbackResponse['sessionId']
+                    ?? $fallbackResponse['SessionId']
+                    ?? $fallbackResponse['sessionID']
+                    ?? $fallbackResponse['SessionID']
+                    ?? null;
+
+                if (!empty($fallbackSessionId)) {
+                    $tunaSessionID = $fallbackSessionId;
+                    $tokenDomainUsed = $fallbackDomain;
+                    $response = $fallbackResponse;
+                }
+            }
         }catch(\Exception $e)
         {
         }
-        $response = null;
         if ($tunaSessionID !== null && $customerSession->isLoggedIn()) {
-            $url = 'https://token.' . $this->_tunaEndpointDomain . '/api/Token/List';
+            $url = 'https://token.' . $tokenDomainUsed . '/api/Token/List';
             $cItem = [
                 "SessionId" => $tunaSessionID
             ];
@@ -221,8 +259,10 @@ class TunaProvider implements ConfigProviderInterface
                 $responseBody = $httpClient->getBody();
 
                 $response = $this->jsonHelper->jsonDecode($responseBody);
+                if (!is_array($response)) {
+                    $response = [];
+                }
             } catch (\Exception $e) {
-                // Handle exception
             }
         }
 
@@ -231,13 +271,15 @@ class TunaProvider implements ConfigProviderInterface
                 'tunagateway' => [
                     'sessionid' =>  $tunaSessionID,
                     'useSandboxBundle' => $this->scopeConfig->getValue('payment/tuna_payment/options/endpoint_config') != 'production',
-                    'savedCreditCards' => ($response <> null && $response["code"] == 1) ? $response["tokens"] : null,
+                    'savedCreditCards' => ($response <> null && isset($response["code"]) && $response["code"] == 1 && isset($response["tokens"])) ? $response["tokens"] : null,
                     'is_user_logged_in' => $customerSession->isLoggedIn(),
                     'allow_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto'),
                     'allow_crypto' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_crypto'),
                     'allow_pix' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_pix'),
                     'allow_link' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_link'),
-                    'tuna_active' => $this->scopeConfig->getValue('payment/tuna_payment/active'),
+                    'allow_googlepay' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_googlepay'),
+                    'allow_applepay' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_applepay'),
+                    'tuna_active' => '0',
                     'allow_card' => $this->scopeConfig->getValue('payment/tuna_payment/options/allow_card'),
                     'allow_pay_with_two_cards' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/allow_pay_with_two_cards'),
                     'minimum_installment_value' => $this->scopeConfig->getValue('payment/tuna_payment/credit_card/minimum_installment_value'),
@@ -250,7 +292,12 @@ class TunaProvider implements ConfigProviderInterface
                     'title_boleto' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_boleto'),
                     'title_pix' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_pix'),
                     'title_link' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_link'),
-                    'title_crypto' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_crypto')
+                    'title_crypto' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_crypto'),
+                    'title_googlepay' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_googlepay'),
+                    'title_applepay' => $this->scopeConfig->getValue('payment/tuna_payment/options/title_applepay'),
+                    'merchant_id_googlepay' => $this->scopeConfig->getValue('payment/tuna_payment/options/merchant_id_googlepay'),
+                    'merchant_name_googlepay' => $this->scopeConfig->getValue('payment/tuna_payment/options/merchant_name_googlepay'),
+                    'merchant_id_applepay' => $this->scopeConfig->getValue('payment/tuna_payment/options/merchant_id_applepay')
                 ]
             ],
             'tuna_payment' => $this->tunaPaymentMethod->getStandardCheckoutPaymentUrl(),

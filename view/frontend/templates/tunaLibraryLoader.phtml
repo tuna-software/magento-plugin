@@ -1,0 +1,35 @@
+<!-- Tuna Library Global Loader -->
+<script type="text/javascript">
+    (function() {
+        'use strict';
+        
+        // Check if already loaded
+        if (window.Tuna && typeof window.Tuna === 'function') {
+            console.log('[TunaLoader] window.Tuna already available');
+            return;
+        }
+        
+        // Get the static URL for tuna.js
+        var tunaUrl = '<?php echo $this->getViewFileUrl('Tuna_TunaGateway::js/tuna.js'); ?>';
+        
+        console.log('[TunaLoader] Loading tuna.js from:', tunaUrl);
+        
+        // Create script tag
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = tunaUrl;
+        script.async = false;
+        
+        script.onerror = function() {
+            console.error('[TunaLoader] Failed to load tuna.js');
+        };
+        
+        script.onload = function() {
+            console.log('[TunaLoader] tuna.js loaded successfully. window.Tuna type:', typeof window.Tuna);
+        };
+        
+        document.head.appendChild(script);
+    })();
+</script>
+
+

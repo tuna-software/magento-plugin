@@ -26,6 +26,14 @@
     <event name="payment_method_assign_data_credit">
         <observer name="credit_custom_gateway_data_assign" instance="Tuna\TunaGateway\Observer\DataAssignObserver" />
     </event>
+
+    <event name="payment_method_assign_data_googlepay">
+        <observer name="googlepay_custom_gateway_data_assign" instance="Tuna\TunaGateway\Observer\DataAssignObserver" />
+    </event>
+
+    <event name="payment_method_assign_data_applepay">
+        <observer name="applepay_custom_gateway_data_assign" instance="Tuna\TunaGateway\Observer\DataAssignObserver" />
+    </event>
     
     <event name="sales_order_invoice_pay">
         <observer name="tuna_invoice_observe_partial_refund" instance="Tuna\TunaGateway\Observer\InvoicePartialRefundObserver" />

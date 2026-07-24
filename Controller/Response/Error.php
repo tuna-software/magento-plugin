@@ -35,14 +35,19 @@ class Error extends \Magento\Framework\App\Action\Action
         /** @var \Magento\Framework\View\Result\PageFactory $resultPage */
         $resultPage = $this->_resultPageFactory->create();
 
-        $oldOrderTotal = $this->order()->getBaseGrandTotal();
-        $newOrderTotal = $this->order()->getGrandTotal();
+        $order = $this->order();
+        if (!$order->getId()) {
+            return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'checkout/cart'));
+        }
 
-        $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderId($this->order()->getIncrementId().'');
+        $oldOrderTotal = $order->getBaseGrandTotal();
+        $newOrderTotal = $order->getGrandTotal();
+
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderId($order->getIncrementId().'');
         $resultPage->getLayout()->getBlock('tuna.response.error')->setStatus($this->status());
         $resultPage->getLayout()->getBlock('tuna.response.error')->setOrderProducts($this->products());
-        $resultPage->getLayout()->getBlock('tuna.response.error')->setDiscountExtra($this->order()->getDiscountAmount());
-        $resultPage->getLayout()->getBlock('tuna.response.error')->setShippingAmount($this->order()->getBaseShippingAmount());
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setDiscountExtra($order->getDiscountAmount());
+        $resultPage->getLayout()->getBlock('tuna.response.error')->setShippingAmount($order->getBaseShippingAmount());
         $resultPage->getLayout()->getBlock('tuna.response.error')->setOldOrderTotal($oldOrderTotal);
         $resultPage->getLayout()->getBlock('tuna.response.error')->setNewOrderTotal($newOrderTotal);
         //$this->clearSession();
@@ -65,26 +70,60 @@ class Error extends \Magento\Framework\App\Action\Action
      */
     private function order()
     {
-        return $this->_objectManager->create('Magento\Sales\Model\Order')->loadByIncrementId($this->session()->order_id);
+        $order = $this->_objectManager->create('Magento\Sales\Model\Order');
+        $incrementId = (string)$this->getSessionValue('order_id', '');
+
+        if ($incrementId !== '') {
+            $order = $order->loadByIncrementId($incrementId);
+            if ($order->getId()) {
+                return $order;
+            }
+        }
+
+        $lastRealOrder = $this->_objectManager->create('Magento\Checkout\Model\Session')->getLastRealOrder();
+        if ($lastRealOrder && $lastRealOrder->getId()) {
+            return $lastRealOrder;
+        }
+
+        return $order;
     }
 
     private function status()
     {
-        return $this->session()->order_status;
+        return $this->getSessionValue('order_status', '');
     }
     private function products()
     {
-        return $this->session()->order_products;
+        return $this->getSessionValue('order_products', []);
+    }
+
+    private function baseUrl()
+    {
+        return $this->_objectManager->create('Magento\Store\Model\StoreManagerInterface')->getStore()->getBaseUrl();
+    }
+
+    private function getSessionValue($key, $default = null)
+    {
+        $data = $this->session();
+        return array_key_exists($key, $data) ? $data[$key] : $default;
     }
     /**
      * Get session
      *
-     * @return object
+     * @return array
      */
     private function session()
     {
-        return (object)$this->_objectManager->create('Magento\Framework\Session\SessionManager')->getData(
-            'tuna_payment'
-        );
+        $data = $this->_objectManager->create('Magento\Framework\Session\SessionManager')->getData('tuna_payment');
+
+        if (is_array($data)) {
+            return $data;
+        }
+
+        if (is_object($data)) {
+            return (array)$data;
+        }
+
+        return [];
     }
 }

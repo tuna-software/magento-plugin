@@ -8,8 +8,15 @@
                 <value id="script-tuna-token" type="host">https://token.tunagateway.com</value>
                 <value id="script-tuna-engine" type="host">https://engine.tunagateway.com/</value>
                 <value id="script-tuna-engine-sandbox" type="host">https://sandbox.tuna-demo.uy</value>
-                <value id="img-tuna-js" type="host">https://js.tuna.uy</value>
-            </values>
+                <value id="script-tuna-js" type="host">https://js.tuna.uy</value>
+                <value id="script-google-pay-wildcard" type="host">https://*.google.com</value>
+                <value id="script-google-apis-wildcard" type="host">https://*.googleapis.com</value>
+                <value id="script-gstatic-wildcard" type="host">https://*.gstatic.com</value>
+                <value id="script-apple-pay-wildcard" type="host">https://*.apple.com</value>
+                <value id="script-apple-cdn-wildcard" type="host">https://*.cdn-apple.com</value>
+                <value id="script-tuna-statics" type="host">https://storage.googleapis.com</value>
+                <value id="script-store-domain" type="host">https://store.construcode.com.br</value>
+             </values>
         </policy>
         <policy id="frame-src">
             <values>
@@ -17,8 +24,12 @@
                 <value id="frame-tuna-token" type="host">https://token.tunagateway.com</value>
                 <value id="frame-tuna-engine" type="host">https://engine.tunagateway.com/</value>
                 <value id="frame-tuna-engine-sandbox" type="host">https://sandbox.tuna-demo.uy</value>
-                <value id="img-tuna-js" type="host">https://js.tuna.uy</value>
-            </values>
+                <value id="frame-tuna-js" type="host">https://js.tuna.uy</value>
+                <value id="frame-google-wildcard" type="host">https://*.google.com</value>
+                <value id="frame-apple-wildcard" type="host">https://*.apple.com</value>
+                <value id="frame-apple-cdn-wildcard" type="host">https://*.cdn-apple.com</value>
+                <value id="frame-store-domain" type="host">https://store.construcode.com.br</value>
+             </values>
         </policy>
         <policy id="img-src">
             <values>
@@ -27,6 +38,11 @@
                 <value id="img-tuna-engine" type="host">https://engine.tunagateway.com/</value>
                 <value id="img-tuna-engine-sandbox" type="host">https://sandbox.tuna-demo.uy</value>
                 <value id="img-tuna-js" type="host">https://js.tuna.uy</value>
+                <value id="img-google-wildcard" type="host">https://*.google.com</value>
+                <value id="img-gstatic-wildcard" type="host">https://*.gstatic.com</value>
+                <value id="img-apple-wildcard" type="host">https://*.apple.com</value>
+                <value id="img-apple-cdn-wildcard" type="host">https://*.cdn-apple.com</value>
+                <value id="img-store-domain" type="host">https://store.construcode.com.br</value>
             </values>
         </policy>
         <policy id="connect-src">
@@ -35,7 +51,27 @@
                 <value id="connect-tuna-token" type="host">https://token.tunagateway.com</value>
                 <value id="connect-tuna-engine" type="host">https://engine.tunagateway.com/</value>
                 <value id="connect-tuna-engine-sandbox" type="host">https://sandbox.tuna-demo.uy</value>
-                <value id="img-tuna-js" type="host">https://js.tuna.uy</value>
+                <value id="connect-tuna-js" type="host">https://js.tuna.uy</value>
+                <value id="connect-google-wildcard" type="host">https://*.google.com</value>
+                <value id="connect-googleapis-wildcard" type="host">https://*.googleapis.com</value>
+                <value id="connect-apple-wildcard" type="host">https://*.apple.com</value>
+                <value id="connect-apple-cdn-wildcard" type="host">https://*.cdn-apple.com</value>
+                <value id="connect-store-domain" type="host">https://store.construcode.com.br</value>
+            </values>
+        </policy>
+        <policy id="manifest-src">
+            <values>
+                <value id="manifest-google-pay" type="host">https://pay.google.com</value>
+                <value id="manifest-self" type="host">'self'</value>
+            </values>
+        </policy>
+    </policies>
+    <policies>
+        <policy id="style-src">
+            <values>
+                <value id="style-store-domain" type="host">https://store.construcode.com.br</value>
+                <value id="style-google-fonts" type="host">https://fonts.googleapis.com</value>
+                <value id="style-google-fonts-gstatic" type="host">https://fonts.gstatic.com</value>
             </values>
         </policy>
     </policies>

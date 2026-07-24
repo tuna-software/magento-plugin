@@ -23,7 +23,6 @@ define(
             try {
                 $('#boleto_document').mask(CpfCnpjMaskBehavior, cpfCnpjpOptions);
             } catch (e) {
-                console.log("applied");
             }
         }
 
@@ -52,7 +51,7 @@ define(
             isActive: function () {
                 let tunaGateway = window?.checkoutConfig?.payment?.tunagateway;
 
-                return tunaGateway?.allow_boleto === "1" && tunaGateway?.tuna_active !== "1";
+                return tunaGateway?.allow_boleto === "1";
             },
 
             isCPFValid: function (cpf) {
@@ -206,15 +205,24 @@ define(
                     'is_crypto_payment': "false",
                     'is_pix_payment': "false",
                     'is_link_payment': "false",
+                    'is_googlepay_payment': 'false',
+                    'is_applepay_payment': 'false',
+                    'wallet_token_provider': '',
+                    'wallet_token': '',
                     'payment_type': "TUNA_EBOL",
                 };
+
+                const placeOrderPaymentData = Object.assign({}, paymentData, {
+                    method: this.getCode(),
+                    additional_data: additionalData
+                });
 
                 $.when(setPaymentInformationAction(messageContainer, {
                     'method': this.getCode(),
                     'additional_data': additionalData
                 })).done(function () {
                     delete paymentData['title'];
-                    $.when(placeOrder(paymentData, messageContainer)).done(function () {
+                    $.when(placeOrder(placeOrderPaymentData, messageContainer)).done(function () {
                         $.mage.redirect(window.checkoutConfig.tuna_payment);
                     }).fail(function (result) {
                         alert({

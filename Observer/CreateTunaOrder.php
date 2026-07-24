@@ -71,14 +71,74 @@ class CreateTunaOrder implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $order = $observer->getEvent()->getOrder();
-        //verify transaction
-        if ($order->getStatus() == 'tuna_Started') {
+        $payment = $order->getPayment();
+        $paymentMethodCode = strtolower((string)($payment ? $payment->getMethod() : ''));
+        $supportedMethods = ['tuna', 'credit', 'boleto', 'pix', 'crypto', 'link', 'googlepay', 'applepay'];
+
+        // Process only Tuna methods. Relying on a specific initial order status is brittle across environments.
+        if (in_array($paymentMethodCode, $supportedMethods, true)) {
             $orderId = $order->getIncrementId();
             $shipping = $order->getShippingAddress();
             $billing = $order->getBillingAddress();
-            $payment = $order->getPayment();
+            $paymentAdditionalInfo = $payment->getAdditionalInformation();
+            $configuredAppKey = (string)$this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey');
+            $engineAppToken = $this->extractGuid($configuredAppKey);
 
-            $tokenSessionParam = $payment->getAdditionalInformation()["session_id"];
+            $tokenSessionParam = $paymentAdditionalInfo["session_id"] ?? null;
+            $buyerDocument = $paymentAdditionalInfo["buyer_document"] ?? "";
+            $isBoletoPayment = ($paymentAdditionalInfo["is_boleto_payment"] ?? "false") == "true";
+            $isCryptoPayment = ($paymentAdditionalInfo["is_crypto_payment"] ?? "false") == "true";
+            $isPixPayment = ($paymentAdditionalInfo["is_pix_payment"] ?? "false") == "true";
+            $isLinkPayment = ($paymentAdditionalInfo["is_link_payment"] ?? "false") == "true";
+            $paymentType = strtoupper((string)($paymentAdditionalInfo["payment_type"] ?? ''));
+
+            // Prefer Magento payment method code over additional_data flags to avoid stale state.
+            switch ($paymentMethodCode) {
+                case 'credit':
+                    $isBoletoPayment = false;
+                    $isCryptoPayment = false;
+                    $isPixPayment = false;
+                    $isLinkPayment = false;
+                    break;
+                case 'boleto':
+                    $isBoletoPayment = true;
+                    $isCryptoPayment = false;
+                    $isPixPayment = false;
+                    $isLinkPayment = false;
+                    break;
+                case 'crypto':
+                    $isBoletoPayment = false;
+                    $isCryptoPayment = true;
+                    $isPixPayment = false;
+                    $isLinkPayment = false;
+                    break;
+                case 'pix':
+                    $isBoletoPayment = false;
+                    $isCryptoPayment = false;
+                    $isPixPayment = true;
+                    $isLinkPayment = false;
+                    break;
+                case 'link':
+                    $isBoletoPayment = false;
+                    $isCryptoPayment = false;
+                    $isPixPayment = false;
+                    $isLinkPayment = true;
+                    break;
+            }
+            $isGooglePayPayment = ($paymentAdditionalInfo["is_googlepay_payment"] ?? "false") == "true"
+                || $paymentMethodCode === 'googlepay'
+                || $paymentType === 'TUNA_EGOOGLEPAY';
+            $isApplePayPayment = ($paymentAdditionalInfo["is_applepay_payment"] ?? "false") == "true"
+                || $paymentMethodCode === 'applepay'
+                || $paymentType === 'TUNA_EAPPLEPAY';
+            $walletTokenProvider = $paymentAdditionalInfo["wallet_token_provider"] ?? '';
+            $walletToken = $paymentAdditionalInfo["wallet_token"] ?? '';
+            $isWalletPayment = $isGooglePayPayment || $isApplePayPayment;
+
+            if ($isWalletPayment && empty($walletTokenProvider)) {
+                $walletTokenProvider = $isGooglePayPayment ? 'GooglePay' : 'ApplePay';
+            }
+
             $fullName =  $billing["firstname"] . " " . $billing["lastname"];
             $this->_coreSession->start();
             $customerID = $this->_coreSession->getCostumerID();
@@ -88,7 +148,7 @@ class CreateTunaOrder implements ObserverInterface
             }
             $itens = [];
 
-            $creditCardData = json_decode($payment->getAdditionalInformation()["credit_card_data"]);
+            $creditCardData = json_decode($paymentAdditionalInfo["credit_card_data"] ?? "[]");
             $valorTotal = $this->getValorFinal($order->getGrandTotal());
             $juros = 1;
             if ($creditCardData != null && count($creditCardData) > 0) {
@@ -183,67 +243,116 @@ class CreateTunaOrder implements ObserverInterface
                 }
             }
             $documentType = "CPF";
-            if (strlen($payment->getAdditionalInformation()["buyer_document"]) > 17) {
+            if (strlen($buyerDocument) > 17) {
                 $documentType = "CNPJ";
             }
             $paymentMethods = [];
-            if ($payment->getAdditionalInformation()["is_boleto_payment"] == "false") {
+            if (!$isBoletoPayment) {
                 if (
-                    $payment->getAdditionalInformation()["is_pix_payment"] == "false"
-                    && $payment->getAdditionalInformation()["is_crypto_payment"] == "false"
-                    && $payment->getAdditionalInformation()["is_link_payment"] == "false"
+                    !$isPixPayment
+                    && !$isCryptoPayment
+                    && !$isLinkPayment
                 ) {
-                    $order->addStatusHistoryComment('Pagamento em Cartão de crédito');
-                    $payment = $order->getPayment();
-                    $payment->setMethod('credit');
-                    $payment->save();
-
-                    foreach ($creditCardData as $index => $creditCard) {
-                        if ($index == 0) {
-                            $creditCardAmount = round($this->getValorFinal($creditCard->credit_card_amount, $creditCard->credit_card_installments), 2);
-                        } else {
-                            $creditCardAmount = $valorTotal - round($this->getValorFinal($creditCardData[0]->credit_card_amount, $creditCardData[0]->credit_card_installments), 2);
+                    if ($isWalletPayment) {
+                        if (empty($walletTokenProvider)) {
+                            $walletTokenProvider = $isGooglePayPayment ? 'GooglePay' : 'ApplePay';
                         }
 
-                        $cardHolderName = isset($creditCard->card_holder_name) ? $creditCard->card_holder_name : 'Unknown'; // Ensure card_holder_name exists
+                        if (empty($walletToken)) {
+                            $order->setStatus('tuna_Cancelled');
+                            $order->addStatusHistoryComment('Token de carteira digital ausente para processamento de pagamento.');
+                            $order->save();
+                            $this->_checkoutSession->restoreQuote();
+                            throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Não foi possível processar o token da carteira digital.'));
+                        }
 
-                        $expirationMonth = isset($creditCard->credit_card_expiration_month) ? $creditCard->credit_card_expiration_month * 1 : null; // Validate existence
-                        $expirationYear = isset($creditCard->credit_card_expiration_year) ? $creditCard->credit_card_expiration_year * 1 : null; // Validate existence
-
-                        $paymentMethod = [
-                            "PaymentMethodType" => "1",
-                            "amount" => $creditCardAmount,
-                            "Installments" => $creditCard->credit_card_installments,
-                            "CardInfo" => [
-                                "TokenProvider" => "Tuna",
-                                "CardNumber" => "",
-                                "CardHolderName" => $cardHolderName, // Use the validated cardHolderName
-                                "BrandName" => $creditCard->credit_card_brand,
-                                "ExpirationMonth" => $expirationMonth, // Use validated expirationMonth
-                                "ExpirationYear" => $expirationYear, // Use validated expirationYear
-                                "Token" => $creditCard->credit_card_token,
-                                "TokenSingleUse" => $isNewCustomer ? 1 : 0,
-                                "SaveCard" => false,
-                                "BillingInfo" => [
-                                    "Document" => $payment->getAdditionalInformation()["buyer_document"],
-                                    "DocumentType" => $documentType,
-                                    "Address" => [
-                                        "Street" => $billingAddress,
-                                        "Number" => $numberB,
-                                        "Complement" => $complementB,
-                                        "Neighborhood" => "Centro",
-                                        "City" => $billing["city"],
-                                        "State" => $this->getStateCode($billing["region"]),
-                                        "Country" => $billing["country_id"] != null ? $billing["country_id"] : "BR",
-                                        "PostalCode" => $billing["postcode"],
-                                        "Phone" => $billing["telephone"]
-                                    ]
+                        $payment = $order->getPayment();
+                        $payment->setMethod($isGooglePayPayment ? 'googlepay' : 'applepay');
+                        $payment->save();
+                        $order->addStatusHistoryComment($isGooglePayPayment ? 'Pagamento em Google Pay' : 'Pagamento em Apple Pay');
+                        $paymentMethods = [
+                            [
+                                "PaymentMethodType" => "1",
+                                "Amount" => $valorTotal,
+                                "Installments" => 1,
+                                "CardInfo" => [
+                                    "TokenProvider" => $walletTokenProvider,
+                                    "Token" => $walletToken,
                                 ]
                             ]
                         ];
-                        $paymentMethods[] = $paymentMethod;
+                    } else {
+                        if (empty($creditCardData) || count((array)$creditCardData) === 0) {
+                            $order->setStatus('tuna_Cancelled');
+                            $order->addStatusHistoryComment('Dados de cartao ausentes para o fluxo de credito.');
+                            $order->save();
+                            $this->_checkoutSession->restoreQuote();
+                            throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operacao. Nao foi possivel identificar os dados de pagamento.'));
+                        }
+
+                        $order->addStatusHistoryComment('Pagamento em Cartão de crédito');
+                        $payment = $order->getPayment();
+                        $payment->setMethod('credit');
+                        $payment->save();
+
+                        foreach ((array)$creditCardData as $index => $creditCard) {
+                            if ($index == 0) {
+                                $creditCardAmount = round($this->getValorFinal($creditCard->credit_card_amount, $creditCard->credit_card_installments), 2);
+                            } else {
+                                $creditCardAmount = $valorTotal - round($this->getValorFinal($creditCardData[0]->credit_card_amount, $creditCardData[0]->credit_card_installments), 2);
+                            }
+
+                            $cardHolderName = isset($creditCard->card_holder_name) ? $creditCard->card_holder_name : 'Unknown';
+
+                            $expirationMonth = isset($creditCard->credit_card_expiration_month) ? $creditCard->credit_card_expiration_month * 1 : null;
+                            $expirationYear = isset($creditCard->credit_card_expiration_year) ? $creditCard->credit_card_expiration_year * 1 : null;
+
+                            $creditCardToken = $creditCard->credit_card_token ?? '';
+                            if (empty($creditCardToken)) {
+                                $order->setStatus('tuna_Cancelled');
+                                $order->addStatusHistoryComment('Token de cartao ausente para processamento de pagamento.');
+                                $order->save();
+                                $this->_checkoutSession->restoreQuote();
+                                throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operacao. Nao foi possivel identificar o token do cartao.'));
+                            }
+
+                            $brandName = $creditCard->credit_card_brand ?? 'Unknown';
+
+                            $paymentMethod = [
+                                "PaymentMethodType" => "1",
+                                "amount" => $creditCardAmount,
+                                "Installments" => $creditCard->credit_card_installments,
+                                "CardInfo" => [
+                                    "TokenProvider" => "Tuna",
+                                    "CardNumber" => "",
+                                    "CardHolderName" => $cardHolderName,
+                                    "BrandName" => $brandName,
+                                    "ExpirationMonth" => $expirationMonth,
+                                    "ExpirationYear" => $expirationYear,
+                                    "Token" => $creditCardToken,
+                                    "TokenSingleUse" => $isNewCustomer ? 1 : 0,
+                                    "SaveCard" => false,
+                                    "BillingInfo" => [
+                                        "Document" => $buyerDocument,
+                                        "DocumentType" => $documentType,
+                                        "Address" => [
+                                            "Street" => $billingAddress,
+                                            "Number" => $numberB,
+                                            "Complement" => $complementB,
+                                            "Neighborhood" => "Centro",
+                                            "City" => $billing["city"],
+                                            "State" => $this->getStateCode($billing["region"]),
+                                            "Country" => $billing["country_id"] != null ? $billing["country_id"] : "BR",
+                                            "PostalCode" => $billing["postcode"],
+                                            "Phone" => $billing["telephone"]
+                                        ]
+                                    ]
+                                ]
+                            ];
+                            $paymentMethods[] = $paymentMethod;
+                        }
                     }
-                } elseif ($payment->getAdditionalInformation()["is_crypto_payment"] == "true") {
+                } elseif ($isCryptoPayment) {
                     $payment = $order->getPayment();
                     $payment->setMethod('crypto');
                     $payment->save();
@@ -254,7 +363,7 @@ class CreateTunaOrder implements ObserverInterface
                             "Amount" => $valorTotal
                         ]
                     ];
-                } elseif ($payment->getAdditionalInformation()["is_pix_payment"] == "true") {
+                } elseif ($isPixPayment) {
                     $payment = $order->getPayment();
                     $payment->setMethod('pix');
                     $payment->save();
@@ -290,7 +399,7 @@ class CreateTunaOrder implements ObserverInterface
                         "Amount" => $valorTotal,
                         "BoletoInfo" => [
                             "BillingInfo" => [
-                                "Document" => $payment->getAdditionalInformation()["buyer_document"],
+                                "Document" => $buyerDocument,
                                 "DocumentType" => $documentType,
                                 "Address" => [
                                     "Street" => $billingAddress,
@@ -308,18 +417,16 @@ class CreateTunaOrder implements ObserverInterface
                     ]
                 ];
             }
-            if ($payment->getAdditionalInformation()["is_link_payment"] == "false"){
+            if (!$isLinkPayment){
             $url  = 'https://' . $this->_tunaEndpointDomain . '/api/Payment/Init';
             $requestbody = [
-                'AppToken' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
-                'Account' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'),
                 'PartnerUniqueID' => $orderId,
                 'TokenSession' =>  $tokenSessionParam,
                 'Customer' => [
                     'Email' => $billing["email"],
                     'Name' => $fullName,
                     'ID' => $customerID,
-                    'Document' => $payment->getAdditionalInformation()["buyer_document"],
+                    'Document' => $buyerDocument,
                     'DocumentType' => $documentType
                 ],
                 "FrontData" => [
@@ -346,11 +453,23 @@ class CreateTunaOrder implements ObserverInterface
             try {
                 $bodyJsonRequest = json_encode($requestbody);
                 $this->curlClient->addHeader("Content-Type", "application/json");
+                $this->curlClient->addHeader("x-tuna-apptoken", $configuredAppKey);
+                $this->curlClient->addHeader("x-tuna-account", (string)$this->_scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'));
                 $this->curlClient->post($url, $bodyJsonRequest); // Use Curl client to send POST request
                 $body = $this->curlClient->getBody(); // Get the response body
 
                 $response = $this->jsonHelper->unserialize($body);
-                switch (strval($response["status"])) {
+                $response = $this->normalizeResponseKeys($response);
+                if (!is_array($response)) {
+                    $response = [];
+                }
+
+                $responseCode = (string)($response['code'] ?? '');
+                $responseStatus = (string)($response['status'] ?? '');
+                $responseMethods = isset($response['methods']) && is_array($response['methods']) ? $response['methods'] : [];
+                $firstMethod = isset($responseMethods[0]) && is_array($responseMethods[0]) ? $responseMethods[0] : [];
+
+                switch ($responseStatus) {
                     case '0':
                         $order->setStatus('tuna_Started');
                         break;
@@ -386,27 +505,27 @@ class CreateTunaOrder implements ObserverInterface
                         break;
                     case '4':
                         $order->setStatus('tuna_Denied');
-                        $this->_checkoutSession->restoreOrder();
+                        $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         break;
                     case '5':
                         $order->setStatus('tuna_Cancelled');
-                        $this->_checkoutSession->restoreOrder();
+                        $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         break;
                     case '-1':
                         $order->setStatus('tuna_Cancelled');
-                        $this->_checkoutSession->restoreOrder();
+                        $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         break;
                     case '6':
                         $order->setStatus('tuna_Expired');
-                        $this->_checkoutSession->restoreOrder();
+                        $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento expirado.'));
                         break;
                     case '7':
                         $order->setStatus('tuna_Chargeback');
-                        $this->_checkoutSession->restoreOrder();
+                        $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         break;
                     case '8':
@@ -414,27 +533,27 @@ class CreateTunaOrder implements ObserverInterface
                         break;
                     case '9':
                         $order->setStatus('tuna_PartialCancel');
-                        $this->_checkoutSession->restoreOrder();
+                        $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         break;
                     case 'A':
                         $order->setStatus('tuna_Error');
-                        $this->_checkoutSession->restoreOrder();
+                        $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         break;
                     case 'B':
                         $order->setStatus('tuna_RedFlag');
-                        $this->_checkoutSession->restoreOrder();
+                        $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         break;
                     case 'C':
                     case 'P':
-                        if (($payment->getAdditionalInformation()["is_crypto_payment"] == "false")
-                            && ($payment->getAdditionalInformation()["is_pix_payment"] == "false")
-                            && ($payment->getAdditionalInformation()["is_boleto_payment"] == "false"))
+                        if ((!$isCryptoPayment)
+                            && (!$isPixPayment)
+                            && (!$isBoletoPayment))
                             {
                                 $order->setStatus('tuna_PendingCapture');
-                                    switch (strval($response["methods"][0]["status"]))
+                                    switch ((string)($firstMethod['status'] ?? ''))
                                     {
                                         case '3':
                                         case '4':
@@ -448,7 +567,7 @@ class CreateTunaOrder implements ObserverInterface
                                         case 'B':
                                         case 'G':
                                         case 'N':
-                                            $this->_checkoutSession->restoreOrder();
+                                            $this->_checkoutSession->restoreQuote();
                                             throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                                             break;
                                         default:
@@ -465,37 +584,41 @@ class CreateTunaOrder implements ObserverInterface
                         break;
                     case 'E':
                         $order->setStatus('tuna_DeniedAntiFraud');
-                        $this->_checkoutSession->restoreOrder();
+                        $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         break;
                 }
 
-                if (strval($response["code"]) == "1" && ($response["status"] == "C" || $response["status"] == "P")) {
-                    if ($payment->getAdditionalInformation()["is_boleto_payment"] == "true") {
-                        if ($response["methods"] != null && $response["methods"][0]["redirectInfo"] != null) {
+                if ($responseCode === "1" && ($responseStatus === "C" || $responseStatus === "P")) {
+                    $redirectInfo = $firstMethod['redirectinfo'] ?? $firstMethod['redirectInfo'] ?? null;
+                    $cryptoInfo = $firstMethod['cryptoinfo'] ?? $firstMethod['cryptoInfo'] ?? null;
+                    $pixInfo = $firstMethod['pixinfo'] ?? $firstMethod['pixInfo'] ?? null;
+
+                    if ($isBoletoPayment) {
+                        if (is_array($redirectInfo) && !empty($redirectInfo['url'])) {
                             $additionalData = $payment->getAdditionalInformation();
-                            $additionalData["boleto_url"] = $response["methods"][0]["redirectInfo"]["url"];
+                            $additionalData["boleto_url"] = $redirectInfo['url'];
                             $payment->setData('additional_information', $additionalData);
                             $payment->save();
-                            $order->addStatusHistoryComment('Link: '. $response["methods"][0]["redirectInfo"]["url"]);
+                            $order->addStatusHistoryComment('Link: '. $redirectInfo['url']);
                         }
                     }
-                    if ($payment->getAdditionalInformation()["is_crypto_payment"] == "true") {
-                        if ($response["methods"] != null && $response["methods"][0]["cryptoInfo"] != null) {
+                    if ($isCryptoPayment) {
+                        if (is_array($cryptoInfo)) {
                             $additionalData = $payment->getAdditionalInformation();
-                            $additionalData["crypto_coin_value"] = $response["methods"][0]["cryptoInfo"]["coinValue"];
-                            $additionalData["crypto_coin_rate_currency"] = $response["methods"][0]["cryptoInfo"]["coinRateCurrency"];
-                            $additionalData["crypto_coin_addr"] = $response["methods"][0]["cryptoInfo"]["coinAddr"];
-                            $additionalData["crypto_coin_qrcode_url"] = $response["methods"][0]["cryptoInfo"]["coinQRCodeUrl"];
-                            $additionalData["crypto_coin"] = $response["methods"][0]["cryptoInfo"]["coin"];
+                            $additionalData["crypto_coin_value"] = $cryptoInfo['coinvalue'] ?? $cryptoInfo['coinValue'] ?? null;
+                            $additionalData["crypto_coin_rate_currency"] = $cryptoInfo['coinratecurrency'] ?? $cryptoInfo['coinRateCurrency'] ?? null;
+                            $additionalData["crypto_coin_addr"] = $cryptoInfo['coinaddr'] ?? $cryptoInfo['coinAddr'] ?? null;
+                            $additionalData["crypto_coin_qrcode_url"] = $cryptoInfo['coinqrcodeurl'] ?? $cryptoInfo['coinQRCodeUrl'] ?? null;
+                            $additionalData["crypto_coin"] = $cryptoInfo['coin'] ?? null;
                             $payment->setData('additional_information', $additionalData);
                             $payment->save();
                         }
                     }
-                    if ($payment->getAdditionalInformation()["is_pix_payment"] == "true") {
-                        if ($response["methods"] != null && $response["methods"][0]["pixInfo"] != null) {
+                    if ($isPixPayment) {
+                        if (is_array($pixInfo)) {
                             $additionalData = $payment->getAdditionalInformation();
-                            $pixImageIndo = $response["methods"][0]["pixInfo"]["qrImage"];
+                            $pixImageIndo = $pixInfo['qrimage'] ?? $pixInfo['qrImage'] ?? '';
                             if (stripos($pixImageIndo,'data:image') === false
                             && stripos($pixImageIndo,'https://') === false )
                             {
@@ -504,10 +627,10 @@ class CreateTunaOrder implements ObserverInterface
                             {
                                 $additionalData["pix_image"] = $pixImageIndo;
                             }
-                            $additionalData["pix_key"] = $response["methods"][0]["pixInfo"]["qrContent"];
+                            $additionalData["pix_key"] = $pixInfo['qrcontent'] ?? $pixInfo['qrContent'] ?? '';
                             $additionalData["initial_total_value"] = $order->getGrandTotal();
                             $payment->setData('additional_information', $additionalData);
-                            $order->addStatusHistoryComment('Chave Pix: '. $response["methods"][0]["pixInfo"]["qrContent"]);
+                            $order->addStatusHistoryComment('Chave Pix: '. ($pixInfo['qrcontent'] ?? $pixInfo['qrContent'] ?? ''));
                             $payment->save();
                         }
                     }
@@ -564,8 +687,6 @@ class CreateTunaOrder implements ObserverInterface
             $baseURL = $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK);
             $url  = 'https://' . $this->_tunaEndpointDomain . '/api/PaymentLink/Create';
             $requestbody = [
-                'AppToken' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
-                'Account' => $this->_scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'),
                 'PartnerUniqueID' => $orderId,
                 "Amount" => $valorTotal,
                 "description"=>  "Pagamento Pedido Nº:". $orderId,
@@ -579,7 +700,7 @@ class CreateTunaOrder implements ObserverInterface
                     'Email' => $billing["email"],
                     'Name' => $fullName,
                     'ID' => $customerID,
-                    'Document' => $payment->getAdditionalInformation()["buyer_document"],
+                    'Document' => $buyerDocument,
                     'DocumentType' => $documentType
                 ],
                 "expirationinminutes"=>  2880,
@@ -599,31 +720,42 @@ class CreateTunaOrder implements ObserverInterface
             try {
                 $bodyJsonRequest = json_encode($requestbody);
                 $this->curlClient->addHeader("Content-Type", "application/json");
+                $this->curlClient->addHeader("x-tuna-apptoken", $configuredAppKey);
+                $this->curlClient->addHeader("x-tuna-account", (string)$this->_scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'));
                 $this->curlClient->post($url, $bodyJsonRequest); // Use Curl client to send POST request
                 $body = $this->curlClient->getBody(); // Get the response body
-
                 $response = $this->jsonHelper->unserialize($body);
-                switch (strval($response["code"])) {
+                $response = $this->normalizeResponseKeys($response);
+                if (!is_array($response)) {
+                    $response = [];
+                }
+
+                $responseCode = (string)($response['code'] ?? '');
+                $paymentLink = isset($response['paymentlink']) && is_array($response['paymentlink'])
+                    ? $response['paymentlink']
+                    : (isset($response['paymentLink']) && is_array($response['paymentLink']) ? $response['paymentLink'] : []);
+
+                switch ($responseCode) {
                     case '1':
                             $order->setStatus('tuna_PendingCapture');
                         break;
                     default:
                         $order->setStatus('tuna_Error');
-                        $this->_checkoutSession->restoreOrder();
+                        $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         break;
                 }
 
-                if (strval($response["code"]) == "1" && $response["paymentLink"] !=null && $response["paymentLink"]["url"] != null) {
+                if ($responseCode === "1" && !empty($paymentLink['url'])) {
                     $additionalData = $payment->getAdditionalInformation();
-                    $additionalData["link_url"] = $response["paymentLink"]["url"];
+                    $additionalData["link_url"] = $paymentLink['url'];
                     $payment->setData('additional_information', $additionalData);
                     $payment->save();
-                    $order->addStatusHistoryComment('Link: '. $response["paymentLink"]["url"]);
+                    $order->addStatusHistoryComment('Link: '. $paymentLink['url']);
                 }else
                 {
                     $order->setStatus('tuna_Error');
-                    $this->_checkoutSession->restoreOrder();
+                    $this->_checkoutSession->restoreQuote();
                     throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                 }
             } catch (\Exception $e) {
@@ -653,17 +785,37 @@ class CreateTunaOrder implements ObserverInterface
         }
     }
 
-    public function saveLog($txt)
+    private function normalizeResponseKeys($data)
     {
-        $filename = "/var/www/html/app/code/Tuna/TunaGateway/newfile.txt";
-        $file = fopen($filename, "a");
-
-        if ($file == false) {
-            echo ("Error in opening new file");
-            exit();
+        if (!is_array($data)) {
+            return $data;
         }
-        fwrite($file, $txt . " | " . date("j/n/Y h:i:s") . "\n");
-        fclose($file);
+
+        $normalized = [];
+        foreach ($data as $key => $value) {
+            $normalizedKey = is_string($key) ? strtolower($key) : $key;
+            $normalized[$normalizedKey] = $this->normalizeResponseKeys($value);
+        }
+
+        return $normalized;
+    }
+
+    private function extractGuid($value)
+    {
+        $candidate = trim((string)$value);
+        if ($candidate === '') {
+            return null;
+        }
+
+        if (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/', $candidate)) {
+            return $candidate;
+        }
+
+        if (preg_match('/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})/', $candidate, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 
     public function getStateCode($state)
@@ -755,4 +907,5 @@ class CreateTunaOrder implements ObserverInterface
         return $code;
     }
 }
+
 

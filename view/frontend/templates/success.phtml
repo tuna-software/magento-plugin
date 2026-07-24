@@ -3,7 +3,17 @@
 /** @var $block \Magento\Checkout\Block\Onepage\Success */ ?>
 
 <div>
-    <?php if ($block->getStatus() == "tuna_Captured" || ($block->getStatus() == "tuna_PendingCapture" && ($block->getIsPix() == "true" || $block->getIsLink() == "true"  || $block->getIsBoleto() == "true" || $block->getIsCrypto() == "true"))) { ?>
+    <?php
+        $status = strtolower(trim((string)$block->getStatus()));
+        $isSuccessStatus = in_array($status, ["tuna_captured", "complete"], true);
+        $isPendingCaptureAllowed = $status == "tuna_pendingcapture" && (
+            $block->getIsPix() == "true" ||
+            $block->getIsLink() == "true" ||
+            $block->getIsBoleto() == "true" ||
+            $block->getIsCrypto() == "true"
+        );
+    ?>
+    <?php if ($isSuccessStatus || $isPendingCaptureAllowed) { ?>
 
         <h2><?php echo __('Pedido concluído # <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></h2>
 

@@ -69,9 +69,9 @@ class PixValidation extends Action
             exit;
         }
         $url = $this->_tunaEndpointDomain;
+        $configuredAppKey = (string)$this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey');
+        $engineAppToken = $this->extractGuid($configuredAppKey);
         $cItem = [
-            "AppToken" => $this->scopeConfig->getValue('payment/tuna_payment/credentials/appKey'),
-            "Account" => $this->scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'),
             "PartnerUniqueID" => $orderID . "",
             "PaymentDate" => date('Y-m-d', strtotime($order->getCreatedAt()) + 19800)
         ];
@@ -79,16 +79,27 @@ class PixValidation extends Action
         $requestBody = json_encode($cItem);
 
         $this->curlClient->addHeader("Content-Type", "application/json");
+        $this->curlClient->addHeader("x-tuna-apptoken", $configuredAppKey);
+        $this->curlClient->addHeader("x-tuna-account", (string)$this->scopeConfig->getValue('payment/tuna_payment/credentials/partner_account'));
         $this->curlClient->post($url, $requestBody);
         $responseBody = $this->curlClient->getBody();
 
         /* convert JSON to Array */
-        $response = $this->jsonHelper->unserialize($responseBody);
-        $status = $response["status"];
+        try {
+            $response = $this->jsonHelper->unserialize($responseBody);
+        } catch (\InvalidArgumentException $e) {
+            $response = [];
+        }
+        if (!is_array($response)) {
+            $response = [];
+        }
+        $response = $this->normalizeResponseKeys($response);
+        $status = (string)($response["status"] ?? '');
+        $responseCode = (string)($response["code"] ?? '');
 
 
         $payment = $order->getPayment();
-        if ($response["code"] == "-1") {
+        if ($responseCode == "-1") {
             $order->addStatusToHistory('tuna_Cancelled', null, true);
             $order->setStatus('tuna_Cancelled');
             $order->save();
@@ -154,6 +165,39 @@ class PixValidation extends Action
             }
         }
         exit;
+    }
+
+    private function normalizeResponseKeys($data)
+    {
+        if (!is_array($data)) {
+            return $data;
+        }
+
+        $normalized = [];
+        foreach ($data as $key => $value) {
+            $normalizedKey = is_string($key) ? strtolower($key) : $key;
+            $normalized[$normalizedKey] = $this->normalizeResponseKeys($value);
+        }
+
+        return $normalized;
+    }
+
+    private function extractGuid($value)
+    {
+        $candidate = trim((string)$value);
+        if ($candidate === '') {
+            return null;
+        }
+
+        if (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/', $candidate)) {
+            return $candidate;
+        }
+
+        if (preg_match('/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})/', $candidate, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 
     private function session()

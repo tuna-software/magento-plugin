@@ -10,10 +10,6 @@ define(
         'use strict';
         rendererList.push(
             {
-                type: 'tuna',
-                component: 'Tuna_TunaGateway/js/view/payment/method-renderer/tuna-method'
-            },
-            {
                 type: 'boleto',
                 component: 'Tuna_TunaGateway/js/view/payment/method-renderer/boleto-method'
             },
@@ -28,6 +24,14 @@ define(
             {
                 type: 'link',
                 component: 'Tuna_TunaGateway/js/view/payment/method-renderer/link-method'
+            },
+            {
+                type: 'googlepay',
+                component: 'Tuna_TunaGateway/js/view/payment/method-renderer/googlepay-method'
+            },
+            {
+                type: 'applepay',
+                component: 'Tuna_TunaGateway/js/view/payment/method-renderer/applepay-method'
             },
             {
                 type: 'pix',

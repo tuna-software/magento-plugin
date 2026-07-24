@@ -31,21 +31,10 @@
 				</group>
 				<group id="options" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
 					<label>Options</label>
-					<field id="active" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label" type="select">
-						<label>Enable Tuna all in one</label>
-						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-						 <config_path>payment/tuna_payment/active</config_path>
-					</field>
-					<field id="title" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="11" translate="label" type="text">
-						<label>Title all methods in one</label>						
-					</field>
 					<field id="endpoint_config" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="9" translate="label" type="select">
 						<label>Environment</label>
 						<source_model>Tuna\TunaGateway\Model\Config\Source\EndpointConfiguration</source_model>
 					</field>
-					<field id="antifraudConfig" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="30" translate="label" type="text">
-						<label>Antifraud configuration</label>
-					</field>								
 					<field id="allow_boleto" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="13" translate="label" type="select">
 						<label>Allow Offline Payment (Boleto)</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
@@ -81,22 +70,60 @@
 					<field id="title_link" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="22" translate="label" type="text">
 						<label>Title to External Payment Link</label>						
 					</field>	
-					<field id="auto_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="23" translate="label" type="select">
+					<field id="allow_googlepay" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="23" translate="label" type="select">
+						<label>Allow Google Pay</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>
+					<field id="title_googlepay" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="24" translate="label" type="text">
+						<label>Title to Google Pay</label>
+					</field>
+					<field id="merchant_id_googlepay" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="25" translate="label" type="text">
+						<label>Google Pay Merchant ID</label>
+						<validate>required-entry</validate>
+						<depends>
+							<field id="allow_googlepay">1</field>
+						</depends>
+					</field>
+					<field id="merchant_name_googlepay" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="26" translate="label" type="text">
+						<label>Google Pay Merchant Name</label>
+						<validate>required-entry</validate>
+						<depends>
+							<field id="allow_googlepay">1</field>
+						</depends>
+					</field>
+					<field id="allow_applepay" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="27" translate="label" type="select">
+						<label>Allow Apple Pay</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>
+					<field id="title_applepay" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="28" translate="label" type="text">
+						<label>Title to Apple Pay</label>
+					</field>
+					<field id="merchant_id_applepay" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="29" translate="label" type="text">
+						<label>Apple Pay Merchant ID</label>
+						<validate>required-entry</validate>
+						<depends>
+							<field id="allow_applepay">1</field>
+						</depends>
+					</field>
+					<field id="split_enabled" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="30" translate="label" type="select">
+						<label>Enable Split</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>	
+					<field id="auto_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="31" translate="label" type="select">
 						<label>Generate Invoice Automatically</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 					</field>
-					<field id="enable_partial_refund_with_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="24" translate="label" type="select">
+					<field id="enable_partial_refund_with_invoice" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="32" translate="label" type="select">
 						<label>Enable partial refund when invoice is generated with value less than order amount (ONLY FOR PIX PAYMENT)</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 					</field>
-					<field id="enable_partial_refund_with_invoice_order_status" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="25" translate="label" type="select">
+					<field id="enable_partial_refund_with_invoice_order_status" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="33" translate="label" type="select">
 						<label>Order status to be observed in order to allow perform partial refund</label>
 						<source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
 					</field>	
-					<field id="split_enabled" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="25" translate="label" type="select">
-						<label>Ativar split</label>
-						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-					</field>	
+					<field id="antifraudConfig" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="34" translate="label" type="text">
+						<label>Antifraud configuration</label>
+					</field>
 					<field id="sort_order" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="60" translate="label" type="text">
 						<label>Sort Order</label>
 					</field>

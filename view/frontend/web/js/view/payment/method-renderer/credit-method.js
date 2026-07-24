@@ -1,5 +1,6 @@
 define(
     [
+        'tuna_checkout_info',
         'tuna_lib',
         'Magento_Ui/js/modal/alert',
         'jquery',
@@ -9,7 +10,7 @@ define(
         'Magento_Checkout/js/action/place-order',
         'Magento_Catalog/js/price-utils'
     ],
-    function (t, alert, $, quote, Component, setPaymentInformationAction, placeOrder, priceUtils) {
+    function (tuna_checkout_info, t, alert, $, quote, Component, setPaymentInformationAction, placeOrder, priceUtils) {
         'use strict';
 
         function fillInstallmentsSelector() {
@@ -100,6 +101,38 @@ define(
             return result;
         }
 
+        function getFallbackCardImageMap() {
+            const baseUrl = require.toUrl('Tuna_TunaGateway/images/');
+
+            return {
+                AMAZON: baseUrl + 'AMAZON.png',
+                AMEX: baseUrl + 'AMEX.png',
+                CIRRUS: baseUrl + 'CIRRUS.png',
+                DINNERS: baseUrl + 'DINNERS.png',
+                DIRECTDEBIT: baseUrl + 'DIRECT_DEBIT.png',
+                DISCOVER: baseUrl + 'DISCOVER.png',
+                EBAY: baseUrl + 'EBAY.png',
+                EWAY: baseUrl + 'EWAY.png',
+                JCB: baseUrl + 'JCB.png',
+                MAESTRO: baseUrl + 'MAESTRO.png',
+                MASTERCARD: baseUrl + 'MASTERCARD.png',
+                MASTER: baseUrl + 'MASTERCARD.png',
+                PAYPAL: baseUrl + 'PAYPAL.png',
+                SAGE: baseUrl + 'SAGE.png',
+                SHOPIFY: baseUrl + 'SHOPIFY.png',
+                SKRILLMONEYBOOKERS: baseUrl + 'SKRILL_MONEYBOOKERS.png',
+                SKRILL: baseUrl + 'SKRILL.png',
+                SOLO2: baseUrl + 'SOLO_2.png',
+                SOLO: baseUrl + 'SOLO.png',
+                VISAELECTRON: baseUrl + 'VISA_ELECTRON.png',
+                VISA: baseUrl + 'VISA.png',
+                WESTERNUNION: baseUrl + 'WESTERN_UNION.png',
+                WORLDPAY: baseUrl + 'WORLDPAY.png',
+                W: baseUrl + 'W.png',
+                UNKNOWN: baseUrl + 'UNKNOWN.svg'
+            };
+        }
+
         function secondCardRadioChanged() {
             if ($("#tuna_second_card_radio_saved").prop("checked")) {
                 $("#secondNewCardDiv").hide();
@@ -120,8 +153,12 @@ define(
             }
         };
 
-        const payUsingTwoCardsClicked = function () {
-            if ($(" #payingWithTwoCards").val() === "0") {
+        const payUsingTwoCardsClicked = function (isUsingTwoCards) {
+            if (isUsingTwoCards === undefined) {
+                isUsingTwoCards = $(" #payingWithTwoCards").is(":checked");
+            }
+
+            if (isUsingTwoCards) {
                 // Pay with two cards
                 const savedCards = window.checkoutConfig.payment.tunagateway.savedCreditCards;
                 $(" #secondCardSelectorDiv").show();
@@ -133,7 +170,7 @@ define(
                     $(" #tuna_second_card_radio_saved").prop("checked", true);
                     $(" #secondSavedCardDiv").show();
                 }
-                $(" #payingWithTwoCards").val("1");
+                $(" #payingWithTwoCards").prop("checked", true).val("1");
                 $(" #payUsingTwoCardsLink").text("Pagar usando um cartão");
                 $(" #installmentsDiv").hide();
 
@@ -146,7 +183,7 @@ define(
                 fillInstallmentsSelector();
             } else {
                 // Pay with one card
-                $(" #payingWithTwoCards").val("0");
+                $(" #payingWithTwoCards").prop("checked", false).val("0");
                 $(" #installmentsDiv").show();
                 $(" #first_card_installments_div").hide();
                 $(" #secondCardSelectorDiv").hide();
@@ -189,9 +226,7 @@ define(
                         $(' #tuna_billing_address_phone').mask('(00) 0000-00009');
                     }
                 });
-            } catch (e) {
-                console.error(e.message);
-            }
+            } catch (e) {}
         }
 
         function valid_credit_card(value) {
@@ -227,8 +262,19 @@ define(
                     refreshOrderInfo();
                 });
                 $(' #tuna_second_credit_card_installments').on("change", _ => refreshOrderInfo());
-                $("#payUsingTwoCardsLink").on("click", payUsingTwoCardsClicked);
-                $("#payingWithTwoCards").on("change", payUsingTwoCardsClicked);
+                $(document)
+                    .off("change.tunaTwoCards", "#payingWithTwoCards")
+                    .on("change.tunaTwoCards", "#payingWithTwoCards", function () {
+                        payUsingTwoCardsClicked($(this).is(":checked"));
+                    });
+
+                $(document)
+                    .off("click.tunaTwoCards", "#payUsingTwoCardsLink")
+                    .on("click.tunaTwoCards", "#payUsingTwoCardsLink", function (event) {
+                        event.preventDefault();
+                        const nextState = !$(" #payingWithTwoCards").is(":checked");
+                        $(" #payingWithTwoCards").prop("checked", nextState).trigger("change");
+                    });
                 $(" #checkmo").on("click", resetOrderInfo);
 
                 $(" #tuna_billing_address_country").on("change", _ => {
@@ -260,10 +306,6 @@ define(
                     }
                 });
 
-                $(document).on("change", 'input[id=payingWithTwoCards]', function () {
-                    payUsingTwoCardsClicked()
-                });
-
                 $('input[type=radio][name=billingAddress]').on("change", function () {
                     $(" #billingAddressFields").hide();
                 });
@@ -274,9 +316,7 @@ define(
                 $(document).on("change", "input[name=firstCardRadio]", function () {
                     firstCardRadioChanged();
                 });
-            } catch (e) {
-                console.error(e.message);
-            }
+            } catch (e) {}
         }
 
         function getOrderTotal() {
@@ -322,9 +362,14 @@ define(
                 template: 'Tuna_TunaGateway/payment/credit',
             },
 
+            tuna: null,
 
             initialize: function () {
                 this._super();
+
+                if (!window.tunaImages || typeof window.tunaImages !== 'object') {
+                    window.tunaImages = {};
+                }
 
                 var sessionID = window.checkoutConfig.payment.tunagateway.sessionid;
                 var env = window.checkoutConfig.payment.tunagateway.useSandboxBundle ? 'sandbox' : 'production';
@@ -385,7 +430,13 @@ define(
                 return window.checkoutConfig.countries;
             },
             getCreditCardFlag: function (brand) {
-                return window.tunaImages[brand.toUpperCase()];
+                const fallbackImages = getFallbackCardImageMap();
+                const images = (window.tunaImages && typeof window.tunaImages === 'object')
+                    ? Object.assign({}, fallbackImages, window.tunaImages)
+                    : fallbackImages;
+                const normalizedBrand = ((brand || 'UNKNOWN') + '').toUpperCase();
+
+                return images[normalizedBrand] || images.UNKNOWN || '';
             },
             getMailingAddress: function () {
                 return window.checkoutConfig.payment.checkmo.mailingAddress;
@@ -519,7 +570,7 @@ define(
             isActive: function () {
                 let tunaGateway = window?.checkoutConfig?.payment?.tunagateway;
 
-                return tunaGateway?.allow_card === "1" && tunaGateway?.tuna_active !== "1";
+                return tunaGateway?.allow_card === "1";
             },
             endOrder: function (self, creditCardData, secondCreditCardData, paymentData, messageContainer, isBoleto = false, isPix = false, isCrypto = false, isLink = false) {
 
@@ -549,6 +600,10 @@ define(
                     'is_crypto_payment': isCrypto ? "true" : "false",
                     'is_pix_payment': isPix ? "true" : "false",
                     'is_link_payment': isLink ? "true" : "false",
+                    'is_googlepay_payment': 'false',
+                    'is_applepay_payment': 'false',
+                    'wallet_token_provider': '',
+                    'wallet_token': '',
                     'payment_type': isBoleto ? "TUNA_EBOL" : isPix ? "TUNA_EPIX" : isCrypto ? "TUNA_ECRYPTO" : isLink ? "TUNA_ELINK" : "TUNA_ECAC",
                 };
 
@@ -561,13 +616,19 @@ define(
                 if (Object.prototype.hasOwnProperty.call(paymentData, 'title')) {
                     delete paymentData.title;
                 }
+
+                const placeOrderPaymentData = Object.assign({}, paymentData, {
+                    method: this.getCode(),
+                    additional_data: additionalData
+                });
+
                 $.when(setPaymentInformationAction(messageContainer, {
                     'method': this.getCode(),
                     'additional_data': additionalData
                 })).done(function () {
                     delete paymentData['title'];
                     $.when(
-                        placeOrder(paymentData, messageContainer)).done(function () {
+                        placeOrder(placeOrderPaymentData, messageContainer)).done(function () {
                         $.mage.redirect(window.checkoutConfig.tuna_payment);
                     }).fail(function (result) {
                         alert({
@@ -731,9 +792,9 @@ define(
                     return {
                         token: generateResponse.token,
                         brand: generateResponse.brand,
-                        expirationMonth: cardData.ExpirationMonth,
-                        expirationYear: cardData.ExpirationYear,
-                        cardHolderName: cardData.CardHolderName
+                        expirationMonth: cardData.expirationMonth,
+                        expirationYear: cardData.expirationYear,
+                        cardHolderName: cardData.cardHolderName
                     };
                 return null;
             },

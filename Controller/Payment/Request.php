@@ -31,11 +31,18 @@ class Request extends \Magento\Framework\App\Action\Action
     public function execute()
     {
         $lastRealOrder = $this->_checkoutSession->getLastRealOrder();
+        $order = $lastRealOrder;
+        if ($lastRealOrder && $lastRealOrder->getIncrementId()) {
+            $freshOrder = $this->_objectManager->create('Magento\Sales\Model\Order')->loadByIncrementId($lastRealOrder->getIncrementId());
+            if ($freshOrder && $freshOrder->getId()) {
+                $order = $freshOrder;
+            }
+        }
 
-        if (is_null($lastRealOrder->getPayment())) {
+        if (is_null($order->getPayment())) {
             throw new \Magento\Framework\Exception\NotFoundException(__('No order associated.'));
         }
-        $payment = $lastRealOrder->getPayment();
+        $payment = $order->getPayment();
         $paymentData = $payment->getData();
 
         if ($paymentData['method'] === 'tuna' ||
@@ -43,11 +50,13 @@ class Request extends \Magento\Framework\App\Action\Action
         $paymentData['method'] === 'pix' ||
         $paymentData['method'] === 'boleto' ||
         $paymentData['method'] === 'credit' ||
-        $paymentData['method'] === 'link') {
-            $this->orderId = $lastRealOrder->getIncrementId();
+        $paymentData['method'] === 'link' ||
+        $paymentData['method'] === 'googlepay' ||
+        $paymentData['method'] === 'applepay') {
+            $this->orderId = $order->getIncrementId();
             $orderStatusText = '';
-            $orderStatus = $lastRealOrder->getStatus();
-            $itemsCollection = $lastRealOrder->getAllVisibleItems();
+            $orderStatus = $order->getStatus();
+            $itemsCollection = $order->getAllVisibleItems();
             $orderProducts = [];
             foreach ($itemsCollection as $item) {
                 $cItem = [[
@@ -66,29 +75,32 @@ class Request extends \Magento\Framework\App\Action\Action
                 $orderStatus == "tuna_PendingCapture"
             ) {
 
-                $isBoletoPayment = $payment->getAdditionalInformation()["is_boleto_payment"];
+                $additionalInformation = $payment->getAdditionalInformation() ?: [];
+                $paymentMethod = (string)($paymentData['method'] ?? '');
+
+                $isBoletoPayment = $additionalInformation["is_boleto_payment"] ?? ($paymentMethod === 'boleto' ? "true" : "false");
 
                 if ($isBoletoPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_boleto') === "0") {
                     return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
                 }
 
-                $isCryptoPayment = $payment->getAdditionalInformation()["is_crypto_payment"];
+                $isCryptoPayment = $additionalInformation["is_crypto_payment"] ?? ($paymentMethod === 'crypto' ? "true" : "false");
 
                 if ($isCryptoPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_crypto') === "0") {
                     return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
                 }
 
-                $isPixPayment = $payment->getAdditionalInformation()["is_pix_payment"];
+                $isPixPayment = $additionalInformation["is_pix_payment"] ?? ($paymentMethod === 'pix' ? "true" : "false");
 
                 if ($isPixPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_pix') === "0") {
                     return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
                 }
-                $isLinkPayment = $payment->getAdditionalInformation()["is_link_payment"];
+                $isLinkPayment = $additionalInformation["is_link_payment"] ?? ($paymentMethod === 'link' ? "true" : "false");
 
                 if ($isLinkPayment == "true" && $this->scopeConfig->getValue('payment/tuna_payment/options/allow_link') === "0") {
                     return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/error'));
                 }
-                $this->session()->setData(
+                $this->_checkoutSession->setData(
                     'tuna_payment' , [
                         'payment_type'  => $paymentData['method'],
                         'order_id'      => $this->orderId,
@@ -98,15 +110,15 @@ class Request extends \Magento\Framework\App\Action\Action
                         'is_link' => $isLinkPayment,
                         'is_crypto' => $isCryptoPayment,
                         'is_pix' => $isPixPayment,
-                        'boleto_url' => $isBoletoPayment == "true" ? $payment->getAdditionalInformation()["boleto_url"] : "",
-                        'crypto_coin_value' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin_value"] : "",
-                        'crypto_coin_rate_currency' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin_rate_currency"] : "",
-                        'crypto_coin_addr' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin_addr"] : "",
-                        'crypto_coin_qrcode_url' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin_qrcode_url"] : "",
-                        'crypto_coin' => $isCryptoPayment == "true" ? $payment->getAdditionalInformation()["crypto_coin"] : "",
-                        'pix_image' => $isPixPayment == "true" ? $payment->getAdditionalInformation()["pix_image"] : "",
-                        'pix_key' => $isPixPayment == "true" ? $payment->getAdditionalInformation()["pix_key"] : "",
-                        'link_url' => $isLinkPayment == "true" ? $payment->getAdditionalInformation()["link_url"] : "",
+                        'boleto_url' => $isBoletoPayment == "true" ? ($additionalInformation["boleto_url"] ?? "") : "",
+                        'crypto_coin_value' => $isCryptoPayment == "true" ? ($additionalInformation["crypto_coin_value"] ?? "") : "",
+                        'crypto_coin_rate_currency' => $isCryptoPayment == "true" ? ($additionalInformation["crypto_coin_rate_currency"] ?? "") : "",
+                        'crypto_coin_addr' => $isCryptoPayment == "true" ? ($additionalInformation["crypto_coin_addr"] ?? "") : "",
+                        'crypto_coin_qrcode_url' => $isCryptoPayment == "true" ? ($additionalInformation["crypto_coin_qrcode_url"] ?? "") : "",
+                        'crypto_coin' => $isCryptoPayment == "true" ? ($additionalInformation["crypto_coin"] ?? "") : "",
+                        'pix_image' => $isPixPayment == "true" ? ($additionalInformation["pix_image"] ?? "") : "",
+                        'pix_key' => $isPixPayment == "true" ? ($additionalInformation["pix_key"] ?? "") : "",
+                        'link_url' => $isLinkPayment == "true" ? ($additionalInformation["link_url"] ?? "") : "",
                     ]
                 );
                 return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
@@ -132,7 +144,7 @@ class Request extends \Magento\Framework\App\Action\Action
                           $orderStatusText = 'Pagamento negado.';
                         break;
                   }
-                $this->session()->setData(
+                $this->_checkoutSession->setData(
                     'tuna_payment', [
                         'payment_type'  => $paymentData['method'],
                         'order_id'      => $this->orderId,

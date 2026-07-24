@@ -4,7 +4,7 @@
 		<payment>
 			<tuna>
 				<title>Tuna</title>
-				<active>1</active>
+				<active>0</active>
 				<model>Tuna\TunaGateway\Model\Payment\Tuna</model>
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
@@ -37,6 +37,20 @@
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
 			</link>
+			<googlepay>
+				<title>Google Pay</title>
+				<active>1</active>
+				<model>Tuna\TunaGateway\Model\Payment\GooglePay</model>
+				<order_status>tuna_Started</order_status>
+				<log_file>var/log/tuna.log</log_file>
+			</googlepay>
+			<applepay>
+				<title>Apple Pay</title>
+				<active>1</active>
+				<model>Tuna\TunaGateway\Model\Payment\ApplePay</model>
+				<order_status>tuna_Started</order_status>
+				<log_file>var/log/tuna.log</log_file>
+			</applepay>
 			<pix>
 				<title>PIX</title>
 				<active>1</active>

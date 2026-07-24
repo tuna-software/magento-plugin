@@ -482,8 +482,10 @@
                 </div>
             </div>
 
+            <!-- ko if: allowPaymentWithTwoCards() -->
             <label id="payUsingTwoCardsLink" for="payingWithTwoCards">Pagar usando dois cartões</label>
             <input type="checkbox" id="payingWithTwoCards" value="0" />
+            <!-- /ko -->
 
             <div class="field _required" id="installmentsDiv">
                 <label data-bind="attr: {for: 'tuna_credit_card_installments'}" class="label">
