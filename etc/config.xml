@@ -58,6 +58,11 @@
 				<order_status>tuna_Started</order_status>
 				<log_file>var/log/tuna.log</log_file>
 			</pix>
+			<tuna_payment>
+				<options>
+					<use_custom_status>1</use_custom_status>
+				</options>
+			</tuna_payment>
 		</payment>
 	</default>
 </config>

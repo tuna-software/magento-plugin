@@ -4,6 +4,7 @@ namespace Tuna\TunaGateway\Controller\Payment;
 
 use \Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use Tuna\TunaGateway\Helper\OrderStatusResolver;
 
 class Request extends \Magento\Framework\App\Action\Action
 {
@@ -13,12 +14,14 @@ class Request extends \Magento\Framework\App\Action\Action
     private $orderId;
     protected $scopeConfig;
     private  $_isScopePrivate;
+    protected $orderStatusResolver;
 
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         CheckoutSession $checkoutSession,
-        ScopeConfig $scopeConfig
+        ScopeConfig $scopeConfig,
+        OrderStatusResolver $orderStatusResolver
     ) {
         parent::__construct($context);
         $this->scopeConfig = $scopeConfig;
@@ -26,6 +29,7 @@ class Request extends \Magento\Framework\App\Action\Action
         $this->result = $this->resultJsonFactory->create();
         $this->_isScopePrivate = true;
         $this->_checkoutSession = $checkoutSession;
+        $this->orderStatusResolver = $orderStatusResolver;
     }
 
     public function execute()
@@ -69,10 +73,12 @@ class Request extends \Magento\Framework\App\Action\Action
             }
 
             if (
-                $orderStatus == "tuna_Started" ||
-                $orderStatus == "tuna_Authorized" ||
-                $orderStatus == "tuna_Captured" ||
-                $orderStatus == "tuna_PendingCapture"
+                $this->orderStatusResolver->matchesAny($orderStatus, [
+                    'tuna_Started',
+                    'tuna_Authorized',
+                    'tuna_Captured',
+                    'tuna_PendingCapture',
+                ])
             ) {
 
                 $additionalInformation = $payment->getAdditionalInformation() ?: [];
@@ -123,27 +129,19 @@ class Request extends \Magento\Framework\App\Action\Action
                 );
                 return $this->_redirect(sprintf('%s%s', $this->baseUrl(), 'tunagateway/response/success'));
             } else {
-                switch ($orderStatus) {
-                    case 'tuna_Denied':
-                          $orderStatusText = 'Pagamento negado pelo banco emissor.';
-                        break;
-                    case 'tuna_Cancelled':
-                          $orderStatusText = 'Pagamento cancelado.';
-                        break;
-                    case 'tuna_Expired':
-                          $orderStatusText = 'Pagamento expirado.';
-                        break;
-                    case 'tuna_Error':
-                    case 'tuna_RedFlag':
-                           $orderStatusText = 'Erro no pagamento.';
-                        break;
-                    case 'tuna_PendingAntiFraud':
-                          $orderStatusText = 'Pagamento em análise. Aguarde.';
-                        break;
-                    case 'tuna_DeniedAntiFraud':
-                          $orderStatusText = 'Pagamento negado.';
-                        break;
-                  }
+                if ($this->orderStatusResolver->matches($orderStatus, 'tuna_Denied')) {
+                    $orderStatusText = 'Pagamento negado pelo banco emissor.';
+                } elseif ($this->orderStatusResolver->matches($orderStatus, 'tuna_Cancelled')) {
+                    $orderStatusText = 'Pagamento cancelado.';
+                } elseif ($this->orderStatusResolver->matches($orderStatus, 'tuna_Expired')) {
+                    $orderStatusText = 'Pagamento expirado.';
+                } elseif ($this->orderStatusResolver->matchesAny($orderStatus, ['tuna_Error', 'tuna_RedFlag'])) {
+                    $orderStatusText = 'Erro no pagamento.';
+                } elseif ($this->orderStatusResolver->matches($orderStatus, 'tuna_PendingAntiFraud')) {
+                    $orderStatusText = 'Pagamento em análise. Aguarde.';
+                } elseif ($this->orderStatusResolver->matches($orderStatus, 'tuna_DeniedAntiFraud')) {
+                    $orderStatusText = 'Pagamento negado.';
+                }
                 $this->_checkoutSession->setData(
                     'tuna_payment', [
                         'payment_type'  => $paymentData['method'],

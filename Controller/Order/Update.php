@@ -11,6 +11,7 @@ use Magento\Framework\View\Result\PageFactory;
 use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Framework\DB\Transaction;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
+use Tuna\TunaGateway\Helper\OrderStatusResolver;
 
 class Update extends Action
 {
@@ -23,6 +24,7 @@ class Update extends Action
     protected ScopeConfig $scopeConfig;
     protected CurlFactory $curlFactory;
     protected Json $jsonHelper;
+    protected OrderStatusResolver $orderStatusResolver;
 
     public function __construct(
         Context $context,
@@ -33,7 +35,8 @@ class Update extends Action
         ScopeConfig $scopeConfig,
         InvoiceService $invoiceService,
         InvoiceSender $invoiceSender,
-        Transaction $transaction
+        Transaction $transaction,
+        OrderStatusResolver $orderStatusResolver
 
     ) {
         $this->scopeConfig = $scopeConfig;
@@ -44,6 +47,7 @@ class Update extends Action
         $this->invoiceService = $invoiceService;
         $this->transaction = $transaction;
         $this->invoiceSender = $invoiceSender;
+        $this->orderStatusResolver = $orderStatusResolver;
         return parent::__construct($context);
     }
 
@@ -83,6 +87,7 @@ class Update extends Action
             exit;
         }
         $payment = $order->getPayment();
+        $rawStatusId = $status;
         switch ($status.'') {
             case '0':
                 $status = ('tuna_Started');
@@ -151,10 +156,22 @@ class Update extends Action
                 $status = 'tuna_DeniedAntiFraud';
                 break;
           }
-        if ($status != $order->getStatus() && $order->getStatus()!= 'complete')
+        $canonicalStatus = $status;
+        $resolved = $this->orderStatusResolver->resolve($canonicalStatus);
+
+        // registra o callback recebido independentemente de haver troca de status
+        $callbackComment = __(
+            'Callback Tuna recebido. StatusId: %1. Payload: %2',
+            $rawStatusId,
+            $this->jsonHelper->serialize($body)
+        );
+        $order->addCommentToStatusHistory($callbackComment, false)->save();
+
+        if ($resolved['status'] != $order->getStatus() && $order->getState() != \Magento\Sales\Model\Order::STATE_COMPLETE)
         {
-            $order->addStatusToHistory($status, null, true);
-            $order->setStatus($status);
+            $order->addStatusToHistory($resolved['status'], null, true);
+            $order->setState($resolved['state']);
+            $order->setStatus($resolved['status']);
             $order->save();
         }
         echo print_r("OK");

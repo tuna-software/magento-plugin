@@ -4,9 +4,8 @@
 
 <div>
     <?php
-        $status = strtolower(trim((string)$block->getStatus()));
-        $isSuccessStatus = in_array($status, ["tuna_captured", "complete"], true);
-        $isPendingCaptureAllowed = $status == "tuna_pendingcapture" && (
+        $isSuccessStatus = $block->getIsCapturedStatus() || strtolower(trim((string)$block->getStatus())) === 'complete';
+        $isPendingCaptureAllowed = $block->getIsPendingCaptureStatus() && (
             $block->getIsPix() == "true" ||
             $block->getIsLink() == "true" ||
             $block->getIsBoleto() == "true" ||
@@ -57,7 +56,7 @@
             </script>
         <?php } ?>
 
-        <?php if ($block->getIsPix() == "true" && $block->getStatus() == "tuna_PendingCapture") { ?>
+        <?php if ($block->getIsPix() == "true" && $block->getIsPendingCaptureStatus()) { ?>
             <h3><?php echo __('Pagamento via PIX') ?></h3>
             <div style="height: 451px;">
                 <div style="width:300px; float:left">
@@ -112,7 +111,7 @@
                 }, 6000);
             </script>
 
-        <?php } elseif (($block->getIsCrypto() == "true" && $block->getStatus() == "tuna_PendingCapture")) { ?>
+        <?php } elseif (($block->getIsCrypto() == "true" && $block->getIsPendingCaptureStatus())) { ?>
             <h3><?php echo __('Pagar com Bitcoin') ?></h3>
             <p><?php echo __('A partir da sua wallet de preferência, efetue o pagamento de acordo com a cotação do momento.') ?></p>
             <div style="height: 451px;">

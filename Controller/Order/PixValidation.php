@@ -12,6 +12,7 @@ use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Framework\DB\Transaction;
 use Magento\Framework\HTTP\ClientInterface as CurlClient;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
+use Tuna\TunaGateway\Helper\OrderStatusResolver;
 
 class PixValidation extends Action
 {
@@ -25,6 +26,7 @@ class PixValidation extends Action
     protected $scopeConfig;
     protected $curlClient;
     protected $invoiceSender;
+    protected $orderStatusResolver;
 
     public function __construct(
         Context        $context,
@@ -35,7 +37,8 @@ class PixValidation extends Action
         ScopeConfig    $scopeConfig,
         InvoiceService $invoiceService,
         InvoiceSender  $invoiceSender,
-        Transaction    $transaction
+        Transaction    $transaction,
+        OrderStatusResolver $orderStatusResolver
     )
     {
         $this->scopeConfig = $scopeConfig;
@@ -51,6 +54,7 @@ class PixValidation extends Action
         $this->invoiceService = $invoiceService;
         $this->transaction = $transaction;
         $this->invoiceSender = $invoiceSender;
+        $this->orderStatusResolver = $orderStatusResolver;
         return parent::__construct($context);
     }
 
@@ -100,8 +104,7 @@ class PixValidation extends Action
 
         $payment = $order->getPayment();
         if ($responseCode == "-1") {
-            $order->addStatusToHistory('tuna_Cancelled', null, true);
-            $order->setStatus('tuna_Cancelled');
+            $this->orderStatusResolver->apply($order, 'tuna_Cancelled', true, true);
             $order->save();
         } else {
             switch ($status . '') {
@@ -112,16 +115,14 @@ class PixValidation extends Action
                 case 'A':
                 case 'B':
                 case 'E':
-                    $order->addStatusToHistory('tuna_Cancelled', null, true);
-                    $order->setStatus('tuna_Cancelled');
+                    $this->orderStatusResolver->apply($order, 'tuna_Cancelled', true, true);
                     $order->save();
                     echo print_r("OK");
                     break;
                 case '5':
                 case '7':
                 case '3':
-                    $order->addStatusToHistory('tuna_Refunded', null, true);
-                    $order->setStatus('tuna_Refunded');
+                    $this->orderStatusResolver->apply($order, 'tuna_Refunded', true, true);
                     $order->save();
                     echo print_r("OK");
                     break;
@@ -149,8 +150,7 @@ class PixValidation extends Action
                             }
                         }
                     }
-                    $order->addStatusToHistory('tuna_Captured', null, true);
-                    $order->setStatus('tuna_Captured');
+                    $this->orderStatusResolver->apply($order, 'tuna_Captured', true, true);
                     $order->save();
                     echo print_r("OK");
                     break;

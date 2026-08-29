@@ -2,6 +2,8 @@
 
 namespace Tuna\TunaGateway\Controller\Response;
 
+use Tuna\TunaGateway\Helper\OrderStatusResolver;
+
 class Success extends \Magento\Framework\App\Action\Action
 {
 
@@ -9,6 +11,7 @@ class Success extends \Magento\Framework\App\Action\Action
     protected $_resultPageFactory;
     protected $_scopeConfig;
     protected $resultRedirect;
+    protected $orderStatusResolver;
 
     /**
      * Checkout constructor.
@@ -18,7 +21,8 @@ class Success extends \Magento\Framework\App\Action\Action
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
-        \Magento\Framework\Controller\ResultFactory $result
+        \Magento\Framework\Controller\ResultFactory $result,
+        OrderStatusResolver $orderStatusResolver
         ) {
         parent::__construct($context);
 
@@ -26,6 +30,7 @@ class Success extends \Magento\Framework\App\Action\Action
         $this->_resultPageFactory = $resultPageFactory;
         $this->_scopeConfig = $this->_objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
         $this->resultRedirect = $result;
+        $this->orderStatusResolver = $orderStatusResolver;
     }
 
     /**
@@ -58,6 +63,8 @@ class Success extends \Magento\Framework\App\Action\Action
         $resultPage->getLayout()->getBlock('tuna.response.success')->setNewOrderTotal($newOrderTotal);
         $resultPage->getLayout()->getBlock('tuna.response.success')->setOrderProducts($this->products($order));
         $resultPage->getLayout()->getBlock('tuna.response.success')->setStatus($order->getStatus());
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setIsCapturedStatus($this->orderStatusResolver->matches($order->getStatus(), 'tuna_Captured'));
+        $resultPage->getLayout()->getBlock('tuna.response.success')->setIsPendingCaptureStatus($this->orderStatusResolver->matches($order->getStatus(), 'tuna_PendingCapture'));
         $resultPage->getLayout()->getBlock('tuna.response.success')->setBoletoURL((string)($additionalInformation['boleto_url'] ?? $this->boletoURL()));
         $resultPage->getLayout()->getBlock('tuna.response.success')->setIsBoleto((string)($additionalInformation['is_boleto_payment'] ?? ($paymentMethod === 'boleto' ? 'true' : $this->isBoleto())));
         $resultPage->getLayout()->getBlock('tuna.response.success')->setIsCrypto((string)($additionalInformation['is_crypto_payment'] ?? ($paymentMethod === 'crypto' ? 'true' : $this->isCrypto())));

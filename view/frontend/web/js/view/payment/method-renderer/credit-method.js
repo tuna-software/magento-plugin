@@ -198,16 +198,27 @@ define(
         }
 
         function addMasks() {
-            const CpfCnpjMaskBehavior = function (val) {
-                return val.replace(/\D/g, '').length <= 11 ? '000.000.000-009' : '00.000.000/0000-00';
+            const cpfMask = '000.000.000-009';
+            const cnpjMask = 'AA.AAA.AAA/AAAA-00';
+            const resolveMask = function (val) {
+                const clean = (val || '').replace(/[^0-9a-zA-Z]/g, '');
+                return (!/[a-zA-Z]/.test(clean) && clean.length <= 11) ? cpfMask : cnpjMask;
             };
             const cpfCnpjpOptions = {
                 onKeyPress: function (val, e, field, options) {
-                    field.mask(CpfCnpjMaskBehavior.apply({}, arguments), options);
+                    field.mask(resolveMask(val), options);
                 }
             };
             try {
-                $(' #tuna_credit_card_document').mask(CpfCnpjMaskBehavior, cpfCnpjpOptions);
+                const $document = $(' #tuna_credit_card_document');
+                // intercepta a letra no input bruto, antes que a máscara numérica de CPF a descarte
+                $document.off('input.cpfCnpjLetter').on('input.cpfCnpjLetter', function () {
+                    const instance = $(this).data('mask');
+                    if (/[a-zA-Z]/.test($(this).val()) && (!instance || instance.mask !== cnpjMask)) {
+                        $(this).mask(cnpjMask, cpfCnpjpOptions);
+                    }
+                });
+                $document.mask(resolveMask($document.val()), cpfCnpjpOptions);
                 $(" #tuna_first_credit_card_value").mask("9999999999,99");
                 $(" #tuna_second_credit_card_value").mask("999999999,99");
                 $(" #tuna_credit_card_code").mask("999");
@@ -517,24 +528,17 @@ define(
             },
             isCNPJValid: function (cnpj) {
 
-                cnpj = cnpj.replace(/[^\d]+/g, '');
+                cnpj = (cnpj || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
 
                 if (cnpj == '') return false;
 
                 if (cnpj.length != 14)
                     return false;
 
-                if (cnpj == "00000000000000" ||
-                    cnpj == "11111111111111" ||
-                    cnpj == "22222222222222" ||
-                    cnpj == "33333333333333" ||
-                    cnpj == "44444444444444" ||
-                    cnpj == "55555555555555" ||
-                    cnpj == "66666666666666" ||
-                    cnpj == "77777777777777" ||
-                    cnpj == "88888888888888" ||
-                    cnpj == "99999999999999")
+                if (/^(.)\1{13}$/.test(cnpj))
                     return false;
+
+                const charValue = (c) => c.charCodeAt(0) - 48;
 
                 let tamanho = cnpj.length - 2
                 let numeros = cnpj.substring(0, tamanho);
@@ -542,7 +546,7 @@ define(
                 let soma = 0;
                 let pos = tamanho - 7;
                 for (let i = tamanho; i >= 1; i--) {
-                    soma += numeros.charAt(tamanho - i) * pos--;
+                    soma += charValue(numeros.charAt(tamanho - i)) * pos--;
                     if (pos < 2)
                         pos = 9;
                 }
@@ -555,7 +559,7 @@ define(
                 soma = 0;
                 pos = tamanho - 7;
                 for (let i = tamanho; i >= 1; i--) {
-                    soma += numeros.charAt(tamanho - i) * pos--;
+                    soma += charValue(numeros.charAt(tamanho - i)) * pos--;
                     if (pos < 2)
                         pos = 9;
                 }

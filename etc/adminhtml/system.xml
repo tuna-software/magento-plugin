@@ -35,6 +35,10 @@
 						<label>Environment</label>
 						<source_model>Tuna\TunaGateway\Model\Config\Source\EndpointConfiguration</source_model>
 					</field>
+					<field id="use_custom_status" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label" type="select">
+						<label>Usar status customizados do módulo Tuna (em vez dos status nativos do Magento)</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>
 					<field id="allow_boleto" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="13" translate="label" type="select">
 						<label>Allow Offline Payment (Boleto)</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

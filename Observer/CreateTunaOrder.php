@@ -10,6 +10,7 @@ use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Framework\HTTP\Client\Curl;
 use Magento\Store\Model\StoreManagerInterface; // Add this import
 use Tuna\TunaGateway\Helper\MarketplaceSplitResolver;
+use Tuna\TunaGateway\Helper\OrderStatusResolver;
 
 class CreateTunaOrder implements ObserverInterface
 {
@@ -27,6 +28,7 @@ class CreateTunaOrder implements ObserverInterface
     protected $curlClient;
     protected $storeManager; // Add property for StoreManagerInterface
     protected $marketplaceSplitResolver;
+    protected $orderStatusResolver;
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
@@ -40,7 +42,8 @@ class CreateTunaOrder implements ObserverInterface
         Transaction $transaction,
         Curl $curlClient,
         StoreManagerInterface $storeManager, // Inject StoreManagerInterface
-        MarketplaceSplitResolver $marketplaceSplitResolver
+        MarketplaceSplitResolver $marketplaceSplitResolver,
+        OrderStatusResolver $orderStatusResolver
     ) {
         $this->_scopeConfig = $scopeConfigInterface;
         $this->_session = $sessionManager;
@@ -59,6 +62,7 @@ class CreateTunaOrder implements ObserverInterface
         $this->curlClient = $curlClient;
         $this->storeManager = $storeManager; // Assign StoreManagerInterface
         $this->marketplaceSplitResolver = $marketplaceSplitResolver;
+        $this->orderStatusResolver = $orderStatusResolver;
     }
 
     function roundDown($decimal, $precision)
@@ -154,14 +158,14 @@ class CreateTunaOrder implements ObserverInterface
             if ($creditCardData != null && count($creditCardData) > 0) {
 
                 if (count($creditCardData) > 2) {
-                    $order->setStatus('tuna_Cancelled');
+                    $this->orderStatusResolver->apply($order, 'tuna_Cancelled');
                     $order->addStatusHistoryComment('Não é permitida a compra com mais de 2 cartões');
                     $order->setGrandTotal($valorTotal);
                     $order->save();
                     return;
                 }
                 if ($this->getValorFinal($order->getGrandTotal()) > $this->getValorFinal($creditCardData[0]->credit_card_amount)+$this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0)) {
-                    $order->setStatus('tuna_Cancelled');
+                    $this->orderStatusResolver->apply($order, 'tuna_Cancelled');
                     $order->addStatusHistoryComment('Dados invalidos para compra: R$ '.($this->getValorFinal($creditCardData[0]->credit_card_amount)+$this->getValorFinal($creditCardData[1]->credit_card_amount ?? 0)));
                     $order->setGrandTotal($valorTotal);
                     $order->save();
@@ -259,7 +263,7 @@ class CreateTunaOrder implements ObserverInterface
                         }
 
                         if (empty($walletToken)) {
-                            $order->setStatus('tuna_Cancelled');
+                            $this->orderStatusResolver->apply($order, 'tuna_Cancelled');
                             $order->addStatusHistoryComment('Token de carteira digital ausente para processamento de pagamento.');
                             $order->save();
                             $this->_checkoutSession->restoreQuote();
@@ -283,7 +287,7 @@ class CreateTunaOrder implements ObserverInterface
                         ];
                     } else {
                         if (empty($creditCardData) || count((array)$creditCardData) === 0) {
-                            $order->setStatus('tuna_Cancelled');
+                            $this->orderStatusResolver->apply($order, 'tuna_Cancelled');
                             $order->addStatusHistoryComment('Dados de cartao ausentes para o fluxo de credito.');
                             $order->save();
                             $this->_checkoutSession->restoreQuote();
@@ -309,7 +313,7 @@ class CreateTunaOrder implements ObserverInterface
 
                             $creditCardToken = $creditCard->credit_card_token ?? '';
                             if (empty($creditCardToken)) {
-                                $order->setStatus('tuna_Cancelled');
+                                $this->orderStatusResolver->apply($order, 'tuna_Cancelled');
                                 $order->addStatusHistoryComment('Token de cartao ausente para processamento de pagamento.');
                                 $order->save();
                                 $this->_checkoutSession->restoreQuote();
@@ -471,10 +475,10 @@ class CreateTunaOrder implements ObserverInterface
 
                 switch ($responseStatus) {
                     case '0':
-                        $order->setStatus('tuna_Started');
+                        $this->orderStatusResolver->apply($order, 'tuna_Started');
                         break;
                     case '1':
-                        $order->setStatus('tuna_Authorized');
+                        $this->orderStatusResolver->apply($order, 'tuna_Authorized');
                         break;
                     case '2':
 
@@ -498,51 +502,51 @@ class CreateTunaOrder implements ObserverInterface
                                 } catch (\Exception $e) {}
                             }
                         }
-                        $order->setStatus('tuna_Captured');
+                        $this->orderStatusResolver->apply($order, 'tuna_Captured');
                         break;
                     case '3':
-                        $order->setStatus('tuna_Refunded');
+                        $this->orderStatusResolver->apply($order, 'tuna_Refunded');
                         break;
                     case '4':
-                        $order->setStatus('tuna_Denied');
+                        $this->orderStatusResolver->apply($order, 'tuna_Denied');
                         $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         break;
                     case '5':
-                        $order->setStatus('tuna_Cancelled');
+                        $this->orderStatusResolver->apply($order, 'tuna_Cancelled');
                         $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         break;
                     case '-1':
-                        $order->setStatus('tuna_Cancelled');
+                        $this->orderStatusResolver->apply($order, 'tuna_Cancelled');
                         $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         break;
                     case '6':
-                        $order->setStatus('tuna_Expired');
+                        $this->orderStatusResolver->apply($order, 'tuna_Expired');
                         $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento expirado.'));
                         break;
                     case '7':
-                        $order->setStatus('tuna_Chargeback');
+                        $this->orderStatusResolver->apply($order, 'tuna_Chargeback');
                         $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         break;
                     case '8':
-                        $order->setStatus('tuna_MoneyReceived');
+                        $this->orderStatusResolver->apply($order, 'tuna_MoneyReceived');
                         break;
                     case '9':
-                        $order->setStatus('tuna_PartialCancel');
+                        $this->orderStatusResolver->apply($order, 'tuna_PartialCancel');
                         $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento cancelado.'));
                         break;
                     case 'A':
-                        $order->setStatus('tuna_Error');
+                        $this->orderStatusResolver->apply($order, 'tuna_Error');
                         $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         break;
                     case 'B':
-                        $order->setStatus('tuna_RedFlag');
+                        $this->orderStatusResolver->apply($order, 'tuna_RedFlag');
                         $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         break;
@@ -552,7 +556,7 @@ class CreateTunaOrder implements ObserverInterface
                             && (!$isPixPayment)
                             && (!$isBoletoPayment))
                             {
-                                $order->setStatus('tuna_PendingCapture');
+                                $this->orderStatusResolver->apply($order, 'tuna_PendingCapture');
                                     switch ((string)($firstMethod['status'] ?? ''))
                                     {
                                         case '3':
@@ -575,15 +579,15 @@ class CreateTunaOrder implements ObserverInterface
                                     }
                             }else
                             {
-                                $order->setStatus('tuna_PendingCapture');
+                                $this->orderStatusResolver->apply($order, 'tuna_PendingCapture');
                             }
 
                         break;
                     case 'D':
-                        $order->setStatus('tuna_PendingAntiFraud');
+                        $this->orderStatusResolver->apply($order, 'tuna_PendingAntiFraud');
                         break;
                     case 'E':
-                        $order->setStatus('tuna_DeniedAntiFraud');
+                        $this->orderStatusResolver->apply($order, 'tuna_DeniedAntiFraud');
                         $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Pagamento negado pelo banco emissor.'));
                         break;
@@ -737,10 +741,10 @@ class CreateTunaOrder implements ObserverInterface
 
                 switch ($responseCode) {
                     case '1':
-                            $order->setStatus('tuna_PendingCapture');
+                            $this->orderStatusResolver->apply($order, 'tuna_PendingCapture');
                         break;
                     default:
-                        $order->setStatus('tuna_Error');
+                        $this->orderStatusResolver->apply($order, 'tuna_Error');
                         $this->_checkoutSession->restoreQuote();
                         throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                         break;
@@ -754,7 +758,7 @@ class CreateTunaOrder implements ObserverInterface
                     $order->addStatusHistoryComment('Link: '. $paymentLink['url']);
                 }else
                 {
-                    $order->setStatus('tuna_Error');
+                    $this->orderStatusResolver->apply($order, 'tuna_Error');
                     $this->_checkoutSession->restoreQuote();
                     throw new \Magento\Framework\Exception\LocalizedException(__('Falha na operação. Tente novamente.'));
                 }
