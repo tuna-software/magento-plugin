@@ -61,6 +61,7 @@
 			<tuna_payment>
 				<options>
 					<use_custom_status>1</use_custom_status>
+					<enable_debug_logging>0</enable_debug_logging>
 				</options>
 			</tuna_payment>
 		</payment>

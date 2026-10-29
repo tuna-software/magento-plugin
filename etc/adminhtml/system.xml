@@ -125,6 +125,11 @@
 						<label>Order status to be observed in order to allow perform partial refund</label>
 						<source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
 					</field>	
+					<field id="enable_debug_logging" showInDefault="1" showInStore="0" showInWebsite="0" sortOrder="35" translate="label comment" type="select">
+						<label>Enable Tuna API debug logging</label>
+						<comment><![CDATA[Append sanitized Init, Status and webhook request/response details to var/log/tuna_debug.log. Sensitive values are redacted. Keep disabled except while diagnosing an issue.]]></comment>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					</field>
 					<field id="antifraudConfig" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="34" translate="label" type="text">
 						<label>Antifraud configuration</label>
 					</field>
